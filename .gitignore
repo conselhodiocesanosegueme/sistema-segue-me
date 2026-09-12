@@ -1,0 +1,17 @@
+node_modules/
+.next/
+.env*
+!.env.example
+.vercel/
+test-results/
+playwright-report/
+coverage/
+.local/
+*.xlsx
+*.csv
+*.pdf
+*.log
+supabase/.temp/
+supabase/.branches/
+tsconfig.tsbuildinfo
+.DS_Store
