@@ -95,8 +95,8 @@ export async function POST(request: NextRequest) {
       .select()
       .maybeSingle();
 
-    // 3. Registrar na tabela pending_reviews para validação do Conselho
-    await admin.from('pending_reviews').insert({
+    // 3. Registrar na tabela review_items para validação do Conselho
+    await admin.from('review_items').insert({
       kind: 'identity',
       title: `Validação de cadastro: ${name}`,
       requester_id: userId,

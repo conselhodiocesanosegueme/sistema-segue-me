@@ -85,7 +85,7 @@ export async function POST(
     if (decision === 'approved') {
       try {
         const { data: rev } = await db
-          .from('pending_reviews')
+          .from('review_items')
           .select('kind, proposed_changes, requester_id')
           .eq('id', id)
           .maybeSingle();

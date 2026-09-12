@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, CheckCircle, EnvelopeSimple, Lock, Phone, User, Church, CalendarBlank } from '@phosphor-icons/react';
+import { CheckCircle, EnvelopeSimple, Lock, User, ShieldCheck } from '@phosphor-icons/react';
+import { createClient } from '@/lib/supabase/client';
 
 export function AuthForm() {
   const [tab, setTab] = useState<'signin' | 'signup'>('signin');
@@ -18,9 +19,25 @@ export function AuthForm() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [phone, setPhone] = useState('');
-  const [parish, setParish] = useState('');
-  const [encounterInfo, setEncounterInfo] = useState('');
+
+  async function handleGoogleSignIn() {
+    setErrorMsg(null);
+    setLoading(true);
+    try {
+      const supabase = createClient();
+      const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.sistemasegueme.com.br';
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${origin}/auth/confirm?next=/me`,
+        },
+      });
+      if (error) throw error;
+    } catch (err: any) {
+      setErrorMsg(err?.message || 'Não foi possível conectar com o Google. Verifique se o provedor está ativo no painel.');
+      setLoading(false);
+    }
+  }
 
   async function handleSignIn(e: React.FormEvent) {
     e.preventDefault();
@@ -41,7 +58,7 @@ export function AuthForm() {
 
       window.location.href = data.targetUrl || '/';
     } catch (err: any) {
-      setErrorMsg(err.message || 'Erro ao realizar login.');
+      setErrorMsg(err?.message || 'Erro ao realizar login.');
     } finally {
       setLoading(false);
     }
@@ -61,9 +78,6 @@ export function AuthForm() {
           name,
           email,
           password,
-          phone,
-          parish,
-          encounterInfo,
         }),
       });
 
@@ -72,16 +86,12 @@ export function AuthForm() {
         throw new Error(data.error || 'Erro ao solicitar cadastro.');
       }
 
-      setSuccessMsg(data.message || 'Cadastro enviado com sucesso! Verifique seu e-mail.');
-      // Limpar campos
+      setSuccessMsg(data.message || 'Cadastro realizado! Verifique sua caixa de entrada.');
       setName('');
       setEmail('');
       setPassword('');
-      setPhone('');
-      setParish('');
-      setEncounterInfo('');
     } catch (err: any) {
-      setErrorMsg(err.message || 'Erro ao processar cadastro.');
+      setErrorMsg(err?.message || 'Erro ao processar cadastro.');
     } finally {
       setLoading(false);
     }
@@ -89,6 +99,58 @@ export function AuthForm() {
 
   return (
     <div>
+      {/* Botão Oficial do Google */}
+      <button
+        type="button"
+        onClick={handleGoogleSignIn}
+        disabled={loading}
+        className="button button-secondary"
+        style={{
+          width: '100%',
+          padding: '12px 16px',
+          justifyContent: 'center',
+          background: '#ffffff',
+          border: '1px solid var(--border-base)',
+          fontWeight: 600,
+          fontSize: '0.88rem',
+          color: 'var(--text-main)',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          cursor: 'pointer',
+        }}
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24">
+          <path
+            fill="#4285F4"
+            d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+          />
+          <path
+            fill="#34A853"
+            d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+          />
+          <path
+            fill="#FBBC05"
+            d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+          />
+          <path
+            fill="#EA4335"
+            d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+          />
+        </svg>
+        Continuar com o Google
+      </button>
+
+      {/* Divisor Visual */}
+      <div style={{ display: 'flex', alignItems: 'center', margin: '18px 0 16px', gap: '12px' }}>
+        <div style={{ flex: 1, height: '1px', background: 'var(--border-light)' }} />
+        <span style={{ fontSize: '0.75rem', color: 'var(--text-subtle)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+          ou com e-mail
+        </span>
+        <div style={{ flex: 1, height: '1px', background: 'var(--border-light)' }} />
+      </div>
+
       {/* Abas de Navegação */}
       <div
         style={{
@@ -96,7 +158,7 @@ export function AuthForm() {
           background: 'var(--bg-canvas)',
           padding: '4px',
           borderRadius: 'var(--radius-lg)',
-          marginBottom: '20px',
+          marginBottom: '18px',
           border: '1px solid var(--border-light)',
         }}
       >
@@ -105,7 +167,7 @@ export function AuthForm() {
           onClick={() => { setTab('signin'); setErrorMsg(null); }}
           style={{
             flex: 1,
-            padding: '10px 12px',
+            padding: '9px 12px',
             fontSize: '0.84rem',
             fontWeight: 600,
             borderRadius: 'var(--radius-md)',
@@ -124,7 +186,7 @@ export function AuthForm() {
           onClick={() => { setTab('signup'); setErrorMsg(null); }}
           style={{
             flex: 1,
-            padding: '10px 12px',
+            padding: '9px 12px',
             fontSize: '0.84rem',
             fontWeight: 600,
             borderRadius: 'var(--radius-md)',
@@ -136,7 +198,7 @@ export function AuthForm() {
             transition: 'all 0.15s ease',
           }}
         >
-          Solicitar cadastro
+          Criar cadastro
         </button>
       </div>
 
@@ -176,34 +238,32 @@ export function AuthForm() {
           <CheckCircle size={22} style={{ flexShrink: 0, marginTop: '2px', color: '#16a34a' }} />
           <div>
             <strong style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem' }}>
-              Solicitação enviada com sucesso!
+              Conta criada com sucesso!
             </strong>
-            Enviamos um e-mail de confirmação para você. A Coordenação Diocesana fará a conferência da sua vivência nos quadrantes oficiais e liberará seu acesso em breve.
+            Enviamos um e-mail de confirmação para você. Faça login para informar os dados do seu encontro e vincular seu histórico oficial!
           </div>
         </div>
       )}
 
       {tab === 'signin' ? (
-        <form onSubmit={handleSignIn} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <form onSubmit={handleSignIn} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           <div>
-            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '6px' }}>
+            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '5px' }}>
               E-mail de acesso
             </label>
-            <div style={{ position: 'relative' }}>
-              <input
-                type="email"
-                value={signInEmail}
-                onChange={(e) => setSignInEmail(e.target.value)}
-                placeholder="seu.email@exemplo.com"
-                required
-                className="filter-input"
-                style={{ width: '100%' }}
-              />
-            </div>
+            <input
+              type="email"
+              value={signInEmail}
+              onChange={(e) => setSignInEmail(e.target.value)}
+              placeholder="seu.email@exemplo.com"
+              required
+              className="filter-input"
+              style={{ width: '100%' }}
+            />
           </div>
 
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '5px' }}>
               <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)' }}>
                 Sua senha
               </label>
@@ -226,7 +286,7 @@ export function AuthForm() {
             type="submit"
             disabled={loading}
             className="button button-primary"
-            style={{ width: '100%', marginTop: '8px', justifyContent: 'center' }}
+            style={{ width: '100%', marginTop: '6px', justifyContent: 'center' }}
           >
             {loading ? 'Entrando...' : 'Entrar na conta'}
           </button>
@@ -234,83 +294,40 @@ export function AuthForm() {
       ) : (
         <form onSubmit={handleSignUp} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           <div>
-            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '4px' }}>
-              Nome completo *
+            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '5px' }}>
+              Seu nome completo *
             </label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Como consta no quadrante"
+              placeholder="Nome como saía no crachá ou quadrante"
               required
               className="filter-input"
               style={{ width: '100%' }}
             />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-            <div>
-              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '4px' }}>
-                E-mail *
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="seu.email@exemplo.com"
-                required
-                className="filter-input"
-                style={{ width: '100%' }}
-              />
-            </div>
-            <div>
-              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '4px' }}>
-                WhatsApp / Telefone
-              </label>
-              <input
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="(62) 99999-9999"
-                className="filter-input"
-                style={{ width: '100%' }}
-              />
-            </div>
-          </div>
-
           <div>
-            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '4px' }}>
-              Sua Paróquia atual
+            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '5px' }}>
+              Seu e-mail *
             </label>
             <input
-              type="text"
-              value={parish}
-              onChange={(e) => setParish(e.target.value)}
-              placeholder="Ex.: Paróquia São Francisco de Assis"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="seu.email@exemplo.com"
+              required
               className="filter-input"
               style={{ width: '100%' }}
             />
-          </div>
-
-          <div>
-            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '4px' }}>
-              Quando você vivenciou o Segue-me?
-            </label>
-            <input
-              type="text"
-              value={encounterInfo}
-              onChange={(e) => setEncounterInfo(e.target.value)}
-              placeholder="Ex.: 1ª Etapa em 2019 na Paróquia São Benedito"
-              className="filter-input"
-              style={{ width: '100%' }}
-            />
-            <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '2px', display: 'block' }}>
-              Ajuda a equipe a localizar o seu histórico nos quadrantes.
+            <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '3px', display: 'block' }}>
+              Você receberá as notificações e confirmações neste e-mail.
             </span>
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '4px' }}>
+            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '5px' }}>
               Crie uma senha de acesso * (mínimo 6 caracteres)
             </label>
             <input
@@ -325,13 +342,27 @@ export function AuthForm() {
             />
           </div>
 
+          <div
+            style={{
+              padding: '10px 12px',
+              borderRadius: 'var(--radius-md)',
+              background: 'var(--bg-canvas)',
+              border: '1px solid var(--border-light)',
+              fontSize: '0.76rem',
+              color: 'var(--text-muted)',
+              lineHeight: '1.4',
+            }}
+          >
+            🛡️ Ao criar sua conta, na próxima tela você poderá informar os encontros que vivenciou ou trabalhou para que o Conselho Diocesano valide seu histórico.
+          </div>
+
           <button
             type="submit"
             disabled={loading}
             className="button button-primary"
-            style={{ width: '100%', marginTop: '8px', justifyContent: 'center' }}
+            style={{ width: '100%', marginTop: '4px', justifyContent: 'center' }}
           >
-            {loading ? 'Enviando solicitação...' : 'Enviar solicitação de cadastro'}
+            {loading ? 'Criando conta...' : 'Criar minha conta'}
           </button>
         </form>
       )}
