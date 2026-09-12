@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Lock, EnvelopeSimple, ArrowRight, ShieldCheck, Path } from '@phosphor-icons/react/dist/ssr';
 import { isDemoMode } from '@/lib/config';
+import { AuthForm } from '@/components/auth-form';
 
 export default async function EntrarPage({ searchParams }: { searchParams?: Promise<{ error?: string }> }) {
   const demo = isDemoMode();
@@ -76,54 +77,10 @@ export default async function EntrarPage({ searchParams }: { searchParams?: Prom
           </div>
         )}
 
-        {/* Formulário Oficial */}
-        <form action="/api/auth/signin" method="post" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div>
-            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '6px' }}>
-              E-mail de acesso
-            </label>
-            <div style={{ position: 'relative' }}>
-              <input
-                type="email"
-                name="email"
-                placeholder="seu.email@exemplo.com"
-                required
-                className="filter-input"
-                style={{ width: '100%' }}
-              />
-            </div>
-          </div>
+        {/* Formulário Oficial com Abas de Login e Solicitação de Cadastro */}
+        <AuthForm />
 
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-              <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)' }}>
-                Sua senha
-              </label>
-              <Link href="/recuperar" style={{ fontSize: '0.78rem', color: 'var(--brand-primary)', textDecoration: 'none' }}>
-                Esqueceu a senha?
-              </Link>
-            </div>
-            <input
-              type="password"
-              name="password"
-              placeholder="••••••••"
-              required
-              className="filter-input"
-              style={{ width: '100%' }}
-            />
-          </div>
-
-          <button type="submit" className="button button-primary" style={{ width: '100%', marginTop: '8px' }}>
-            Entrar na conta
-          </button>
-        </form>
-
-        <div style={{ marginTop: '20px', padding: '12px 14px', borderRadius: 'var(--radius-md)', background: 'var(--bg-canvas)', border: '1px solid var(--border-light)', fontSize: '0.78rem', color: 'var(--text-muted)', lineHeight: '1.45', textAlign: 'center' }}>
-          <strong style={{ color: 'var(--text-main)', display: 'block', marginBottom: '2px' }}>Análise e autorização de acesso</strong>
-          Ao criar seu cadastro, a solicitação passa por análise da equipe diocesana para confirmar que você já vivenciou o Segue-me antes de liberar a visualização.
-        </div>
-
-        <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.8rem', color: 'var(--text-subtle)' }}>
+        <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.8rem', color: 'var(--text-subtle)' }}>
           <ShieldCheck size={16} />
           Acesso restrito e autorizado pela equipe
         </div>

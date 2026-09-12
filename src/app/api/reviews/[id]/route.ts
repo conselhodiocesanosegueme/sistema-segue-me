@@ -81,6 +81,32 @@ export async function POST(
 
     if (error) throw error;
 
+    // Disparar e-mail de aprovação caso seja uma solicitação de cadastro/identidade
+    if (decision === 'approved') {
+      try {
+        const { data: rev } = await db
+          .from('pending_reviews')
+          .select('kind, proposed_changes, requester_id')
+          .eq('id', id)
+          .maybeSingle();
+
+        if (rev?.kind === 'identity') {
+          const recipientEmail = rev.proposed_changes?.email;
+          const recipientName = rev.proposed_changes?.name || 'Participante';
+
+          if (recipientEmail) {
+            const { sendAccessApprovedEmail } = await import('@/lib/email');
+            await sendAccessApprovedEmail({
+              to: recipientEmail,
+              name: recipientName,
+            });
+          }
+        }
+      } catch (emailErr) {
+        console.error('[REVIEWS] Erro ao enviar e-mail de aprovação:', emailErr);
+      }
+    }
+
     return NextResponse.json({ ok: true, message: 'Decisão registrada com sucesso.' });
   } catch (error) {
     return apiError(error);
