@@ -276,7 +276,7 @@ export async function sendWelcomeRegistrationEmail({
   const previewText = `Olá, ${name}! Recebemos a sua solicitação de acesso ao Sistema Segue-me.`;
 
   const content = `
-    <h2>Viva Cristo! Olá, ${name}.</h2>
+    <h2>Olá, ${name}.</h2>
     
     <p>
       Recebemos com muita alegria a sua solicitação de cadastro no <strong>Sistema Oficial do Segue-me da Diocese de Anápolis</strong>.
@@ -359,11 +359,11 @@ export async function sendAccessApprovedEmail({
   to: string;
   name: string;
 }) {
-  const subject = 'Viva Cristo! Seu acesso ao Sistema Segue-me foi aprovado! 🎉';
+  const subject = 'Seu acesso ao Sistema Segue-me foi aprovado! 🎉';
   const previewText = `Parabéns ${name}! Seu histórico no Segue-me da Diocese de Anápolis foi validado com sucesso.`;
 
   const content = `
-    <h2 style="color: #15803d;">Viva Cristo! Olá, ${name}.</h2>
+    <h2 style="color: #15803d;">Olá, ${name}.</h2>
 
     <p>
       Temos uma excelente notícia: a <strong>Coordenação Diocesana do Segue-me</strong> analisou as informações do seu encontro e o seu acesso ao sistema foi <strong>aprovado com sucesso!</strong>
@@ -486,7 +486,7 @@ export async function sendPasswordResetEmail({
   const previewText = `Recebemos uma solicitação para redefinir sua senha de acesso ao Sistema Segue-me.`;
 
   const content = `
-    <h2>Viva Cristo! Olá${name ? `, ${name}` : ''}.</h2>
+    <h2>Olá${name ? `, ${name}` : ''}.</h2>
 
     <p>
       Recebemos uma solicitação para <strong>redefinir a senha de acesso</strong> à sua conta no <strong>Sistema Oficial do Segue-me da Diocese de Anápolis</strong>.
