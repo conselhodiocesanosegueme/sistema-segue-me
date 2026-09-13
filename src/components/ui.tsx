@@ -20,7 +20,24 @@ export function Badge({ status, children, tone }: { status?: string; children?: 
   return <span className={`badge badge-${tone ?? value?.tone ?? 'neutral'}`}><span className="badge-dot" />{children ?? value?.label ?? status ?? 'Não informado'}</span>;
 }
 
-export function Avatar({ name, large = false }: { name: string; large?: boolean }) { return <span aria-hidden="true" className={`avatar${large ? ' avatar-large' : ''}`}>{initials(name)}</span>; }
+export function Avatar({ name, large = false, src }: { name: string; large?: boolean; src?: string | null }) {
+  if (src) {
+    return (
+      <span
+        aria-hidden="true"
+        className={`avatar${large ? ' avatar-large' : ''}`}
+        style={{ padding: 0, overflow: 'hidden', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+      >
+        <img
+          src={src}
+          alt={name}
+          style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit', display: 'block' }}
+        />
+      </span>
+    );
+  }
+  return <span aria-hidden="true" className={`avatar${large ? ' avatar-large' : ''}`}>{initials(name)}</span>;
+}
 
 export function PageHeading({ eyebrow, title, description, actions }: { eyebrow?: string; title: string; description?: string; actions?: ReactNode }) {
   return <div className="page-heading"><div>{eyebrow && <p className="eyebrow">{eyebrow}</p>}<h1>{title}</h1>{description && <p className="page-description">{description}</p>}</div>{actions && <div className="page-actions">{actions}</div>}</div>;

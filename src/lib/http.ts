@@ -5,13 +5,13 @@ import type { Role } from './types';
 import { appOrigin, isDemoMode } from './config';
 import { ZodError } from 'zod';
 export class HttpError extends Error { constructor(public status: number, message: string) { super(message); } }
-export async function authorize(request: Request, roles?: Role[]) {
+export async function authorize(request: Request, roles?: Role[], maxContentLength = 100_000) {
   if (!['GET', 'HEAD'].includes(request.method)) {
     const origin = request.headers.get('origin');
     const requestOrigin = new URL(request.url).origin;
-    if (!origin || (origin !== appOrigin() && !(isDemoMode() && origin === requestOrigin))) throw new HttpError(403, 'Origem da solicitação não permitida.');
+    if (!origin || (origin !== appOrigin() && origin !== requestOrigin)) throw new HttpError(403, 'Origem da solicitação não permitida.');
     const length = Number(request.headers.get('content-length') || 0);
-    if (length > 100_000) throw new HttpError(413, 'Solicitação muito grande.');
+    if (length > maxContentLength) throw new HttpError(413, 'Solicitação muito grande.');
   }
   const viewer = await getViewer();
   if (!viewer) throw new HttpError(401, 'Entre na sua conta para continuar.');

@@ -254,7 +254,7 @@ export function MyHistoryView({
               alignItems: 'center',
             }}
           >
-            <Avatar name={couple.spouse.name} large />
+            <Avatar name={couple.spouse.name} src={couple.spouse.photo_url} large />
             <div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', flexWrap: 'wrap' }}>
                 <strong style={{ fontSize: '1.2rem', fontFamily: 'var(--font-serif)', color: 'var(--text-main)' }}>

@@ -325,8 +325,8 @@ export async function sendWelcomeRegistrationEmail({
             <div class="step-num">3</div>
           </td>
           <td valign="top">
-            <strong style="color: #27272a; font-size: 14px;">Notificação de Aprovação</strong><br>
-            <span class="step-text">Assim que validado, <strong>você receberá um e-mail avisando</strong> que seu histórico completo e equipes já estão liberados para consulta!</span>
+            <strong style="color: #27272a; font-size: 14px;">Notificação de Aprovação & Foto de Perfil</strong><br>
+            <span class="step-text">Assim que validado, <strong>você receberá um e-mail avisando</strong> para consultar seu histórico completo e já adicionar a sua foto de perfil oficial no sistema!</span>
           </td>
         </tr>
       </table>
@@ -372,6 +372,12 @@ export async function sendAccessApprovedEmail({
     <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-left: 4px solid #16a34a; border-radius: 8px; padding: 16px 20px; margin: 24px 0; color: #166534; font-size: 14px;">
       <strong style="font-size: 15px; display: block; margin-bottom: 6px;">🎉 O seu Histórico Oficial está disponível:</strong>
       Agora você pode consultar todos os encontros em que vivenciou, as equipes de trabalho em que serviu e os mandatos de liderança documentados na nossa diocese.
+    </div>
+
+    <!-- Destaque Foto de Perfil -->
+    <div style="background-color: #fefce8; border: 1px solid #fef08a; border-left: 4px solid #ca8a04; border-radius: 8px; padding: 16px 20px; margin: 20px 0; font-size: 14px; color: #854d0e;">
+      <strong style="font-size: 14.5px; display: block; margin-bottom: 6px; color: #713f12;">📸 Adicione sua Foto de Perfil:</strong>
+      No portal, você já pode enviar a sua foto oficial de perfil para personalizar a sua ficha e sua identificação no movimento Segue-me da nossa diocese!
     </div>
 
     <div class="cta-wrapper">

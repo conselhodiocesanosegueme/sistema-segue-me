@@ -2,7 +2,7 @@ import type { EncounterType, EncounterLevel, MandateBody } from './encounter-con
 export type { EncounterType, EncounterLevel, MandateBody };
 
 export type Role = 'participant' | 'reviewer' | 'admin';
-export type Person = { id: string; legacy_id: string | null; name: string; phone: string | null; email: string | null; birth_date_text: string | null; sex: string | null; identification_status: string; notes?: string | null; version: number; merged_into?: string | null; participation_count?: number; parish?: string | null };
+export type Person = { id: string; legacy_id: string | null; name: string; phone: string | null; email: string | null; birth_date_text: string | null; sex: string | null; identification_status: string; notes?: string | null; version: number; merged_into?: string | null; participation_count?: number; parish?: string | null; photo_url?: string | null };
 export type Encounter = {
   id: string;
   legacy_id: string;
@@ -74,6 +74,7 @@ export type SpouseInfo = {
   birth_date_text?: string | null;
   parish?: string | null;
   sex?: string | null;
+  photo_url?: string | null;
 };
 
 export type CoupleInfo = {

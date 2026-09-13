@@ -7,6 +7,7 @@ import { date } from '@/lib/format';
 import { PersonActions } from '@/components/person-actions';
 import { IdentityRequestForm } from '@/components/identity-request-form';
 import { MyHistoryView } from '@/components/my-history-view';
+import { ManagePhotoModal } from '@/components/manage-photo-modal';
 
 export default async function MeuHistoricoPage() {
   const viewer = await requireViewer();
@@ -115,8 +116,8 @@ export default async function MeuHistoricoPage() {
           {/* Coluna Esquerda: Card de Dados do Participante & Solicitações */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <section className="panel">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '18px' }}>
-                <Avatar name={person.name} large />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '16px' }}>
+                <Avatar name={person.name} src={person.photo_url} large />
                 <div>
                   <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.35rem', color: 'var(--text-main)' }}>
                     {person.name}
@@ -125,6 +126,15 @@ export default async function MeuHistoricoPage() {
                     Vínculo ativo
                   </span>
                 </div>
+              </div>
+
+              <div style={{ marginBottom: '18px', paddingBottom: '14px', borderBottom: '1px solid var(--border-light)' }}>
+                <ManagePhotoModal
+                  personId={person.id}
+                  personName={person.name}
+                  currentPhotoUrl={person.photo_url}
+                  buttonLabel={person.photo_url ? 'Alterar Minha Foto' : 'Adicionar Minha Foto'}
+                />
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.88rem' }}>

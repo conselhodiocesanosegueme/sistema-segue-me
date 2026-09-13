@@ -24,6 +24,7 @@ import { Avatar, Badge } from '@/components/ui';
 import { PersonActions } from '@/components/person-actions';
 import { SpouseCard } from '@/components/spouse-card';
 import { PersonTimeline } from '@/components/person-timeline';
+import { ManagePhotoModal } from '@/components/manage-photo-modal';
 import { isMandateRecord, getMandateStatus, getConditionMeta, normalizeMandateBody } from '@/lib/encounter-config';
 
 interface PersonPageProps {
@@ -229,7 +230,15 @@ export default async function PersonDetailPage({ params }: PersonPageProps) {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-          <Avatar name={person.name} large />
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+            <Avatar name={person.name} src={person.photo_url} large />
+            <ManagePhotoModal
+              personId={person.id}
+              personName={person.name}
+              currentPhotoUrl={person.photo_url}
+              compact
+            />
+          </div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', flexWrap: 'wrap' }}>
               <span className="eyebrow" style={{ margin: 0, color: 'var(--brand-primary)' }}>

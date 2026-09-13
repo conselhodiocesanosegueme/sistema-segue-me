@@ -194,7 +194,7 @@ export default async function PessoasPage({ searchParams }: PessoasPageProps) {
                   <tr key={person.id}>
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <Avatar name={person.name} />
+                        <Avatar name={person.name} src={person.photo_url} />
                         <div>
                           <Link
                             href={`/pessoas/${person.id}`}

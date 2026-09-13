@@ -22,6 +22,18 @@ import { ENCOUNTER_TYPES } from './encounter-config';
 import { mutateDemo } from './demo';
 export function pageNumber(value:string|undefined){const parsed=Number(value||1);return Number.isFinite(parsed)?Math.max(1,Math.min(Math.floor(parsed),100000)):1;}
 const text=(s:string)=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+export function hydratePerson<T extends Partial<Person>>(p: T | null | undefined): T | null {
+  if (!p) return null;
+  let photo_url = p.photo_url || null;
+  if (!photo_url && (p as any).notes) {
+    try {
+      const parsed = typeof (p as any).notes === 'string' ? JSON.parse((p as any).notes) : (p as any).notes;
+      if (parsed?.photo_url) photo_url = parsed.photo_url;
+    } catch {}
+  }
+  return { ...p, photo_url };
+}
+
 export async function getPeople(filters: Record<string, string>): Promise<PageResult<Person>> {
   const page = pageNumber(filters.page), pageSize = 20;
   if (isDemoMode()) {
@@ -81,10 +93,10 @@ export async function getPeople(filters: Record<string, string>): Promise<PageRe
     }).sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
 
     return {
-      items: list.slice((page - 1) * pageSize, page * pageSize).map(p => ({
+      items: list.slice((page - 1) * pageSize, page * pageSize).map(p => hydratePerson({
         ...p,
         participation_count: state.participations.filter(h => h.person_id === p.id).length
-      })),
+      }) as Person),
       total: list.length,
       page,
       pageSize
@@ -104,11 +116,21 @@ export async function getPeople(filters: Record<string, string>): Promise<PageRe
     p_status: filters.status || null
   });
   checkDb(error);
-  return data as PageResult<Person>;
+  const result = data as PageResult<Person>;
+  if (result && Array.isArray(result.items)) {
+    result.items = result.items.map(p => hydratePerson(p) as Person);
+  }
+  return result;
 }
 export async function getPerson(id: string) {
-  if (isDemoMode()) return (await readDemo()).people.find(p => p.id === id) || null;
-  const db = await supabaseServer(); const { data, error } = await db.from('people').select('*').eq('id', id).maybeSingle(); checkDb(error); return data as Person | null;
+  if (isDemoMode()) {
+    const p = (await readDemo()).people.find(p => p.id === id) || null;
+    return hydratePerson(p) as Person | null;
+  }
+  const db = await supabaseServer();
+  const { data, error } = await db.from('people').select('*').eq('id', id).maybeSingle();
+  checkDb(error);
+  return hydratePerson(data) as Person | null;
 }
 export async function getParticipations(personId?: string, encounterId?: string): Promise<Participation[]> {
   if (isDemoMode()) { const state = await readDemo(); return state.participations.filter(p => (!personId || p.person_id === personId) && (!encounterId || p.encounter_id === encounterId)).map(p => hydrateParticipation(p, state)); }
@@ -624,8 +646,19 @@ export async function getMyData(): Promise<MyHistoryData> {
   checkDb(history.error);
   checkDb(requests.error);
   const extrasData = extras?.data as { mandates?: Mandate[]; couple?: CoupleInfo | null } | null;
+
+  let personData = profile.data as Person | null;
+  if (personData?.id) {
+    const { data: pDetails } = await db.from('people').select('photo_url, notes').eq('id', personData.id).maybeSingle();
+    if (pDetails) {
+      personData = hydratePerson({ ...personData, ...pDetails });
+    } else {
+      personData = hydratePerson(personData);
+    }
+  }
+
   return {
-    person: profile.data as Person | null,
+    person: personData,
     participations: (history.data || []) as Participation[],
     requests: (requests.data || []) as ReviewItem[],
     mandates: extrasData?.mandates || [],
