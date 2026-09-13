@@ -72,13 +72,16 @@ export function AuthForm() {
     setLoading(true);
 
     try {
+      const savedEmail = email;
+      const savedPassword = password;
+
       const res = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name,
-          email,
-          password,
+          email: savedEmail,
+          password: savedPassword,
         }),
       });
 
@@ -87,7 +90,27 @@ export function AuthForm() {
         throw new Error(data.error || 'Erro ao solicitar cadastro.');
       }
 
-      setSuccessMsg(data.message || 'Cadastro realizado! Verifique sua caixa de entrada.');
+      // Login automático para levar o seguidor direto à tela de vincular seu histórico
+      try {
+        const signInRes = await fetch('/api/auth/signin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: savedEmail, password: savedPassword }),
+        });
+
+        if (signInRes.ok) {
+          const signInData = await signInRes.json();
+          window.location.href = signInData.targetUrl || '/me';
+          return;
+        }
+      } catch {
+        // fallback caso o login automático falhe
+      }
+
+      setSuccessMsg('Cadastro criado com sucesso! Faça login para informar os dados do seu encontro.');
+      setSignInEmail(savedEmail);
+      setSignInPassword('');
+      setTab('signin');
       setName('');
       setEmail('');
       setPassword('');

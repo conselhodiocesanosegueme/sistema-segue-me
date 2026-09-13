@@ -1,7 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/server';
 import { isDemoMode } from '@/lib/config';
-import { sendWelcomeRegistrationEmail, sendNewRegistrationAlertToDiocese } from '@/lib/email';
 
 export async function POST(request: NextRequest) {
   try {
@@ -95,45 +94,10 @@ export async function POST(request: NextRequest) {
       .select()
       .maybeSingle();
 
-    // 3. Registrar na tabela review_items para validação do Conselho
-    await admin.from('review_items').insert({
-      kind: 'identity',
-      title: `Validação de cadastro: ${name}`,
-      requester_id: userId,
-      proposed_changes: {
-        name,
-        email,
-        phone,
-        parish,
-      },
-      evidence: {
-        context: encounterInfo || 'Solicitação direta de novo participante pelo portal.',
-        registered_at: new Date().toISOString(),
-      },
-      status: 'pending',
-    });
-
-    // 4. Enviar e-mails automáticos via Resend (em background sem travar o retorno)
-    Promise.allSettled([
-      sendWelcomeRegistrationEmail({
-        to: email,
-        name,
-        parishName: parish,
-        yearEncounter: encounterInfo,
-      }),
-      sendNewRegistrationAlertToDiocese({
-        requesterName: name,
-        requesterEmail: email,
-        parishName: parish,
-        details: encounterInfo,
-      }),
-    ]).catch((err) => {
-      console.error('[SIGNUP] Erro ao disparar e-mails via Resend:', err);
-    });
-
     return NextResponse.json({
       success: true,
-      message: 'Cadastro solicitado com sucesso! Enviamos um e-mail de confirmação para você.',
+      message: 'Cadastro realizado com sucesso!',
+      user: { id: userId, email, name },
     });
   } catch (err: any) {
     console.error('[SIGNUP] Erro inesperado:', err);

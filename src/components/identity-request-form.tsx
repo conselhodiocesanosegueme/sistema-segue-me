@@ -16,8 +16,12 @@ import {
 import { SubmitButton, Feedback, post } from '@/components/ui';
 import { DIOCESAN_SECTORS } from '@/lib/sectors';
 
-export function IdentityRequestForm() {
-  const [name, setName] = useState('');
+interface IdentityRequestFormProps {
+  defaultName?: string;
+}
+
+export function IdentityRequestForm({ defaultName = '' }: IdentityRequestFormProps = {}) {
+  const [name, setName] = useState(defaultName);
   const [phone, setPhone] = useState('');
   const [parish, setParish] = useState('');
   const [condition, setCondition] = useState<'Jovem' | 'Casal'>('Jovem');

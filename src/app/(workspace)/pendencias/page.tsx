@@ -143,9 +143,22 @@ export default async function PendenciasPage({ searchParams }: PendenciasPagePro
 
               {/* Evidências e Justificativas anexas */}
               {Object.keys(item.evidence || {}).length > 0 && (
-                <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', borderTop: '1px solid var(--border-light)', paddingTop: '10px' }}>
-                  <strong>Evidência informada: </strong>
-                  {Object.entries(item.evidence).map(([k, v]) => `${fieldName[k] || k}: ${readable(v)}`).join(' · ')}
+                <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', borderTop: '1px solid var(--border-light)', paddingTop: '12px' }}>
+                  {item.evidence?.context ? (
+                    <div>
+                      <strong style={{ display: 'block', fontSize: '0.76rem', textTransform: 'uppercase', color: 'var(--text-subtle)', marginBottom: '4px' }}>
+                        Histórico e dados informados pelo participante:
+                      </strong>
+                      <div style={{ whiteSpace: 'pre-line', background: 'var(--bg-subtle)', padding: '10px 12px', borderRadius: '6px', fontSize: '0.84rem', color: 'var(--text-main)', lineHeight: '1.5' }}>
+                        {String(item.evidence.context)}
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      <strong>Evidência informada: </strong>
+                      {Object.entries(item.evidence).map(([k, v]) => `${fieldName[k] || k}: ${readable(v)}`).join(' · ')}
+                    </div>
+                  )}
                 </div>
               )}
             </div>

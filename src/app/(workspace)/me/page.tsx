@@ -70,7 +70,7 @@ export default async function MeuHistoricoPage() {
                 Para liberar a consulta ao seu histórico de encontros e equipes, informe com carinho os dados de quando você vivenciou ou trabalhou no Segue-me.
               </p>
 
-              <IdentityRequestForm />
+              <IdentityRequestForm defaultName={viewer.name || ''} />
             </div>
           )}
 
