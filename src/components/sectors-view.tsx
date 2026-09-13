@@ -17,7 +17,7 @@ import {
   Eye,
   CheckCircle
 } from '@phosphor-icons/react';
-import { DIOCESAN_SECTORS, type Sector, type SectorParish } from '@/lib/sectors';
+import { DIOCESAN_SECTORS, matchEncounterToParish, type Sector, type SectorParish } from '@/lib/sectors';
 import type { ParishSummaryItem } from '@/lib/data';
 import { PageHeading, number } from '@/components/ui';
 
@@ -41,38 +41,10 @@ export function SectorsView({ parishSummaries }: SectorsViewProps) {
     return map;
   }, [parishSummaries]);
 
-  // Função auxiliar para encontrar métricas da paróquia considerando nome e cidade
+  // Função auxiliar para encontrar métricas da paróquia considerando nome e cidade com validação estrita
   function getParishMetrics(parish: SectorParish): ParishSummaryItem {
-    const pCity = (parish.city || '').toLowerCase();
-    const pName = parish.name.toLowerCase();
-
     const matches = parishSummaries.filter((item) => {
-      const itemParish = item.parish.toLowerCase();
-      const cleanItem = itemParish.replace(/^paróquias?\s+/i, '').toLowerCase();
-      const itemCity = (item.city || '').toLowerCase();
-
-      const nameMatch = parish.dbNames.some((d) => {
-        const dLow = d.toLowerCase();
-        const cleanD = dLow.replace(/^paróquias?\s+/i, '');
-        return itemParish === dLow || cleanItem === cleanD || itemParish.includes(dLow) || dLow.includes(itemParish);
-      }) || cleanItem === pName || cleanItem.includes(pName) || pName.includes(cleanItem);
-
-      if (!nameMatch) return false;
-
-      // Desempate por cidades para paróquias com o mesmo orago/nome
-      if (pCity.includes('são francisco de goiás') && !itemCity.includes('são francisco de goiás')) return false;
-      if (!pCity.includes('são francisco de goiás') && itemCity.includes('são francisco de goiás')) return false;
-
-      if (pCity.includes('nova veneza') && !itemCity.includes('nova veneza')) return false;
-      if (!pCity.includes('nova veneza') && itemCity.includes('nova veneza')) return false;
-
-      if (pCity.includes('abadiânia') && !itemCity.includes('abadiânia')) return false;
-      if (!pCity.includes('abadiânia') && itemCity.includes('abadiânia')) return false;
-
-      if (pCity.includes('ouro verde') && !itemCity.includes('ouro verde')) return false;
-      if (!pCity.includes('ouro verde') && itemCity.includes('ouro verde')) return false;
-
-      return true;
+      return matchEncounterToParish({ parish: item.parish, city: item.city || parish.city }, parish);
     });
 
     if (matches.length > 0) {

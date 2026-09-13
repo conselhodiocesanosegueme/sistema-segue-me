@@ -22,8 +22,8 @@ export const DIOCESAN_SECTORS: Sector[] = [
     region: 'Anápolis Norte / Souzânia / Interlândia',
     description: 'Região norte de Anápolis e distritos de Souzânia e Interlândia',
     parishes: [
-      { name: 'São Sebastião', city: 'Interlândia - GO', dbNames: ['Paróquia São Sebastião', 'São Sebastião'] },
-      { name: "Nossa Senhora D'Abadia", city: 'Souzânia - GO', dbNames: ["Paróquia Nossa Senhora D'Abadia (Souzânia)"] },
+      { name: 'São Sebastião', city: 'Interlândia - GO', dbNames: ['Paróquia São Sebastião', 'São Sebastião', 'Paróquia São Sebastião (Interlândia)'] },
+      { name: "Nossa Senhora D'Abadia", city: 'Souzânia - GO', dbNames: ["Paróquia Nossa Senhora D'Abadia (Souzânia)", "Paróquia Nossa Senhora D'Abadia", "Nossa Senhora D'Abadia"] },
       { name: 'Santíssima Trindade', city: 'Anápolis - GO', dbNames: ['Paróquia Santíssima Trindade', 'Santíssima Trindade'] },
       { name: 'Nossa Senhora de Fátima', city: 'Anápolis - GO', dbNames: ['Paróquia Nossa Senhora de Fátima', 'Nossa Senhora de Fátima'] },
       { name: 'Divino Pai Eterno', city: 'Anápolis - GO', dbNames: ['Paróquia Divino Pai Eterno', 'Divino Pai Eterno'] },
@@ -85,11 +85,11 @@ export const DIOCESAN_SECTORS: Sector[] = [
     region: 'Ouro Verde / Petrolina / Nerópolis / Nova Veneza',
     description: 'Municípios do eixo noroeste e norte da diocese',
     parishes: [
-      { name: 'São Sebastião', city: 'Ouro Verde - GO', dbNames: ['Paróquia São Sebastião (Ouro Verde)'] },
+      { name: 'São Sebastião', city: 'Ouro Verde - GO', dbNames: ['Paróquia São Sebastião (Ouro Verde)', 'Paróquia São Sebastião', 'São Sebastião'] },
       { name: 'Santa Maria Eterna', city: 'Petrolina - GO', dbNames: ['Paróquia Santa Maria Eterna', 'Santa Maria Eterna'] },
-      { name: 'Santo Antônio', city: 'Damolândia - GO', dbNames: ['Paróquia Santo Antônio (Damolândia)'] },
-      { name: "Nossa Senhora D'Abadia", city: 'Santa Rosa - GO', dbNames: ["Paróquia Nossa Senhora D'Abadia (Santa Rosa)"] },
-      { name: 'Nossa Senhora do Carmo', city: 'Nova Veneza - GO', dbNames: ['Paróquia Nossa Senhora do Carmo (Nova Veneza)'] },
+      { name: 'Santo Antônio', city: 'Damolândia - GO', dbNames: ['Paróquia Santo Antônio (Damolândia)', 'Paróquia Santo Antônio', 'Santo Antônio'] },
+      { name: "Nossa Senhora D'Abadia", city: 'Santa Rosa - GO', dbNames: ["Paróquia Nossa Senhora D'Abadia (Santa Rosa)", "Paróquia Nossa Senhora D'Abadia", "Nossa Senhora D'Abadia"] },
+      { name: 'Nossa Senhora do Carmo', city: 'Nova Veneza - GO', dbNames: ['Paróquia Nossa Senhora do Carmo (Nova Veneza)', 'Paróquia Nossa Senhora do Carmo', 'Nossa Senhora do Carmo'] },
       { name: 'São Benedito e Imaculado Coração de Maria', city: 'Nerópolis - GO', dbNames: ['Paróquia São Benedito e Imaculado Coração de Maria', 'Paróquia São Benedito', 'São Benedito'] },
     ],
   },
@@ -103,7 +103,7 @@ export const DIOCESAN_SECTORS: Sector[] = [
       { name: 'Nossa Senhora da Penha', city: 'Jaraguá - GO', dbNames: ['Paróquia Nossa Senhora da Penha', 'Nossa Senhora da Penha', 'Paróquias Nossa Senhora da Penha e São José', 'Paróquias Nossa Senhora da Penha, Santa Edwiges e São José'] },
       { name: 'Santa Edwiges', city: 'Jaraguá - GO', dbNames: ['Paróquia Santa Edwiges', 'Santa Edwiges'] },
       { name: 'São José', city: 'Jaraguá - GO', dbNames: ['Paróquia São José', 'São José'] },
-      { name: 'São Francisco de Assis', city: 'São Francisco de Goiás - GO', dbNames: ['Paróquia São Francisco de Assis (São Francisco de Goiás)'] },
+      { name: 'São Francisco de Assis', city: 'São Francisco de Goiás - GO', dbNames: ['Paróquia São Francisco de Assis (São Francisco de Goiás)', 'Paróquia São Francisco de Assis', 'São Francisco de Assis'] },
       { name: 'Imaculado Coração de Maria e São Judas Tadeu', city: 'Jaranápolis - GO', dbNames: ['Paróquia Imaculado Coração de Maria e São Judas Tadeu', 'Imaculado Coração de Maria e São Judas Tadeu'] },
       { name: 'Senhor Bom Jesus', city: 'Jesúpolis - GO', status: 'SEM EQUIPE DIRIGENTE', dbNames: ['Paróquia Senhor Bom Jesus', 'Senhor Bom Jesus'] },
       { name: 'Santo Antônio', city: 'Vila Propício - GO', dbNames: ['Paróquia Santo Antônio de Pádua', 'Santo Antônio de Pádua'] },
@@ -119,8 +119,8 @@ export const DIOCESAN_SECTORS: Sector[] = [
       { name: 'Nossa Senhora da Penha de França', city: 'Corumbá de Goiás - GO', dbNames: ['Paróquia Nossa Senhora da Penha de França', 'Nossa Senhora da Penha de França'] },
       { name: 'Nossa Senhora do Rosário', city: 'Pirenópolis - GO', dbNames: ['Paróquia Nossa Senhora do Rosário e Paróquia Santa Bárbara', 'Nossa Senhora do Rosário'] },
       { name: 'Santa Bárbara', city: 'Pirenópolis - GO', dbNames: ['Paróquia Santa Bárbara', 'Santa Bárbara'] },
-      { name: 'São Pedro e São Paulo', city: 'Abadiânia - GO', dbNames: ['Paróquia São Pedro e São Paulo (Abadiânia)'] },
-      { name: 'Santo Antônio', city: 'Cocalzinho - GO', dbNames: ['Paróquia Santo Antônio (Cocalzinho)'] },
+      { name: 'São Pedro e São Paulo', city: 'Abadiânia - GO', dbNames: ['Paróquia São Pedro e São Paulo (Abadiânia)', 'Paróquia São Pedro e São Paulo', 'São Pedro e São Paulo'] },
+      { name: 'Santo Antônio', city: 'Cocalzinho - GO', dbNames: ['Paróquia Santo Antônio (Cocalzinho)', 'Paróquia Santo Antônio', 'Santo Antônio'] },
       { name: 'Imaculado Coração de Maria', city: 'Alexânia - GO', dbNames: ['Paróquia Imaculado Coração de Maria', 'Imaculado Coração de Maria'] },
       { name: 'Nossa Senhora do Livramento', city: 'Girassol - GO', dbNames: ['Paróquia Nossa Senhora do Livramento', 'Nossa Senhora do Livramento'] },
     ],
@@ -128,46 +128,160 @@ export const DIOCESAN_SECTORS: Sector[] = [
 ];
 
 /**
+ * Normaliza nome de cidade para comparações seguras sem acentos e sufixos
+ */
+export function normalizeCity(c: string = ''): string {
+  return c
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\/go/g, '')
+    .replace(/- go/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Normaliza nome de paróquia/orago para comparações seguras
+ */
+export function normalizeParishName(n: string = ''): string {
+  return n
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/^paróquias?\s+/i, '')
+    .replace(/^santuario\s+(diocesano\s+)?/i, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Verifica se a cidade do encontro e da paróquia são compatíveis
+ */
+export function areCitiesCompatible(encCity?: string, parishCity?: string): boolean {
+  if (!encCity || !parishCity) return true;
+  const e = normalizeCity(encCity);
+  const p = normalizeCity(parishCity);
+  if (!e || !p) return true;
+  if (e === p) return true;
+  if (e.includes(p) || p.includes(e)) return true;
+  if (e.includes('petrolina') && p.includes('petrolina')) return true;
+  if (e.includes('corumba') && p.includes('corumba')) return true;
+  if (e.includes('sao francisco') && p.includes('sao francisco')) return true;
+  if (e.includes('campo limpo') && p.includes('campo limpo')) return true;
+  return false;
+}
+
+/**
+ * Faz a verificação estrita se um encontro pertence a uma paróquia diocesana,
+ * prevenindo categoricamente colisões entre paróquias homônimas ou sobrepostas de cidades distintas
+ * (ex: São José de Jaraguá vs São José Operário de Anápolis, São Francisco de Assis Anápolis vs São Francisco de Goiás).
+ */
+export function matchEncounterToParish(
+  encounter: { parish?: string; city?: string },
+  parish: SectorParish
+): boolean {
+  const eParishRaw = (encounter.parish || '').trim();
+  const eCityRaw = (encounter.city || '').trim();
+  if (!eParishRaw) return false;
+
+  // 1. Barreira estrita de cidade: Se informada no encontro e for incompatível com a paróquia, REJEITA IMEDIATAMENTE
+  if (eCityRaw && parish.city && !areCitiesCompatible(eCityRaw, parish.city)) {
+    return false;
+  }
+
+  const eParishLower = eParishRaw.toLowerCase();
+  const eParishNorm = normalizeParishName(eParishRaw);
+  const pNameNorm = normalizeParishName(parish.name);
+
+  // 2. Regras anti-colisão expressas para oragos homônimos ou sobrepostos
+  // São José Operário (Anápolis) vs São José (Jaraguá)
+  if (pNameNorm === 'sao jose operario' && !eParishNorm.includes('operario')) {
+    return false;
+  }
+  if (pNameNorm === 'sao jose' && eParishNorm.includes('operario')) {
+    return false;
+  }
+
+  // Santa Edwiges vs Santa Clara
+  if (pNameNorm === 'santa edwiges' && !eParishNorm.includes('edwiges')) {
+    return false;
+  }
+  if (pNameNorm === 'santa clara' && !eParishNorm.includes('clara')) {
+    return false;
+  }
+
+  // Penha de França (Corumbá) vs Penha (Jaraguá)
+  if (pNameNorm === 'nossa senhora da penha' && eParishNorm.includes('franca')) {
+    return false;
+  }
+  if (pNameNorm === 'nossa senhora da penha de franca' && !eParishNorm.includes('franca')) {
+    return false;
+  }
+
+  // 3. Correspondência exata na lista de nomes do banco de dados (dbNames)
+  const dbMatch = parish.dbNames.some((db) => {
+    return eParishLower === db.toLowerCase() || eParishNorm === normalizeParishName(db);
+  });
+  if (dbMatch) return true;
+
+  // 4. Correspondência exata no nome normalizado
+  if (eParishNorm === pNameNorm) return true;
+
+  // 5. Edições conjuntas de Jaraguá (Penha com São José e/ou Santa Edwiges)
+  if (parish.city.toLowerCase().includes('jaraguá') && eCityRaw.toLowerCase().includes('jaraguá')) {
+    if (
+      pNameNorm === 'nossa senhora da penha' &&
+      (eParishNorm.includes('penha e sao jose') || eParishNorm.includes('penha, santa edwiges e sao jose'))
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
  * Identifica o setor de uma paróquia a partir do nome ou cidade
  */
 export function getSectorForParish(parishName: string, city?: string): Sector | undefined {
   if (!parishName) return undefined;
-  const p = parishName.toLowerCase().trim();
-  const c = (city || '').toLowerCase().trim();
 
-  // 1. Desempate prioritário por município/cidade quando informada
-  if (c.includes('ouro verde') || c.includes('petrolina') || c.includes('damolândia') || c.includes('nerópolis') || c.includes('nova veneza') || c.includes('santa rosa')) {
+  // 1. Busca estrita usando matchEncounterToParish
+  for (const sector of DIOCESAN_SECTORS) {
+    for (const parish of sector.parishes) {
+      if (matchEncounterToParish({ parish: parishName, city }, parish)) {
+        return sector;
+      }
+    }
+  }
+
+  // 2. Desempate prioritário por município/cidade quando informada
+  const c = normalizeCity(city || '');
+  if (c.includes('ouro verde') || c.includes('petrolina') || c.includes('damolandia') || c.includes('neropolis') || c.includes('nova veneza') || c.includes('santa rosa')) {
     return DIOCESAN_SECTORS.find(s => s.id === 'setor-4');
   }
-  if (c.includes('jaraguá') || c.includes('são francisco de goiás') || c.includes('jesúpolis') || c.includes('propício') || c.includes('jaranápolis')) {
+  if (c.includes('jaragua') || c.includes('sao francisco de goias') || c.includes('jesupolis') || c.includes('propicio') || c.includes('jaranapolis')) {
     return DIOCESAN_SECTORS.find(s => s.id === 'setor-5');
   }
-  if (c.includes('corumbá') || c.includes('pirenópolis') || c.includes('abadiânia') || c.includes('cocalzinho') || c.includes('alexânia') || c.includes('girassol')) {
+  if (c.includes('corumba') || c.includes('pirenopolis') || c.includes('abadiania') || c.includes('cocalzinho') || c.includes('alexania') || c.includes('girassol')) {
     return DIOCESAN_SECTORS.find(s => s.id === 'setor-6');
   }
-  if (c.includes('interlândia') || c.includes('souzânia')) {
+  if (c.includes('interlandia') || c.includes('souzania')) {
     return DIOCESAN_SECTORS.find(s => s.id === 'setor-1');
   }
   if (c.includes('campo limpo')) {
     return DIOCESAN_SECTORS.find(s => s.id === 'setor-2');
   }
 
-  // 2. Busca por nomes cadastrados no banco
-  for (const sector of DIOCESAN_SECTORS) {
-    for (const item of sector.parishes) {
-      if (item.dbNames.some(db => p === db.toLowerCase() || p.includes(db.toLowerCase()))) {
-        return sector;
-      }
-    }
-  }
-
   // 3. Busca heurística por palavras-chave do orago
-  if (p.includes('penha de frança') || p.includes('rosário') || p.includes('livramento')) return DIOCESAN_SECTORS[5];
-  if (p.includes('penha') || p.includes('edwiges') || (p.includes('são josé') && !p.includes('operário'))) return DIOCESAN_SECTORS[4];
+  const p = normalizeParishName(parishName);
+  if (p.includes('penha de franca') || p.includes('rosario') || p.includes('livramento')) return DIOCESAN_SECTORS[5];
+  if (p.includes('penha') || p.includes('edwiges') || (p.includes('sao jose') && !p.includes('operario'))) return DIOCESAN_SECTORS[4];
   if (p.includes('benedito') || p.includes('maria eterna')) return DIOCESAN_SECTORS[3];
-  if (p.includes('operário') || p.includes('aparecida') || p.includes('joaquim') || p.includes('sagrado coração') || p.includes('santuário') || p.includes('teresinha') || p.includes('terezinha')) return DIOCESAN_SECTORS[1];
-  if (p.includes('lourdes') || p.includes('mateus') || p.includes('catedral') || p.includes('francisco de assis') || p.includes('graças') || p.includes('carmo')) return DIOCESAN_SECTORS[2];
-  if (p.includes('trindade') || p.includes('fátima') || p.includes('divino') || p.includes('cristóvão') || p.includes('clara')) return DIOCESAN_SECTORS[0];
+  if (p.includes('operario') || p.includes('aparecida') || p.includes('joaquim') || p.includes('sagrado coracao') || p.includes('santuario') || p.includes('teresinha') || p.includes('terezinha')) return DIOCESAN_SECTORS[1];
+  if (p.includes('lourdes') || p.includes('mateus') || p.includes('catedral') || p.includes('francisco de assis') || p.includes('gracas') || p.includes('carmo')) return DIOCESAN_SECTORS[2];
+  if (p.includes('trindade') || p.includes('fatima') || p.includes('divino') || p.includes('cristovao') || p.includes('clara')) return DIOCESAN_SECTORS[0];
 
   return undefined;
 }

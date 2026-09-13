@@ -19,7 +19,7 @@ import {
   Tag
 } from '@phosphor-icons/react';
 import type { Encounter, Viewer } from '@/lib/types';
-import { DIOCESAN_SECTORS, getSectorForParish, type Sector, type SectorParish } from '@/lib/sectors';
+import { DIOCESAN_SECTORS, getSectorForParish, matchEncounterToParish, type Sector, type SectorParish } from '@/lib/sectors';
 import { number } from '@/lib/format';
 
 interface EncountersHierarchyViewProps {
@@ -82,27 +82,8 @@ export function EncountersHierarchyView({ encounters, viewer, headerActions }: E
       let sectorTotalEncounters = 0;
 
       const parishesData = sector.parishes.map((parish) => {
-        // Encontra os encontros correspondentes a esta paróquia
-        const matchedEncounters = encounters.filter((e) => {
-          const eParish = (e.parish || '').toLowerCase().trim();
-          const eCity = (e.city || '').toLowerCase().trim();
-
-          const matchesDbNames = parish.dbNames.some((db) => {
-            const dbLower = db.toLowerCase();
-            return eParish === dbLower || eParish.includes(dbLower) || dbLower.includes(eParish);
-          });
-
-          // Se tiver nome direto compatível
-          if (matchesDbNames) return true;
-
-          // Se a paróquia tiver o mesmo nome limpo e cidade
-          const pNameLower = parish.name.toLowerCase();
-          if (eParish.includes(pNameLower) && (!eCity || parish.city.toLowerCase().includes(eCity))) {
-            return true;
-          }
-
-          return false;
-        });
+        // Encontra os encontros correspondentes a esta paróquia com validação estrita de cidade e orago
+        const matchedEncounters = encounters.filter((e) => matchEncounterToParish(e, parish));
 
         // Aplica filtro de tipo/etapa
         let filteredEncounters = matchedEncounters;
