@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { CheckCircle, EnvelopeSimple, Lock, User, ShieldCheck } from '@phosphor-icons/react';
+import { CheckCircle, EnvelopeSimple, Lock, User, ShieldCheck, Eye, EyeSlash } from '@phosphor-icons/react';
 import { createClient } from '@/lib/supabase/client';
 
 export function AuthForm() {
@@ -14,6 +14,7 @@ export function AuthForm() {
   // Sign in state
   const [signInEmail, setSignInEmail] = useState('');
   const [signInPassword, setSignInPassword] = useState('');
+  const [showSignInPassword, setShowSignInPassword] = useState(false);
 
   // Sign up state
   const [name, setName] = useState('');
@@ -271,15 +272,35 @@ export function AuthForm() {
                 Esqueceu a senha?
               </Link>
             </div>
-            <input
-              type="password"
-              value={signInPassword}
-              onChange={(e) => setSignInPassword(e.target.value)}
-              placeholder="••••••••"
-              required
-              className="filter-input"
-              style={{ width: '100%' }}
-            />
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <input
+                type={showSignInPassword ? 'text' : 'password'}
+                value={signInPassword}
+                onChange={(e) => setSignInPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+                className="filter-input"
+                style={{ width: '100%', paddingRight: '40px' }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowSignInPassword(!showSignInPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '10px',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: 'var(--text-subtle)',
+                  padding: '4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                }}
+                aria-label={showSignInPassword ? 'Ocultar senha' : 'Exibir senha'}
+              >
+                {showSignInPassword ? <EyeSlash size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
 
           <button

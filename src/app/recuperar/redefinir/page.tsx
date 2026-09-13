@@ -1,14 +1,14 @@
 'use client';
 
 import { useState, FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, CheckCircle, CircleNotch, Lock, ShieldCheck, WarningCircle } from '@phosphor-icons/react';
+import { ArrowLeft, CheckCircle, CircleNotch, Lock, ShieldCheck, WarningCircle, Eye, EyeSlash } from '@phosphor-icons/react';
 
 export default function RedefinirSenhaPage() {
-  const router = useRouter();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -43,8 +43,8 @@ export default function RedefinirSenhaPage() {
 
       setIsSuccess(true);
       setTimeout(() => {
-        router.push('/entrar');
-      }, 2500);
+        window.location.href = '/';
+      }, 2000);
     } catch (err: any) {
       setError(err.message || 'Erro ao redefinir a senha. Tente solicitar um novo link.');
     } finally {
@@ -92,16 +92,16 @@ export default function RedefinirSenhaPage() {
             </h3>
 
             <p style={{ fontSize: '0.88rem', color: '#4b5563', lineHeight: 1.5, marginBottom: '24px' }}>
-              Você já pode acessar o sistema com as suas novas credenciais. Redirecionando para a página de login…
+              Sua nova senha já está ativa. Entrando diretamente no sistema…
             </p>
 
-            <Link
-              href="/entrar"
+            <a
+              href="/"
               className="button button-primary"
               style={{ width: '100%', textAlign: 'center', textDecoration: 'none', display: 'inline-block' }}
             >
-              Ir para o Login Agora
-            </Link>
+              Acessar o Sistema Agora
+            </a>
           </div>
         ) : (
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -131,15 +131,33 @@ export default function RedefinirSenhaPage() {
               <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                 <Lock size={18} style={{ position: 'absolute', left: '12px', color: 'var(--text-subtle)' }} />
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Mínimo de 6 caracteres"
                   required
                   disabled={isSubmitting}
                   className="filter-input"
-                  style={{ width: '100%', paddingLeft: '38px' }}
+                  style={{ width: '100%', paddingLeft: '38px', paddingRight: '40px' }}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: 'absolute',
+                    right: '10px',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: 'var(--text-subtle)',
+                    padding: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                  }}
+                  aria-label={showPassword ? 'Ocultar senha' : 'Exibir senha'}
+                >
+                  {showPassword ? <EyeSlash size={18} /> : <Eye size={18} />}
+                </button>
               </div>
             </div>
 
@@ -150,15 +168,33 @@ export default function RedefinirSenhaPage() {
               <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                 <Lock size={18} style={{ position: 'absolute', left: '12px', color: 'var(--text-subtle)' }} />
                 <input
-                  type="password"
+                  type={showConfirmPassword ? 'text' : 'password'}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Repita a nova senha"
                   required
                   disabled={isSubmitting}
                   className="filter-input"
-                  style={{ width: '100%', paddingLeft: '38px' }}
+                  style={{ width: '100%', paddingLeft: '38px', paddingRight: '40px' }}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  style={{
+                    position: 'absolute',
+                    right: '10px',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: 'var(--text-subtle)',
+                    padding: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                  }}
+                  aria-label={showConfirmPassword ? 'Ocultar senha' : 'Exibir senha'}
+                >
+                  {showConfirmPassword ? <EyeSlash size={18} /> : <Eye size={18} />}
+                </button>
               </div>
             </div>
 
