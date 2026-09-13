@@ -43,10 +43,20 @@ export function PersonTimeline({ participations, isStaff }: PersonTimelineProps)
   }, [realParticipations]);
 
   const filteredItems = useMemo(() => {
-    if (filter === 'vivenciou') return realParticipations.filter(p => p.kind === 'Vivenciou');
-    if (filter === 'trabalhou') return realParticipations.filter(p => p.kind === 'Trabalhou');
-    if (filter === 'palestrou') return realParticipations.filter(p => p.kind === 'Palestrou');
-    return realParticipations;
+    let items = realParticipations;
+    if (filter === 'vivenciou') items = realParticipations.filter(p => p.kind === 'Vivenciou');
+    else if (filter === 'trabalhou') items = realParticipations.filter(p => p.kind === 'Trabalhou');
+    else if (filter === 'palestrou') items = realParticipations.filter(p => p.kind === 'Palestrou');
+
+    return [...items].sort((a, b) => {
+      const yA = a.encounter?.year || 0;
+      const yB = b.encounter?.year || 0;
+      if (yB !== yA) return yB - yA; // Mais recente primeiro (2026 -> 2011)
+
+      const edA = typeof a.encounter?.edition === 'number' ? a.encounter.edition : Number(a.encounter?.edition || 0);
+      const edB = typeof b.encounter?.edition === 'number' ? b.encounter.edition : Number(b.encounter?.edition || 0);
+      return edB - edA;
+    });
   }, [realParticipations, filter]);
 
   return (

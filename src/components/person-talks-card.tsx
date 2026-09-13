@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { MicrophoneStage, Plus, CalendarBlank, Church, Sparkle } from '@phosphor-icons/react';
 import { ManageTalkModal } from './manage-talk-modal';
 
@@ -34,6 +34,15 @@ interface PersonTalksCardProps {
 
 export function PersonTalksCard({ person, talks = [], isStaff }: PersonTalksCardProps) {
   const [modalOpen, setModalOpen] = useState(false);
+
+  // Ordena sempre do mais recente para o mais antigo (2026 -> 2011)
+  const sortedTalks = useMemo(() => {
+    return [...talks].sort((a, b) => {
+      const yA = a.encounter?.year || 0;
+      const yB = b.encounter?.year || 0;
+      return yB - yA;
+    });
+  }, [talks]);
 
   return (
     <section className="panel" style={{ padding: '20px' }}>
@@ -84,7 +93,7 @@ export function PersonTalksCard({ person, talks = [], isStaff }: PersonTalksCard
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          {talks.map((t) => {
+          {sortedTalks.map((t) => {
             const themeTitle = (t.role || t.title || 'Palestra').replace(/^palestrante\s*[-—–:]\s*/i, '').trim();
             const parishName = t.encounter?.parish || t.location || person.parish;
             const yearNum = t.encounter?.year;

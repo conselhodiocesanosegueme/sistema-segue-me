@@ -134,7 +134,20 @@ export async function getPerson(id: string) {
   return hydratePerson(data) as Person | null;
 }
 export async function getParticipations(personId?: string, encounterId?: string): Promise<Participation[]> {
-  if (isDemoMode()) { const state = await readDemo(); return state.participations.filter(p => (!personId || p.person_id === personId) && (!encounterId || p.encounter_id === encounterId)).map(p => hydrateParticipation(p, state)); }
+  if (isDemoMode()) {
+    const state = await readDemo();
+    return state.participations
+      .filter(p => (!personId || p.person_id === personId) && (!encounterId || p.encounter_id === encounterId))
+      .map(p => hydrateParticipation(p, state))
+      .sort((a, b) => {
+        const yA = a.encounter?.year || 0;
+        const yB = b.encounter?.year || 0;
+        if (yB !== yA) return yB - yA;
+        const edA = typeof a.encounter?.edition === 'number' ? a.encounter.edition : Number(a.encounter?.edition || 0);
+        const edB = typeof b.encounter?.edition === 'number' ? b.encounter.edition : Number(b.encounter?.edition || 0);
+        return edB - edA;
+      });
+  }
   const db = await supabaseServer();
   let query = db.from('participations').select('*,encounter:encounters(*),person:people(*)').order('created_at', { ascending: false });
   if (personId) query = query.eq('person_id', personId);
@@ -142,7 +155,15 @@ export async function getParticipations(personId?: string, encounterId?: string)
   else query = query.limit(500);
   const { data, error } = await query;
   checkDb(error);
-  return data as unknown as Participation[];
+  const items = ((data || []) as unknown as Participation[]);
+  return items.sort((a, b) => {
+    const yA = a.encounter?.year || 0;
+    const yB = b.encounter?.year || 0;
+    if (yB !== yA) return yB - yA;
+    const edA = typeof a.encounter?.edition === 'number' ? a.encounter.edition : Number(a.encounter?.edition || 0);
+    const edB = typeof b.encounter?.edition === 'number' ? b.encounter.edition : Number(b.encounter?.edition || 0);
+    return edB - edA;
+  });
 }
 export async function getEncounters(filters: Record<string, string> = {}): Promise<PageResult<Encounter>> {
   const page = pageNumber(filters.page), pageSize = 20;
@@ -764,6 +785,13 @@ export async function getPersonExtras(id: string) {
     });
   }
 
+  // Ordena sempre do mais recente para o mais antigo (2026 -> 2011)
+  unifiedTalks.sort((a, b) => {
+    const yA = a.encounter?.year || a.year || 0;
+    const yB = b.encounter?.year || b.year || 0;
+    return yB - yA;
+  });
+
   return { couples, talks: unifiedTalks, mandates: mandatesRes.data || [] };
 }
 
@@ -941,6 +969,11 @@ export async function getSpeakersCatalog(filters: {
       });
     }
 
+    for (const item of speakerMap.values()) {
+      item.years.sort((a, b) => b - a);
+      item.talks.sort((a, b) => (b.encounter_year || 0) - (a.encounter_year || 0));
+    }
+
     let list = Array.from(speakerMap.values());
     if (filters.search?.trim()) {
       const q = filters.search.toLowerCase().trim();
@@ -1055,6 +1088,11 @@ export async function getSpeakersCatalog(filters: {
       notes: row.notes,
       kind: row.kind,
     });
+  }
+
+  for (const item of speakerMap.values()) {
+    item.years.sort((a, b) => b - a);
+    item.talks.sort((a, b) => (b.encounter_year || 0) - (a.encounter_year || 0));
   }
 
   let list = Array.from(speakerMap.values());

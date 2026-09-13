@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import {
   X,
@@ -87,9 +87,27 @@ export function SpeakerDetailModal({ speaker, isOpen, onClose, onAddTalk }: Spea
     };
   }, [isOpen, speaker]);
 
+  const { person, condition, totalTalks, themes, years, parishes, talks } = speaker || {
+    person: { id: '', name: '', legacy_id: null, phone: null, email: null, parish: null },
+    condition: 'Jovem',
+    totalTalks: 0,
+    themes: [],
+    years: [],
+    parishes: [],
+    talks: [],
+  };
+
+  // Ordena sempre do mais recente para o mais antigo (2026 -> 2011)
+  const sortedTalks = useMemo(() => {
+    return [...talks].sort((a, b) => (b.encounter_year || 0) - (a.encounter_year || 0));
+  }, [talks]);
+
+  const sortedYears = useMemo(() => {
+    return [...years].sort((a, b) => b - a);
+  }, [years]);
+
   if (!isOpen || !speaker) return null;
 
-  const { person, condition, totalTalks, themes, years, parishes, talks } = speaker;
   const isCasal = condition === 'Casal';
 
   // Formata telefone para WhatsApp (apenas dígitos)
@@ -313,7 +331,7 @@ export function SpeakerDetailModal({ speaker, isOpen, onClose, onAddTalk }: Spea
                 Anos em Atuação
               </span>
               <strong style={{ fontSize: '0.90rem', color: 'var(--text-main)', fontWeight: 700, display: 'block', marginTop: '4px' }}>
-                {years.length > 0 ? `${years[years.length - 1]} a ${years[0]}` : 'N/A'}
+                {sortedYears.length > 0 ? `${sortedYears[0]} a ${sortedYears[sortedYears.length - 1]}` : 'N/A'}
               </strong>
             </div>
 
@@ -402,7 +420,7 @@ export function SpeakerDetailModal({ speaker, isOpen, onClose, onAddTalk }: Spea
                 background: '#fafaf9',
               }}
             >
-              {talks.map((talk) => (
+              {sortedTalks.map((talk) => (
                 <div
                   key={talk.id}
                   style={{

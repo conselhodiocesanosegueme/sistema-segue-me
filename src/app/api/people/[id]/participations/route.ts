@@ -39,6 +39,9 @@ export async function GET(request: NextRequest, context: RouteContext) {
         parish: p.encounter?.parish,
       }));
 
+    vivenciou.sort((a, b) => (b.year || 0) - (a.year || 0));
+    worked.sort((a, b) => (b.year || 0) - (a.year || 0));
+
     return NextResponse.json({
       success: true,
       vivenciou,
