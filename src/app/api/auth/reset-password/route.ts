@@ -23,7 +23,11 @@ export async function POST(request: NextRequest) {
     }
 
     const admin = supabaseAdmin();
-    const origin = appOrigin() || new URL(request.url).origin;
+    const host = request.headers.get('x-forwarded-host') || request.headers.get('host');
+    const proto = request.headers.get('x-forwarded-proto') || 'https';
+    const origin = (host && !host.includes('localhost'))
+      ? `${proto}://${host}`
+      : appOrigin();
 
     // Gera o token de recuperação de senha pelo Supabase Auth Admin
     const { data: linkData, error: linkError } = await admin.auth.admin.generateLink({
