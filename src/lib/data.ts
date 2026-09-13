@@ -2,7 +2,8 @@ import 'server-only';
 import { cache } from 'react';
 import { isDemoMode } from './config';
 import { readDemo, hydrateParticipation, hydrateReview, demoPersonId } from './demo';
-import { supabaseServer } from './supabase/server';
+import { supabaseServer, supabaseAdmin } from './supabase/server';
+import { getViewer } from './auth';
 import { checkDb } from './http';
 import { isMandateRecord, normalizeMandateBody } from './encounter-config';
 import type {
@@ -636,10 +637,17 @@ export async function getMyData(): Promise<MyHistoryData> {
   }
 
   const db = await supabaseServer();
+  const viewer = await getViewer();
+  const admin = supabaseAdmin();
+
+  const requestsPromise = viewer?.id
+    ? admin.from('review_items').select('id,kind,person_id,title,proposed_changes,status,resolution,created_at,version').eq('requester_id', viewer.id).order('created_at', { ascending: false }).limit(50)
+    : db.from('review_items').select('id,kind,person_id,title,proposed_changes,status,resolution,created_at,version').order('created_at', { ascending: false }).limit(50);
+
   const [profile, history, requests, extras] = await Promise.all([
     db.rpc('get_my_profile'),
     db.rpc('get_my_history'),
-    db.from('review_items').select('id,kind,person_id,title,proposed_changes,status,resolution,created_at,version').order('created_at', { ascending: false }).limit(50),
+    requestsPromise,
     db.rpc('get_my_extras'),
   ]);
   checkDb(profile.error);
