@@ -36,8 +36,8 @@ export const DIOCESAN_SECTORS: Sector[] = [
     id: 'setor-2',
     roman: 'II',
     name: 'Setor II',
-    region: 'Anápolis Leste / Recanto do Sol / Jaiara',
-    description: 'Região leste e bairros operários da Diocese em Anápolis',
+    region: 'Anápolis Leste / Recanto do Sol / Jaiara / Campo Limpo',
+    description: 'Região leste, Jaiara, bairros operários da Diocese e Campo Limpo de Goiás',
     parishes: [
       { name: 'São José Operário', city: 'Anápolis - GO', dbNames: ['Paróquia São José Operário', 'São José Operário'] },
       { name: 'Nossa Senhora Aparecida', city: 'Anápolis - GO', dbNames: ['Paróquia Nossa Senhora Aparecida', 'Nossa Senhora Aparecida', 'Paróquia Nossa Senhora Aparecida e São Pedro e São Paulo'] },
@@ -45,7 +45,19 @@ export const DIOCESAN_SECTORS: Sector[] = [
       { name: 'Santuário Santo Antônio', city: 'Anápolis - GO', dbNames: ['Santuário Diocesano Santo Antônio', 'Santuário Santo Antônio'] },
       { name: 'São Joaquim', city: 'Anápolis - GO', dbNames: ['Paróquia São Joaquim', 'São Joaquim'] },
       { name: 'Sagrado Coração de Jesus', city: 'Anápolis - GO', dbNames: ['Paróquia Sagrado Coração de Jesus', 'Sagrado Coração de Jesus'] },
-      { name: 'Santa Terezinha do Menino Jesus', city: 'Anápolis - GO', status: 'IMPLANTAÇÃO', dbNames: ['Paróquia Santa Terezinha do Menino Jesus'] },
+      {
+        name: 'Santa Teresinha do Menino Jesus',
+        city: 'Campo Limpo de Goiás - GO',
+        status: 'IMPLANTAÇÃO',
+        dbNames: [
+          'Paróquia Santa Teresinha do Menino Jesus',
+          'Santa Teresinha do Menino Jesus',
+          'Paróquia Santa Terezinha do Menino Jesus',
+          'Santa Terezinha do Menino Jesus',
+          'Santa Teresinha',
+          'Santa Terezinha',
+        ],
+      },
     ],
   },
   {
@@ -136,6 +148,9 @@ export function getSectorForParish(parishName: string, city?: string): Sector | 
   if (c.includes('interlândia') || c.includes('souzânia')) {
     return DIOCESAN_SECTORS.find(s => s.id === 'setor-1');
   }
+  if (c.includes('campo limpo')) {
+    return DIOCESAN_SECTORS.find(s => s.id === 'setor-2');
+  }
 
   // 2. Busca por nomes cadastrados no banco
   for (const sector of DIOCESAN_SECTORS) {
@@ -150,7 +165,7 @@ export function getSectorForParish(parishName: string, city?: string): Sector | 
   if (p.includes('penha de frança') || p.includes('rosário') || p.includes('livramento')) return DIOCESAN_SECTORS[5];
   if (p.includes('penha') || p.includes('edwiges') || (p.includes('são josé') && !p.includes('operário'))) return DIOCESAN_SECTORS[4];
   if (p.includes('benedito') || p.includes('maria eterna')) return DIOCESAN_SECTORS[3];
-  if (p.includes('operário') || p.includes('aparecida') || p.includes('joaquim') || p.includes('sagrado coração') || p.includes('santuário')) return DIOCESAN_SECTORS[1];
+  if (p.includes('operário') || p.includes('aparecida') || p.includes('joaquim') || p.includes('sagrado coração') || p.includes('santuário') || p.includes('teresinha') || p.includes('terezinha')) return DIOCESAN_SECTORS[1];
   if (p.includes('lourdes') || p.includes('mateus') || p.includes('catedral') || p.includes('francisco de assis') || p.includes('graças') || p.includes('carmo')) return DIOCESAN_SECTORS[2];
   if (p.includes('trindade') || p.includes('fátima') || p.includes('divino') || p.includes('cristóvão') || p.includes('clara')) return DIOCESAN_SECTORS[0];
 

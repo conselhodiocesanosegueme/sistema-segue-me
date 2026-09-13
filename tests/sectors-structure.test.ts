@@ -72,5 +72,17 @@ describe('Diocesan Sectors Structure (Edital 2026)', () => {
       p.city.toLowerCase().includes('nerópolis')
     );
     expect(neropolisParishes.length).toBeGreaterThan(0);
+
+    // Busca por cidade Campo Limpo de Goiás
+    const campoLimpoParishes = DIOCESAN_SECTORS.flatMap((s) => s.parishes).filter((p) =>
+      p.city.toLowerCase().includes('campo limpo')
+    );
+    expect(campoLimpoParishes.length).toBe(1);
+    expect(campoLimpoParishes[0].name).toBe('Santa Teresinha do Menino Jesus');
+    expect(campoLimpoParishes[0].city).toBe('Campo Limpo de Goiás - GO');
+
+    // Validação de setor para Santa Teresinha / Campo Limpo
+    const sSantaTeresinha = getSectorForParish('Paróquia Santa Teresinha do Menino Jesus', 'Campo Limpo de Goiás - GO');
+    expect(sSantaTeresinha?.name).toBe('Setor II');
   });
 });
