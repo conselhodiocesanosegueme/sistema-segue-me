@@ -22,6 +22,7 @@ import type { SpeakerCatalogItem } from '@/lib/data';
 import type { Viewer } from '@/lib/types';
 import { PageHeading, Avatar, number } from './ui';
 import { ManageTalkModal } from './manage-talk-modal';
+import { SpeakerDetailModal } from './speaker-detail-modal';
 import { DIOCESAN_SECTORS } from '@/lib/sectors';
 
 interface SpeakersViewProps {
@@ -38,6 +39,9 @@ export function SpeakersView({ initialSpeakers, viewer }: SpeakersViewProps) {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalPerson, setModalPerson] = useState<{ id: string; name: string; legacy_id?: string | null; parish?: string | null } | null>(null);
+
+  const [detailSpeaker, setDetailSpeaker] = useState<SpeakerCatalogItem | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   // Lista única de temas para o filtro
   const allThemes = useMemo(() => {
@@ -312,75 +316,88 @@ export function SpeakersView({ initialSpeakers, viewer }: SpeakersViewProps) {
           </button>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '18px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
           {filteredSpeakers.map((speaker) => {
             const isCasal = speaker.condition === 'Casal';
             const person = speaker.person;
+            const phoneDigits = (person.phone || '').replace(/\D/g, '');
+            const whatsappUrl = phoneDigits.length >= 10 ? `https://wa.me/55${phoneDigits}` : null;
 
             return (
               <div
                 key={person.id}
                 className="panel"
+                onClick={() => {
+                  setDetailSpeaker(speaker);
+                  setIsDetailModalOpen(true);
+                }}
                 style={{
-                  borderLeft: isCasal ? '3.5px solid #d97706' : '3.5px solid #2563eb',
+                  borderLeft: isCasal ? '4px solid #d97706' : '4px solid #2563eb',
                   background: '#ffffff',
-                  padding: '18px',
+                  padding: '16px 18px',
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'space-between',
                   boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                  cursor: 'pointer',
                   transition: 'all 0.18s ease-in-out',
+                  minHeight: '142px',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 6px 14px rgba(0,0,0,0.07)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'none';
+                  e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.04)';
                 }}
               >
                 <div>
-                  {/* Topo do Card */}
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '14px' }}>
+                  {/* Topo do Card: Avatar, Nome e Tag */}
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '10px' }}>
                     <Avatar name={person.name} src={person.photo_url} />
 
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
-                        <Link
-                          href={`/pessoas/${person.id}`}
+                        <span
                           style={{
                             fontWeight: 700,
-                            fontSize: '1rem',
+                            fontSize: '0.96rem',
                             color: 'var(--text-main)',
-                            textDecoration: 'none',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            display: 'block',
                           }}
                         >
-                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {person.name}
-                          </span>
-                          <ArrowRight size={13} color="var(--brand-primary)" />
-                        </Link>
+                          {person.name}
+                        </span>
 
                         <span
                           style={{
-                            fontSize: '0.68rem',
+                            fontSize: '0.66rem',
                             fontWeight: 700,
-                            padding: '2px 8px',
+                            padding: '2px 7px',
                             borderRadius: '999px',
                             background: isCasal ? '#fef3c7' : '#eff6ff',
                             color: isCasal ? '#92400e' : '#1d4ed8',
                             border: isCasal ? '1px solid #fde68a' : '1px solid #bfdbfe',
                             whiteSpace: 'nowrap',
+                            flexShrink: 0,
                           }}
                         >
                           {isCasal ? '💍 Casal' : '⚡ Jovem'}
                         </span>
                       </div>
 
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '3px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px', flexWrap: 'wrap' }}>
                         {person.legacy_id && (
-                          <span style={{ fontSize: '0.72rem', color: 'var(--text-subtle)' }}>
+                          <span style={{ fontSize: '0.70rem', color: 'var(--text-subtle)', fontWeight: 600 }}>
                             {person.legacy_id}
                           </span>
                         )}
                         {person.parish && (
-                          <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
                             &bull; {person.parish}
                           </span>
                         )}
@@ -388,83 +405,105 @@ export function SpeakersView({ initialSpeakers, viewer }: SpeakersViewProps) {
                     </div>
                   </div>
 
-                  {/* Telefone / Contato para Convites */}
-                  {person.phone && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', color: '#166534', background: '#f0fdf4', padding: '4px 8px', borderRadius: '4px', marginBottom: '12px', width: 'fit-content' }}>
-                      <Phone size={13} />
-                      <a href={`tel:${person.phone}`} style={{ color: '#166534', textDecoration: 'none', fontWeight: 600 }}>
-                        {person.phone}
-                      </a>
-                    </div>
-                  )}
+                  {/* Telefone e Contato Direto */}
+                  {person.phone ? (
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '6px',
+                        background: '#f0fdf4',
+                        border: '1px solid #dcfce7',
+                        padding: '4px 10px',
+                        borderRadius: '6px',
+                        marginBottom: '6px',
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', color: '#166534', fontWeight: 600 }}>
+                        <Phone size={13} weight="fill" />
+                        <a href={`tel:${person.phone}`} style={{ color: '#166534', textDecoration: 'none' }}>
+                          {person.phone}
+                        </a>
+                      </div>
 
-                  {/* Temas Ministrados */}
-                  <div style={{ marginBottom: '14px' }}>
-                    <span style={{ display: 'block', fontSize: '0.74rem', textTransform: 'uppercase', color: 'var(--text-subtle)', fontWeight: 700, marginBottom: '6px', letterSpacing: '0.04em' }}>
-                      Temas Ministrados:
-                    </span>
-
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                      {speaker.themes.map((t, idx) => (
-                        <span
-                          key={idx}
+                      {whatsappUrl && (
+                        <a
+                          href={whatsappUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="Conversar no WhatsApp"
                           style={{
-                            fontSize: '0.74rem',
-                            fontWeight: 600,
-                            padding: '3px 8px',
-                            borderRadius: '6px',
-                            background: '#fafaf9',
-                            border: '1px solid var(--border-light)',
-                            color: 'var(--text-main)',
+                            color: '#15803d',
                             display: 'inline-flex',
                             alignItems: 'center',
-                            gap: '4px',
+                            justifyContent: 'center',
+                            padding: '2px',
                           }}
                         >
-                          <MicrophoneStage size={12} color="var(--brand-primary)" />
-                          {t}
-                        </span>
-                      ))}
+                          <Chats size={15} weight="fill" />
+                        </a>
+                      )}
                     </div>
-                  </div>
-
-                  {/* Resumo de Encontros onde Palestrou */}
-                  <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginBottom: '10px' }}>
-                    <CalendarBlank size={13} style={{ display: 'inline', marginRight: '4px' }} />
-                    Palestrou em: <strong>{speaker.years.slice(0, 4).join(', ')}{speaker.years.length > 4 ? '...' : ''}</strong>
-                  </div>
+                  ) : (
+                    <div style={{ fontSize: '0.74rem', color: 'var(--text-subtle)', fontStyle: 'italic', marginBottom: '8px' }}>
+                      Telefone não informado
+                    </div>
+                  )}
                 </div>
 
-                {/* Rodapé com Total e Botão de Ação */}
+                {/* Rodapé do Card: Quantidade de Palestras e Botão Abrir */}
                 <div
                   style={{
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     borderTop: '1px solid var(--border-light)',
-                    paddingTop: '12px',
-                    marginTop: '8px',
+                    paddingTop: '10px',
+                    marginTop: '4px',
                   }}
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  <span style={{ fontSize: '0.76rem', fontWeight: 600, color: 'var(--brand-primary)' }}>
+                  <span
+                    style={{
+                      fontSize: '0.76rem',
+                      fontWeight: 700,
+                      color: 'var(--brand-primary)',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                  >
+                    <MicrophoneStage size={13} />
                     {speaker.totalTalks} {speaker.totalTalks === 1 ? 'palestra' : 'palestras'}
                   </span>
 
-                  <div style={{ display: 'flex', gap: '8px' }}>
+                  <div style={{ display: 'flex', gap: '6px' }}>
                     <button
                       type="button"
-                      onClick={() => handleOpenNewTalk({ id: person.id, name: person.name, legacy_id: person.legacy_id, parish: person.parish })}
-                      className="button button-secondary"
-                      style={{ padding: '4px 10px', fontSize: '0.76rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                      onClick={() => {
+                        setDetailSpeaker(speaker);
+                        setIsDetailModalOpen(true);
+                      }}
+                      className="button button-primary"
+                      style={{
+                        padding: '4px 10px',
+                        fontSize: '0.74rem',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                      }}
                     >
-                      <Plus size={13} />
-                      Nova Palestra
+                      Abrir
+                      <ArrowRight size={11} />
                     </button>
 
                     <Link
                       href={`/pessoas/${person.id}`}
                       className="button button-secondary"
-                      style={{ padding: '4px 10px', fontSize: '0.76rem', textDecoration: 'none' }}
+                      style={{ padding: '4px 8px', fontSize: '0.74rem', textDecoration: 'none' }}
+                      title="Ver Ficha Completa"
                     >
                       Ficha
                     </Link>
@@ -475,6 +514,14 @@ export function SpeakersView({ initialSpeakers, viewer }: SpeakersViewProps) {
           })}
         </div>
       )}
+
+      {/* Modal de Detalhes Completos do Palestrante */}
+      <SpeakerDetailModal
+        speaker={detailSpeaker}
+        isOpen={isDetailModalOpen}
+        onClose={() => setIsDetailModalOpen(false)}
+        onAddTalk={(person) => handleOpenNewTalk(person)}
+      />
 
       {/* Modal para Cadastro de Palestra */}
       <ManageTalkModal
