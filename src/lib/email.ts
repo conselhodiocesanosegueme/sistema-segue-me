@@ -469,3 +469,62 @@ export async function sendNewRegistrationAlertToDiocese({
     html: emailLayout({ title: subject, content, previewText }),
   });
 }
+
+/**
+ * 4. E-mail oficial de Recuperação e Redefinição de Senha
+ */
+export async function sendPasswordResetEmail({
+  to,
+  name,
+  resetUrl,
+}: {
+  to: string;
+  name?: string;
+  resetUrl: string;
+}) {
+  const subject = 'Redefinição de Senha — Sistema Segue-me (Diocese de Anápolis)';
+  const previewText = `Recebemos uma solicitação para redefinir sua senha de acesso ao Sistema Segue-me.`;
+
+  const content = `
+    <h2>Viva Cristo! Olá${name ? `, ${name}` : ''}.</h2>
+
+    <p>
+      Recebemos uma solicitação para <strong>redefinir a senha de acesso</strong> à sua conta no <strong>Sistema Oficial do Segue-me da Diocese de Anápolis</strong>.
+    </p>
+
+    <p>
+      Para criar uma nova senha com total segurança, clique no botão abaixo:
+    </p>
+
+    <div class="cta-wrapper" style="margin: 28px 0 20px;">
+      <a href="${resetUrl}" class="btn-primary" style="background: #b45309; padding: 14px 32px; font-size: 15px;">
+        Redefinir Minha Senha
+      </a>
+    </div>
+
+    <div class="info-card" style="background: #f8fafc; border-color: #e2e8f0; border-left-color: #64748b; color: #475569; font-size: 13.5px; margin-top: 24px;">
+      <strong style="color: #334155; display: block; margin-bottom: 4px;">🔒 Informações de Segurança:</strong>
+      <ul style="margin: 6px 0 0; padding-left: 18px; line-height: 1.5;">
+        <li>Este link é pessoal e expira em <strong>1 hora</strong>.</li>
+        <li>Se você não solicitou esta redefinição, <strong>desconsidere este e-mail</strong>. Sua senha atual permanecerá inalterada e segura.</li>
+        <li>Nunca compartilhe este link com outras pessoas.</li>
+      </ul>
+    </div>
+
+    <p style="font-size: 12px; color: #94a3b8; word-break: break-all; margin-top: 24px; text-align: center;">
+      Se o botão acima não funcionar, copie e cole o link no seu navegador:<br>
+      <a href="${resetUrl}" style="color: #b45309;">${resetUrl}</a>
+    </p>
+
+    <div class="quote-box">
+      &ldquo;O Senhor é o meu pastor; de nada terei falta.&rdquo;<br>
+      <strong>Salmos 23:1</strong>
+    </div>
+  `;
+
+  return sendEmail({
+    to,
+    subject,
+    html: emailLayout({ title: subject, content, previewText }),
+  });
+}

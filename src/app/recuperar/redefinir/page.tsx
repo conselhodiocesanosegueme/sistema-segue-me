@@ -1,40 +1,52 @@
 'use client';
 
 import { useState, FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, CheckCircle, CircleNotch, EnvelopeSimple, ShieldCheck, WarningCircle } from '@phosphor-icons/react';
+import { ArrowLeft, CheckCircle, CircleNotch, Lock, ShieldCheck, WarningCircle } from '@phosphor-icons/react';
 
-export default function RecuperarPage() {
-  const [email, setEmail] = useState('');
+export default function RedefinirSenhaPage() {
+  const router = useRouter();
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isSent, setIsSent] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!email || !email.includes('@')) {
-      setError('Por favor, digite um e-mail válido.');
+    setError(null);
+
+    if (password.length < 6) {
+      setError('A nova senha deve ter no mínimo 6 caracteres.');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError('As senhas digitadas não coincidem.');
       return;
     }
 
     setIsSubmitting(true);
-    setError(null);
 
     try {
-      const res = await fetch('/api/auth/reset-password', {
+      const res = await fetch('/api/auth/update-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ password }),
       });
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || 'Erro ao enviar instruções de recuperação.');
+        throw new Error(data.error || 'Não foi possível redefinir a senha.');
       }
 
-      setIsSent(true);
+      setIsSuccess(true);
+      setTimeout(() => {
+        router.push('/entrar');
+      }, 2500);
     } catch (err: any) {
-      setError(err.message || 'Falha na conexão. Tente novamente.');
+      setError(err.message || 'Erro ao redefinir a senha. Tente solicitar um novo link.');
     } finally {
       setIsSubmitting(false);
     }
@@ -60,51 +72,36 @@ export default function RecuperarPage() {
             />
           </div>
           <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.8rem', color: 'var(--brand-primary)', lineHeight: 1.2 }}>
-            Recuperar Senha
+            Nova Senha
           </h1>
           <p style={{ fontSize: '0.86rem', color: 'var(--text-muted)', marginTop: '8px', lineHeight: '1.45' }}>
-            {isSent
-              ? 'Verifique a sua caixa de entrada.'
-              : 'Informe o seu e-mail cadastrado para receber o link oficial de redefinição.'}
+            {isSuccess
+              ? 'Sua senha foi redefinida com sucesso!'
+              : 'Defina a sua nova senha de acesso ao portal do Segue-me.'}
           </p>
         </div>
 
-        {isSent ? (
+        {isSuccess ? (
           <div style={{ textAlign: 'center', animation: 'fadeIn 0.3s ease' }}>
             <div style={{ width: '56px', height: '56px', borderRadius: '50%', backgroundColor: '#f0fdf4', color: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', border: '1px solid #bbf7d0' }}>
               <CheckCircle size={32} weight="fill" />
             </div>
 
             <h3 style={{ fontSize: '1.15rem', color: '#166534', fontWeight: 700, marginBottom: '8px' }}>
-              Instruções Enviadas!
+              Senha Alterada com Sucesso!
             </h3>
 
             <p style={{ fontSize: '0.88rem', color: '#4b5563', lineHeight: 1.5, marginBottom: '24px' }}>
-              Enviamos um e-mail com as instruções de redefinição para <strong>{email}</strong>.
+              Você já pode acessar o sistema com as suas novas credenciais. Redirecionando para a página de login…
             </p>
 
-            <div style={{ backgroundColor: '#fffbeb', border: '1px solid #fef08a', borderRadius: '8px', padding: '12px 14px', fontSize: '0.82rem', color: '#854d0e', textAlign: 'left', marginBottom: '24px', lineHeight: 1.45 }}>
-              💡 <strong>Aviso:</strong> O link é válido por <strong>1 hora</strong>. Caso não encontre a mensagem na sua caixa de entrada principal, verifique a sua pasta de <strong>Spam / Lixo Eletrônico</strong>.
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <button
-                type="button"
-                onClick={() => setIsSent(false)}
-                className="button button-subtle"
-                style={{ width: '100%', fontSize: '0.88rem' }}
-              >
-                Enviar para outro e-mail
-              </button>
-
-              <Link
-                href="/entrar"
-                className="button button-primary"
-                style={{ width: '100%', textAlign: 'center', textDecoration: 'none', display: 'inline-block' }}
-              >
-                Ir para o Login
-              </Link>
-            </div>
+            <Link
+              href="/entrar"
+              className="button button-primary"
+              style={{ width: '100%', textAlign: 'center', textDecoration: 'none', display: 'inline-block' }}
+            >
+              Ir para o Login Agora
+            </Link>
           </div>
         ) : (
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -129,15 +126,34 @@ export default function RecuperarPage() {
 
             <div>
               <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '6px' }}>
-                E-mail cadastrado
+                Nova Senha
               </label>
               <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                <EnvelopeSimple size={18} style={{ position: 'absolute', left: '12px', color: 'var(--text-subtle)' }} />
+                <Lock size={18} style={{ position: 'absolute', left: '12px', color: 'var(--text-subtle)' }} />
                 <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="seu.email@exemplo.com"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Mínimo de 6 caracteres"
+                  required
+                  disabled={isSubmitting}
+                  className="filter-input"
+                  style={{ width: '100%', paddingLeft: '38px' }}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '6px' }}>
+                Confirmar Nova Senha
+              </label>
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <Lock size={18} style={{ position: 'absolute', left: '12px', color: 'var(--text-subtle)' }} />
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Repita a nova senha"
                   required
                   disabled={isSubmitting}
                   className="filter-input"
@@ -148,7 +164,7 @@ export default function RecuperarPage() {
 
             <button
               type="submit"
-              disabled={isSubmitting || !email}
+              disabled={isSubmitting || !password || !confirmPassword}
               className="button button-primary"
               style={{
                 width: '100%',
@@ -159,15 +175,15 @@ export default function RecuperarPage() {
                 gap: '8px',
               }}
             >
-              {isSubmitting ? <CircleNotch size={18} className="spin" /> : <EnvelopeSimple size={18} />}
-              <span>{isSubmitting ? 'Enviando instruções…' : 'Enviar instruções de recuperação'}</span>
+              {isSubmitting ? <CircleNotch size={18} className="spin" /> : <Lock size={18} />}
+              <span>{isSubmitting ? 'Salvando nova senha…' : 'Salvar Nova Senha'}</span>
             </button>
           </form>
         )}
 
         <div style={{ marginTop: '28px', paddingTop: '20px', borderTop: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.8rem', color: 'var(--text-subtle)' }}>
           <ShieldCheck size={16} />
-          Instruções enviadas com criptografia de ponta a ponta
+          Conexão segura com criptografia oficial
         </div>
       </div>
     </div>
