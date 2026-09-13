@@ -166,7 +166,7 @@ export async function getParticipations(personId?: string, encounterId?: string)
   });
 }
 export async function getEncounters(filters: Record<string, string> = {}): Promise<PageResult<Encounter>> {
-  const page = pageNumber(filters.page), pageSize = 20;
+  const page = pageNumber(filters.page), pageSize = filters.pageSize ? Math.min(Number(filters.pageSize), 1000) : 20;
   if (isDemoMode()) {
     const state = await readDemo();
     const list = state.encounters.filter(e =>

@@ -51,4 +51,26 @@ describe('Diocesan Sectors Structure (Edital 2026)', () => {
     const s6 = getSectorForParish('Paróquia Imaculado Coração de Maria', 'Alexânia - GO');
     expect(s6?.name).toBe('Setor VI');
   });
+
+  it('correctly maps cities to parishes across sectors', () => {
+    // Busca por cidade Jaraguá
+    const jaraguaParishes = DIOCESAN_SECTORS.flatMap((s) => s.parishes).filter((p) =>
+      p.city.toLowerCase().includes('jaraguá')
+    );
+    expect(jaraguaParishes.length).toBeGreaterThan(0);
+    expect(jaraguaParishes.some((p) => p.name.includes('Nossa Senhora da Penha'))).toBe(true);
+
+    // Busca por cidade Pirenópolis
+    const pirenopolisParishes = DIOCESAN_SECTORS.flatMap((s) => s.parishes).filter((p) =>
+      p.city.toLowerCase().includes('pirenópolis')
+    );
+    expect(pirenopolisParishes.length).toBeGreaterThan(0);
+    expect(pirenopolisParishes.some((p) => p.name.includes('Nossa Senhora do Rosário'))).toBe(true);
+
+    // Busca por cidade Nerópolis
+    const neropolisParishes = DIOCESAN_SECTORS.flatMap((s) => s.parishes).filter((p) =>
+      p.city.toLowerCase().includes('nerópolis')
+    );
+    expect(neropolisParishes.length).toBeGreaterThan(0);
+  });
 });
