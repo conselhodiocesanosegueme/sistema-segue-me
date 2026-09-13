@@ -8,9 +8,10 @@ describe('Diocesan Sectors Structure (Edital 2026)', () => {
     expect(names).toEqual(['Setor I', 'Setor II', 'Setor III', 'Setor IV', 'Setor V', 'Setor VI']);
   });
 
-  it('contains all 44 parishes mapped across the 6 sectors', () => {
+  it('contains all official parishes mapped across the 6 sectors', () => {
     const totalParishes = DIOCESAN_SECTORS.reduce((acc, s) => acc + s.parishes.length, 0);
-    expect(totalParishes).toBe(44);
+    // 43 entidades paroquiais (Pirenópolis unifica Rosário e Santa Bárbara em equipe conjunta, assim como Nerópolis e Jaranápolis)
+    expect(totalParishes).toBe(43);
 
     // Setor I: 8 paróquias
     expect(DIOCESAN_SECTORS[0].parishes).toHaveLength(8);
@@ -22,8 +23,8 @@ describe('Diocesan Sectors Structure (Edital 2026)', () => {
     expect(DIOCESAN_SECTORS[3].parishes).toHaveLength(6);
     // Setor V: 7 paróquias
     expect(DIOCESAN_SECTORS[4].parishes).toHaveLength(7);
-    // Setor VI: 7 paróquias
-    expect(DIOCESAN_SECTORS[5].parishes).toHaveLength(7);
+    // Setor VI: 6 paróquias (Pirenópolis unificada: Nossa Senhora do Rosário e Santa Bárbara)
+    expect(DIOCESAN_SECTORS[5].parishes).toHaveLength(6);
   });
 
   it('correctly identifies sectors for parishes', () => {
@@ -116,8 +117,18 @@ describe('Diocesan Sectors Structure (Edital 2026)', () => {
     const pirenopolisParishes = DIOCESAN_SECTORS.flatMap((s) => s.parishes).filter((p) =>
       p.city.toLowerCase().includes('pirenópolis')
     );
-    expect(pirenopolisParishes.length).toBeGreaterThan(0);
-    expect(pirenopolisParishes.some((p) => p.name.includes('Nossa Senhora do Rosário'))).toBe(true);
+    expect(pirenopolisParishes.length).toBe(1);
+    expect(pirenopolisParishes[0].name).toBe('Nossa Senhora do Rosário e Santa Bárbara');
+
+    // Validação de encontro conjunto de Pirenópolis
+    const encPirenopolis = {
+      parish: 'Paróquia Nossa Senhora do Rosário e Paróquia Santa Bárbara',
+      city: 'Pirenópolis/GO',
+    };
+    expect(matchEncounterToParish(encPirenopolis, pirenopolisParishes[0])).toBe(true);
+
+    const sPirenopolis = getSectorForParish('Nossa Senhora do Rosário e Santa Bárbara', 'Pirenópolis - GO');
+    expect(sPirenopolis?.name).toBe('Setor VI');
 
     // Busca por cidade Nerópolis
     const neropolisParishes = DIOCESAN_SECTORS.flatMap((s) => s.parishes).filter((p) =>

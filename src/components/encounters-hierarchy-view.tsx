@@ -196,6 +196,11 @@ export function EncountersHierarchyView({ encounters, viewer, headerActions }: E
     return count;
   }, [sectorsWithData]);
 
+  // Total geral de paróquias cadastradas na Diocese
+  const totalDiocesanParishes = useMemo(() => {
+    return DIOCESAN_SECTORS.reduce((acc, s) => acc + s.parishes.length, 0);
+  }, []);
+
   return (
     <div>
       {/* Barra Superior: Busca Global (com Cidade) e Filtros */}
@@ -311,7 +316,7 @@ export function EncountersHierarchyView({ encounters, viewer, headerActions }: E
             </span>
             <span>&bull;</span>
             <span>
-              Paróquias com encontros: <strong style={{ color: 'var(--brand-primary)' }}>{totalParishesWithEncounters}</strong> de 44
+              Paróquias com encontros: <strong style={{ color: 'var(--brand-primary)' }}>{totalParishesWithEncounters}</strong> de {totalDiocesanParishes}
             </span>
             <span>&bull;</span>
             <span>

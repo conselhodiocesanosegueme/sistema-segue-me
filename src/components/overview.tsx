@@ -157,7 +157,7 @@ export function OverviewView({ data, viewer, selectedParish }: OverviewViewProps
     },
     {
       title: 'Paróquias Cadastradas',
-      value: 44,
+      value: DIOCESAN_SECTORS.reduce((acc, s) => acc + s.parishes.length, 0),
       detail: `${number(data.parishes)} paróquias que tiveram encontros`,
       icon: Church,
       link: '/setores',

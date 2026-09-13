@@ -117,8 +117,18 @@ export const DIOCESAN_SECTORS: Sector[] = [
     description: 'Região leste e nordeste da diocese (rota do Entorno e Pireneus)',
     parishes: [
       { name: 'Nossa Senhora da Penha de França', city: 'Corumbá de Goiás - GO', dbNames: ['Paróquia Nossa Senhora da Penha de França', 'Nossa Senhora da Penha de França'] },
-      { name: 'Nossa Senhora do Rosário', city: 'Pirenópolis - GO', dbNames: ['Paróquia Nossa Senhora do Rosário e Paróquia Santa Bárbara', 'Nossa Senhora do Rosário'] },
-      { name: 'Santa Bárbara', city: 'Pirenópolis - GO', dbNames: ['Paróquia Santa Bárbara', 'Santa Bárbara'] },
+      {
+        name: 'Nossa Senhora do Rosário e Santa Bárbara',
+        city: 'Pirenópolis - GO',
+        dbNames: [
+          'Paróquia Nossa Senhora do Rosário e Paróquia Santa Bárbara',
+          'Nossa Senhora do Rosário e Santa Bárbara',
+          'Paróquia Nossa Senhora do Rosário',
+          'Nossa Senhora do Rosário',
+          'Paróquia Santa Bárbara',
+          'Santa Bárbara',
+        ],
+      },
       { name: 'São Pedro e São Paulo', city: 'Abadiânia - GO', dbNames: ['Paróquia São Pedro e São Paulo (Abadiânia)', 'Paróquia São Pedro e São Paulo', 'São Pedro e São Paulo'] },
       { name: 'Santo Antônio', city: 'Cocalzinho - GO', dbNames: ['Paróquia Santo Antônio (Cocalzinho)', 'Paróquia Santo Antônio', 'Santo Antônio'] },
       { name: 'Imaculado Coração de Maria', city: 'Alexânia - GO', dbNames: ['Paróquia Imaculado Coração de Maria', 'Imaculado Coração de Maria'] },
@@ -276,7 +286,7 @@ export function getSectorForParish(parishName: string, city?: string): Sector | 
 
   // 3. Busca heurística por palavras-chave do orago
   const p = normalizeParishName(parishName);
-  if (p.includes('penha de franca') || p.includes('rosario') || p.includes('livramento')) return DIOCESAN_SECTORS[5];
+  if (p.includes('penha de franca') || p.includes('rosario') || p.includes('barbara') || p.includes('livramento')) return DIOCESAN_SECTORS[5];
   if (p.includes('penha') || p.includes('edwiges') || (p.includes('sao jose') && !p.includes('operario'))) return DIOCESAN_SECTORS[4];
   if (p.includes('benedito') || p.includes('maria eterna')) return DIOCESAN_SECTORS[3];
   if (p.includes('operario') || p.includes('aparecida') || p.includes('joaquim') || p.includes('sagrado coracao') || p.includes('santuario') || p.includes('teresinha') || p.includes('terezinha')) return DIOCESAN_SECTORS[1];
