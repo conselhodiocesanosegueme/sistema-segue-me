@@ -18,7 +18,10 @@ import {
   User,
   UsersThree,
   X,
-  Sparkle
+  Sparkle,
+  FolderSimple,
+  ShieldCheck,
+  GlobeHemisphereWest
 } from '@phosphor-icons/react';
 import type { Mandate, Viewer } from '@/lib/types';
 import {
@@ -26,7 +29,8 @@ import {
   type MandateBody,
   normalizeMandateBody,
   type NormalizedMandateMeta,
-  getMandateStatus
+  getMandateStatus,
+  getConditionMeta
 } from '@/lib/encounter-config';
 import { DIOCESAN_SECTORS } from '@/lib/sectors';
 import { PageHeading, number } from './ui';
@@ -40,7 +44,8 @@ interface MandatesViewProps {
 export function MandatesView({ initialMandates, viewer }: MandatesViewProps) {
   const router = useRouter();
 
-  const [activeTab, setActiveTab] = useState<'all' | 'diocesano' | 'setorial' | 'equipe_dirigente'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'diocesano' | 'setorial' | 'equipe_dirigente'>('diocesano');
+  const [selectedYear, setSelectedYear] = useState<string>('all');
   const [sectorFilter, setSectorFilter] = useState<string>('all');
   const [conditionFilter, setConditionFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -48,7 +53,7 @@ export function MandatesView({ initialMandates, viewer }: MandatesViewProps) {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  // Normalização e descarte seguro de equipes operacionais (ex: Faxina, Gráfica, etc.)
+  // Normalização de mandatos
   const normalizedList = useMemo(() => {
     const list: Array<{ mandate: Mandate; meta: NormalizedMandateMeta }> = [];
     for (const m of initialMandates) {
@@ -59,7 +64,17 @@ export function MandatesView({ initialMandates, viewer }: MandatesViewProps) {
     return list;
   }, [initialMandates]);
 
-  // Contagens por categoria da estrutura oficial
+  // Anos disponíveis para filtro
+  const availableYears = useMemo(() => {
+    const years = new Set<number>();
+    for (const item of normalizedList) {
+      if (item.mandate.start_year) years.add(item.mandate.start_year);
+      if (item.mandate.end_year) years.add(item.mandate.end_year);
+    }
+    return Array.from(years).sort((a, b) => b - a);
+  }, [normalizedList]);
+
+  // Contagens por categoria
   const counts = useMemo(() => {
     let diocesano = 0;
     let setorial = 0;
@@ -83,21 +98,29 @@ export function MandatesView({ initialMandates, viewer }: MandatesViewProps) {
       // 1. Aba principal
       if (activeTab !== 'all' && meta.category !== activeTab) return false;
 
-      // 2. Setor (1 a 6)
+      // 2. Filtro de Ano
+      if (selectedYear !== 'all') {
+        const y = Number(selectedYear);
+        const start = m.start_year || 0;
+        const end = m.end_year || start;
+        if (y < start || y > end) return false;
+      }
+
+      // 3. Setor (1 a 6)
       if (sectorFilter !== 'all') {
         const itemSector = meta.sectorId || m.sector_id;
         if (itemSector !== sectorFilter) return false;
       }
 
-      // 3. Condição (Casal / Jovem)
+      // 4. Condição (Casal / Jovem)
       if (conditionFilter !== 'all' && m.condition !== conditionFilter) return false;
 
-      // 4. Status de vigência (Ativo / Concluído)
+      // 5. Status de vigência (Ativo / Concluído)
       const vigencia = getMandateStatus(m.start_year, m.end_year);
       if (statusFilter === 'ativo' && !vigencia.isActive) return false;
       if (statusFilter === 'concluido' && vigencia.isActive) return false;
 
-      // 5. Busca por texto
+      // 6. Busca por texto
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
         const pName = (m.person?.name || '').toLowerCase();
@@ -120,7 +143,94 @@ export function MandatesView({ initialMandates, viewer }: MandatesViewProps) {
 
       return true;
     });
-  }, [normalizedList, activeTab, sectorFilter, conditionFilter, statusFilter, searchQuery]);
+  }, [normalizedList, activeTab, selectedYear, sectorFilter, conditionFilter, statusFilter, searchQuery]);
+
+  // Função auxiliar para agrupar mandatos do Conselho Diocesano por Ano e Pasta
+  const diocesanoGrouped = useMemo(() => {
+    const diocesanoItems = filteredItems.filter((i) => i.meta.category === 'diocesano');
+    const byYear: Record<number, Record<string, typeof diocesanoItems>> = {};
+
+    for (const item of diocesanoItems) {
+      const year = item.mandate.start_year || new Date().getFullYear();
+      if (!byYear[year]) byYear[year] = {};
+
+      const roleLower = item.mandate.role.toLowerCase();
+      let folder = 'Outras Funções';
+      if (roleLower.includes('coordenador') || roleLower.includes('coordenação')) {
+        folder = 'Coordenação Diocesana';
+      } else if (roleLower.includes('tesour') || roleLower.includes('finan')) {
+        folder = 'Tesouraria / Finanças';
+      } else if (roleLower.includes('secretár') || roleLower.includes('secretar')) {
+        folder = 'Secretaria';
+      } else if (roleLower.includes('espiritual') || roleLower.includes('eclesiástico')) {
+        folder = 'Diretoria Espiritual';
+      } else if (roleLower.includes('formaç') || roleLower.includes('formac') || roleLower.includes('comunicaç')) {
+        folder = 'Formação & Comunicação';
+      }
+
+      if (!byYear[year][folder]) byYear[year][folder] = [];
+      byYear[year][folder].push(item);
+    }
+
+    const sortedYears = Object.keys(byYear).map(Number).sort((a, b) => b - a);
+    return { byYear, sortedYears };
+  }, [filteredItems]);
+
+  // Função auxiliar para agrupar Coordenações Setoriais por Setor e Ano
+  const setorialGrouped = useMemo(() => {
+    const setorialItems = filteredItems.filter((i) => i.meta.category === 'setorial');
+    const bySector: Record<string, { sectorName: string; byYear: Record<number, typeof setorialItems> }> = {};
+
+    for (const s of DIOCESAN_SECTORS) {
+      bySector[s.id] = { sectorName: `${s.name} (${s.region})`, byYear: {} };
+    }
+
+    for (const item of setorialItems) {
+      const sId = item.meta.sectorId || item.mandate.sector_id || 'setor-1';
+      if (!bySector[sId]) {
+        bySector[sId] = { sectorName: item.meta.sectorName || 'Setor Diocesano', byYear: {} };
+      }
+      const year = item.mandate.start_year || new Date().getFullYear();
+      if (!bySector[sId].byYear[year]) bySector[sId].byYear[year] = [];
+      bySector[sId].byYear[year].push(item);
+    }
+
+    return bySector;
+  }, [filteredItems]);
+
+  // Função auxiliar para agrupar Equipes Dirigentes por Setor, Paróquia e Ano
+  const dirigentesGrouped = useMemo(() => {
+    const dirigenteItems = filteredItems.filter((i) => i.meta.category === 'equipe_dirigente');
+    const byParish: Record<string, { parish: string; sectorName: string; byYear: Record<number, Record<string, typeof dirigenteItems>> }> = {};
+
+    for (const item of dirigenteItems) {
+      const pName = item.mandate.parish || item.mandate.person?.parish || 'Paróquia não identificada';
+      const sectorObj = DIOCESAN_SECTORS.find((s) => s.parishes.some((p) => p.name === pName || p.dbNames.includes(pName)));
+      const sectorName = sectorObj ? sectorObj.name : 'Setor';
+
+      if (!byParish[pName]) {
+        byParish[pName] = { parish: pName, sectorName, byYear: {} };
+      }
+
+      const year = item.mandate.start_year || new Date().getFullYear();
+      if (!byParish[pName].byYear[year]) byParish[pName].byYear[year] = {};
+
+      const roleLower = item.mandate.role.toLowerCase();
+      let pasta = 'Outras Pastas';
+      if (roleLower.includes('montagem')) pasta = 'Pasta Montagem';
+      else if (roleLower.includes('ficha')) pasta = 'Pasta Fichas';
+      else if (roleLower.includes('finan') || roleLower.includes('tesour')) pasta = 'Pasta Finanças';
+      else if (roleLower.includes('palestra')) pasta = 'Pasta Palestra';
+      else if (roleLower.includes('pós-encontro') || roleLower.includes('pos-encontro')) pasta = 'Pasta Pós-Encontro';
+      else if (roleLower.includes('espiritual')) pasta = 'Diretor Espiritual';
+
+      if (!byParish[pName].byYear[year][pasta]) byParish[pName].byYear[year][pasta] = [];
+      byParish[pName].byYear[year][pasta].push(item);
+    }
+
+    const sortedParishes = Object.keys(byParish).sort();
+    return { byParish, sortedParishes };
+  }, [filteredItems]);
 
   async function handleDelete(id: string) {
     if (!confirm('Deseja realmente remover este registro de mandato?')) return;
@@ -135,13 +245,216 @@ export function MandatesView({ initialMandates, viewer }: MandatesViewProps) {
     }
   }
 
+  // Renderizador de Cartão de Mandato Individual
+  const renderMandateCard = (item: (typeof normalizedList)[0]) => {
+    const { mandate, meta } = item;
+    const condMeta = getConditionMeta(mandate.condition, mandate.role);
+    const vigencia = getMandateStatus(mandate.start_year, mandate.end_year);
+    const isCasal = condMeta.isCasal;
+
+    return (
+      <div
+        key={mandate.id}
+        className="panel"
+        style={{
+          borderLeft: condMeta.cardBorderLeft,
+          padding: '16px 18px',
+          background: '#ffffff',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          position: 'relative',
+          transition: 'all 0.18s ease-in-out',
+        }}
+      >
+        <div>
+          {/* Topo do Card: Pasta & Status */}
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px', marginBottom: '8px' }}>
+            <h4
+              style={{
+                margin: 0,
+                fontSize: '1.05rem',
+                color: isCasal ? '#92400e' : 'var(--text-main)',
+                fontFamily: 'var(--font-serif)',
+                lineHeight: 1.25,
+                fontWeight: 700,
+              }}
+            >
+              {mandate.role}
+            </h4>
+
+            <span
+              style={{
+                fontSize: '0.68rem',
+                fontWeight: 700,
+                padding: '2px 8px',
+                borderRadius: '999px',
+                background: vigencia.badgeBg,
+                color: vigencia.badgeColor,
+                border: `1px solid ${vigencia.badgeBorder}`,
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
+              }}
+            >
+              {vigencia.label}
+            </span>
+          </div>
+
+          {/* Dados da Pessoa */}
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginTop: '8px' }}>
+            <span
+              style={{
+                width: '34px',
+                height: '34px',
+                borderRadius: '50%',
+                background: isCasal ? '#fef3c7' : '#eff6ff',
+                color: isCasal ? '#b45309' : '#1d4ed8',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+                border: isCasal ? '1px solid #fde68a' : '1px solid #bfdbfe',
+              }}
+            >
+              {isCasal ? <Heart size={16} weight="fill" /> : <User size={16} />}
+            </span>
+
+            <div style={{ flex: 1, minWidth: 0 }}>
+              {mandate.person ? (
+                <Link
+                  href={`/pessoas/${mandate.person.id}`}
+                  style={{
+                    fontWeight: 700,
+                    fontSize: '0.92rem',
+                    color: 'var(--text-main)',
+                    textDecoration: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                >
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {mandate.person.name}
+                  </span>
+                  <ArrowRight size={12} color="var(--brand-primary)" />
+                </Link>
+              ) : (
+                <strong style={{ fontSize: '0.90rem', color: 'var(--text-main)' }}>
+                  Pessoa não vinculada
+                </strong>
+              )}
+
+              {/* Cônjuge se Casal */}
+              {isCasal && mandate.spouse && (
+                <div style={{ fontSize: '0.80rem', color: '#92400e', marginTop: '2px', fontWeight: 600 }}>
+                  &amp;{' '}
+                  <Link
+                    href={`/pessoas/${mandate.spouse.id}`}
+                    style={{ color: '#b45309', textDecoration: 'none' }}
+                  >
+                    {mandate.spouse.name}
+                  </Link>
+                </div>
+              )}
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
+                <span
+                  style={{
+                    fontSize: '0.68rem',
+                    fontWeight: 700,
+                    padding: '1px 6px',
+                    borderRadius: '999px',
+                    background: isCasal ? '#fef3c7' : '#eff6ff',
+                    color: isCasal ? '#92400e' : '#1d4ed8',
+                    border: isCasal ? '1px solid #fde68a' : '1px solid #bfdbfe',
+                  }}
+                >
+                  {isCasal ? '💍 Casal' : '⚡ Jovem'}
+                </span>
+
+                {mandate.person?.legacy_id && (
+                  <span style={{ fontSize: '0.70rem', color: 'var(--text-subtle)' }}>
+                    {mandate.person.legacy_id}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Paróquia */}
+          {(mandate.parish || mandate.person?.parish) && (
+            <div
+              style={{
+                fontSize: '0.76rem',
+                color: 'var(--text-muted)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                marginTop: '10px',
+                background: '#fafaf9',
+                padding: '4px 8px',
+                borderRadius: 'var(--radius-sm)',
+              }}
+            >
+              <Church size={13} color="var(--brand-primary)" />
+              <span>{mandate.parish || mandate.person?.parish}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Rodapé do Card */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            borderTop: '1px solid var(--border-light)',
+            paddingTop: '10px',
+            marginTop: '12px',
+            fontSize: '0.76rem',
+            color: 'var(--text-muted)',
+          }}
+        >
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+            <CalendarBlank size={14} color="var(--brand-primary)" />
+            <strong>{vigencia.displayPeriod}</strong>
+          </span>
+
+          {(viewer.role === 'admin' || viewer.role === 'reviewer') && (
+            <button
+              type="button"
+              onClick={() => handleDelete(mandate.id)}
+              disabled={deletingId === mandate.id}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: '#b91c1c',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                fontSize: '0.72rem',
+                padding: '2px 4px',
+                borderRadius: '4px',
+              }}
+              title="Excluir mandato"
+            >
+              <Trash size={13} />
+              {deletingId === mandate.id ? 'Excluindo...' : 'Excluir'}
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="page-enter">
-      {/* Cabeçalho da Página - Título simples e direto: Mandatos */}
+      {/* Cabeçalho Oficial */}
       <PageHeading
-        eyebrow="ESTRUTURA DIOCESANA · DIOCESE DE ANÁPOLIS"
-        title="Mandatos"
-        description="Gestão institucional do Conselho Diocesano (Coordenação Diocesana e Setoriais dos 6 Setores) e Equipes Dirigentes."
+        eyebrow="ORGANIZAÇÃO INSTITUCIONAL · DIOCESE DE ANÁPOLIS"
+        title="Mandatos e Pastas Oficiais"
+        description="Estrutura de liderança do Segue-me: Conselho Diocesano, Coordenações dos 6 Setores e Equipes Dirigentes Paroquiais."
         actions={
           <button
             type="button"
@@ -155,56 +468,56 @@ export function MandatesView({ initialMandates, viewer }: MandatesViewProps) {
         }
       />
 
-      {/* Cards de Resumo das 3 Instâncias Oficiais */}
+      {/* Cards de Métricas Gerais */}
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: '16px',
-          marginBottom: '22px',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+          gap: '14px',
+          marginBottom: '20px',
         }}
       >
         <div className="stat-card stat-primary">
           <div className="stat-top">
-            <span>Total de Mandatos</span>
+            <span>Total Geral</span>
             <Scroll size={20} />
           </div>
           <strong className="stat-number">{number(counts.total)}</strong>
           <div className="stat-bottom">
-            <span>Lideranças documentadas</span>
+            <span>Lideranças registradas</span>
           </div>
         </div>
 
         <div className="stat-card">
           <div className="stat-top">
-            <span>Coordenação Diocesana</span>
-            <Buildings size={20} />
+            <span>Conselho Diocesano</span>
+            <Buildings size={20} color="#b45309" />
           </div>
           <strong className="stat-number" style={{ color: '#92400e' }}>
             {number(counts.diocesano)}
           </strong>
           <div className="stat-bottom">
-            <span>Conselho Executivo Diocesano</span>
+            <span>Gestão Diocesana</span>
           </div>
         </div>
 
         <div className="stat-card">
           <div className="stat-top">
             <span>Coordenações Setoriais</span>
-            <UsersThree size={20} />
+            <GlobeHemisphereWest size={20} color="#1d4ed8" />
           </div>
           <strong className="stat-number" style={{ color: '#1d4ed8' }}>
             {number(counts.setorial)}
           </strong>
           <div className="stat-bottom">
-            <span>6 Setores da Diocese</span>
+            <span>6 Setores Diocesanos</span>
           </div>
         </div>
 
         <div className="stat-card">
           <div className="stat-top">
             <span>Equipes Dirigentes</span>
-            <Church size={20} />
+            <Church size={20} color="#15803d" />
           </div>
           <strong className="stat-number" style={{ color: '#15803d' }}>
             {number(counts.equipe_dirigente)}
@@ -215,515 +528,446 @@ export function MandatesView({ initialMandates, viewer }: MandatesViewProps) {
         </div>
       </div>
 
-      {/* Box Explicativo da Estrutura Oficial de Mandatos */}
+      {/* Navegação por Grandes Blocos Institucionais */}
       <div
         style={{
-          padding: '16px 20px',
-          borderRadius: 'var(--radius-lg)',
-          background: '#fffbeb',
-          border: '1px solid #fde68a',
-          color: '#78350f',
-          fontSize: '0.84rem',
-          lineHeight: 1.5,
-          marginBottom: '22px',
           display: 'flex',
-          gap: '12px',
-          alignItems: 'flex-start',
-          boxShadow: 'var(--shadow-sm)',
-        }}
-      >
-        <span style={{ fontSize: '1.4rem', marginTop: '-2px' }}>🏛️</span>
-        <div>
-          <strong style={{ fontSize: '0.92rem' }}>
-            Estrutura Oficial de Mandatos do Movimento Segue-me:
-          </strong>
-          <div style={{ marginTop: '6px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <div>
-              • <strong>Coordenação Diocesana:</strong> Composta por 1 Casal Coordenador, 2 Jovens Coordenadores, 2 Casais Tesoureiros (anteriormente Casais Auxiliares), 2 Jovens Secretários (anteriormente Jovens Auxiliares) e Assessor Eclesiástico.
-            </div>
-            <div>
-              • <strong>Coordenações Setoriais:</strong> Organizada em 6 Setores territoriais. Cada setor possui <strong>1 Casal e 2 Jovens Setoriais</strong> que tomam conta do setor e mantêm articulação direta com as Equipes Dirigentes das paróquias.
-            </div>
-            <div>
-              • <strong>Equipes Dirigentes:</strong> Lideranças responsáveis pelas etapas do Segue-me nas paróquias (1ª Etapa) e a nível diocesano (2ª Etapa), organizadas por pastas pastorais.
-            </div>
-            <div style={{ fontStyle: 'italic', marginTop: '2px', color: '#92400e' }}>
-              * Os mandatos no Segue-me têm duração média de 2 anos (período bienal), distinguindo-se categoricamente do trabalho operacional temporário nos encontros.
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Barra de Controles, Abas e Filtros */}
-      <div
-        style={{
-          background: '#ffffff',
+          gap: '8px',
+          background: 'var(--bg-canvas)',
+          padding: '6px',
+          borderRadius: 'var(--radius-lg)',
           border: '1px solid var(--border-base)',
-          borderRadius: 'var(--radius-lg)',
-          padding: '18px 22px',
-          marginBottom: '24px',
-          boxShadow: 'var(--shadow-sm)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '16px',
+          marginBottom: '18px',
+          overflowX: 'auto',
         }}
       >
-        {/* Abas Principais de Separação */}
-        <div
+        <button
+          type="button"
+          onClick={() => setActiveTab('diocesano')}
           style={{
+            flex: 1,
+            padding: '10px 14px',
+            borderRadius: 'var(--radius-md)',
+            border: activeTab === 'diocesano' ? '1px solid #fde68a' : 'none',
+            background: activeTab === 'diocesano' ? '#fff' : 'transparent',
+            color: activeTab === 'diocesano' ? '#92400e' : 'var(--text-muted)',
+            fontWeight: activeTab === 'diocesano' ? 700 : 500,
+            fontSize: '0.86rem',
+            cursor: 'pointer',
             display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             gap: '8px',
-            overflowX: 'auto',
-            paddingBottom: '8px',
-            borderBottom: '1px solid var(--border-light)',
+            boxShadow: activeTab === 'diocesano' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+            whiteSpace: 'nowrap',
           }}
         >
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab('all');
-              setSectorFilter('all');
-            }}
-            style={{
-              padding: '8px 16px',
-              fontSize: '0.84rem',
-              fontWeight: 700,
-              borderRadius: 'var(--radius-md)',
-              border: activeTab === 'all' ? '2px solid var(--brand-primary)' : '1px solid var(--border-base)',
-              background: activeTab === 'all' ? 'var(--brand-primary)' : '#ffffff',
-              color: activeTab === 'all' ? '#ffffff' : 'var(--text-main)',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-              transition: 'var(--transition)',
-            }}
-          >
-            Todos os Mandatos ({number(counts.total)})
-          </button>
+          <Buildings size={18} weight={activeTab === 'diocesano' ? 'fill' : 'regular'} />
+          Conselho Diocesano ({counts.diocesano})
+        </button>
 
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab('diocesano');
-              setSectorFilter('all');
-            }}
-            style={{
-              padding: '8px 16px',
-              fontSize: '0.84rem',
-              fontWeight: 700,
-              borderRadius: 'var(--radius-md)',
-              border: activeTab === 'diocesano' ? '2px solid #b45309' : '1px solid #fde68a',
-              background: activeTab === 'diocesano' ? '#b45309' : '#fffdf5',
-              color: activeTab === 'diocesano' ? '#ffffff' : '#92400e',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              transition: 'var(--transition)',
-            }}
-          >
-            <span>🏛️</span>
-            Coordenação Diocesana ({number(counts.diocesano)})
-          </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('setorial')}
+          style={{
+            flex: 1,
+            padding: '10px 14px',
+            borderRadius: 'var(--radius-md)',
+            border: activeTab === 'setorial' ? '1px solid #bfdbfe' : 'none',
+            background: activeTab === 'setorial' ? '#fff' : 'transparent',
+            color: activeTab === 'setorial' ? '#1d4ed8' : 'var(--text-muted)',
+            fontWeight: activeTab === 'setorial' ? 700 : 500,
+            fontSize: '0.86rem',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            boxShadow: activeTab === 'setorial' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <GlobeHemisphereWest size={18} weight={activeTab === 'setorial' ? 'fill' : 'regular'} />
+          Coordenações Setoriais ({counts.setorial})
+        </button>
 
-          <button
-            type="button"
-            onClick={() => setActiveTab('setorial')}
-            style={{
-              padding: '8px 16px',
-              fontSize: '0.84rem',
-              fontWeight: 700,
-              borderRadius: 'var(--radius-md)',
-              border: activeTab === 'setorial' ? '2px solid #1d4ed8' : '1px solid #bfdbfe',
-              background: activeTab === 'setorial' ? '#1d4ed8' : '#eff6ff',
-              color: activeTab === 'setorial' ? '#ffffff' : '#1d4ed8',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              transition: 'var(--transition)',
-            }}
-          >
-            <span>🌐</span>
-            Coordenações Setoriais ({number(counts.setorial)})
-          </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('equipe_dirigente')}
+          style={{
+            flex: 1,
+            padding: '10px 14px',
+            borderRadius: 'var(--radius-md)',
+            border: activeTab === 'equipe_dirigente' ? '1px solid #bbf7d0' : 'none',
+            background: activeTab === 'equipe_dirigente' ? '#fff' : 'transparent',
+            color: activeTab === 'equipe_dirigente' ? '#166534' : 'var(--text-muted)',
+            fontWeight: activeTab === 'equipe_dirigente' ? 700 : 500,
+            fontSize: '0.86rem',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            boxShadow: activeTab === 'equipe_dirigente' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <Church size={18} weight={activeTab === 'equipe_dirigente' ? 'fill' : 'regular'} />
+          Equipes Dirigentes ({counts.equipe_dirigente})
+        </button>
 
-          <button
-            type="button"
-            onClick={() => setActiveTab('equipe_dirigente')}
-            style={{
-              padding: '8px 16px',
-              fontSize: '0.84rem',
-              fontWeight: 700,
-              borderRadius: 'var(--radius-md)',
-              border: activeTab === 'equipe_dirigente' ? '2px solid #15803d' : '1px solid #bbf7d0',
-              background: activeTab === 'equipe_dirigente' ? '#15803d' : '#f0fdf4',
-              color: activeTab === 'equipe_dirigente' ? '#ffffff' : '#15803d',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              transition: 'var(--transition)',
-            }}
-          >
-            <span>⛪</span>
-            Equipes Dirigentes ({number(counts.equipe_dirigente)})
-          </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('all')}
+          style={{
+            padding: '10px 14px',
+            borderRadius: 'var(--radius-md)',
+            border: activeTab === 'all' ? '1px solid var(--border-base)' : 'none',
+            background: activeTab === 'all' ? '#fff' : 'transparent',
+            color: activeTab === 'all' ? 'var(--brand-primary)' : 'var(--text-muted)',
+            fontWeight: activeTab === 'all' ? 700 : 500,
+            fontSize: '0.86rem',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            boxShadow: activeTab === 'all' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <Scroll size={18} />
+          Todos ({counts.total})
+        </button>
+      </div>
+
+      {/* Barra de Filtros Refinados */}
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '10px',
+          alignItems: 'center',
+          background: '#ffffff',
+          padding: '12px 16px',
+          borderRadius: 'var(--radius-lg)',
+          border: '1px solid var(--border-base)',
+          marginBottom: '24px',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-muted)', fontSize: '0.82rem', fontWeight: 600 }}>
+          <Funnel size={16} />
+          <span>Filtros:</span>
         </div>
 
-        {/* Linha 2: Filtros por Setor, Condição (Casal/Jovem), Status e Busca */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
-            {/* Filtro de Setor */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-muted)' }}>Setor:</span>
-              <select
-                value={sectorFilter}
-                onChange={(e) => setSectorFilter(e.target.value)}
-                className="filter-input"
-                style={{ fontSize: '0.8rem', padding: '5px 10px' }}
-              >
-                <option value="all">Todos os Setores (1 a 6)</option>
-                <option value="1">Setor 1</option>
-                <option value="2">Setor 2</option>
-                <option value="3">Setor 3</option>
-                <option value="4">Setor 4</option>
-                <option value="5">Setor 5</option>
-                <option value="6">Setor 6</option>
-              </select>
-            </div>
+        {/* Filtro de Ano */}
+        <select
+          value={selectedYear}
+          onChange={(e) => setSelectedYear(e.target.value)}
+          className="filter-input"
+          style={{ fontSize: '0.82rem', padding: '6px 10px' }}
+        >
+          <option value="all">📅 Todos os Anos</option>
+          {availableYears.map((y) => (
+            <option key={y} value={y}>
+              Ano {y}
+            </option>
+          ))}
+        </select>
 
-            {/* Filtro por Condição com Identidade Visual Casal vs Jovem */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <button
-                type="button"
-                onClick={() => setConditionFilter(conditionFilter === 'Casal' ? 'all' : 'Casal')}
-                style={{
-                  padding: '5px 12px',
-                  fontSize: '0.78rem',
-                  borderRadius: 'var(--radius-md)',
-                  border: conditionFilter === 'Casal' ? '2px solid #b45309' : '1px solid #fde68a',
-                  background: conditionFilter === 'Casal' ? '#b45309' : '#fef3c7',
-                  color: conditionFilter === 'Casal' ? '#fff' : '#92400e',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                }}
-              >
-                💍 Casais
-              </button>
+        {/* Filtro de Setor (se relevante) */}
+        {(activeTab === 'setorial' || activeTab === 'equipe_dirigente' || activeTab === 'all') && (
+          <select
+            value={sectorFilter}
+            onChange={(e) => setSectorFilter(e.target.value)}
+            className="filter-input"
+            style={{ fontSize: '0.82rem', padding: '6px 10px' }}
+          >
+            <option value="all">🌐 Todos os Setores (1 a 6)</option>
+            {DIOCESAN_SECTORS.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name} - {s.region}
+              </option>
+            ))}
+          </select>
+        )}
 
-              <button
-                type="button"
-                onClick={() => setConditionFilter(conditionFilter === 'Jovem' ? 'all' : 'Jovem')}
-                style={{
-                  padding: '5px 12px',
-                  fontSize: '0.78rem',
-                  borderRadius: 'var(--radius-md)',
-                  border: conditionFilter === 'Jovem' ? '2px solid #1d4ed8' : '1px solid #bfdbfe',
-                  background: conditionFilter === 'Jovem' ? '#1d4ed8' : '#eff6ff',
-                  color: conditionFilter === 'Jovem' ? '#fff' : '#1d4ed8',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                }}
-              >
-                ⚡ Jovens
-              </button>
-            </div>
+        {/* Filtro de Condição (Casal / Jovem) */}
+        <select
+          value={conditionFilter}
+          onChange={(e) => setConditionFilter(e.target.value)}
+          className="filter-input"
+          style={{ fontSize: '0.82rem', padding: '6px 10px' }}
+        >
+          <option value="all">👥 Jovens e Casais</option>
+          <option value="Casal">💍 Apenas Casais</option>
+          <option value="Jovem">⚡ Apenas Jovens</option>
+        </select>
 
-            {/* Filtro de Status de Vigência */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="filter-input"
-                style={{ fontSize: '0.8rem', padding: '5px 10px' }}
-              >
-                <option value="all">Status: Todos</option>
-                <option value="ativo">🟢 Apenas Ativos (Vigentes)</option>
-                <option value="concluido">⚪ Encerrados (Concluídos)</option>
-              </select>
-            </div>
-          </div>
+        {/* Filtro de Status de Vigência */}
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="filter-input"
+          style={{ fontSize: '0.82rem', padding: '6px 10px' }}
+        >
+          <option value="all">Todos os Status</option>
+          <option value="ativo">Vigentes (Ativos)</option>
+          <option value="concluido">Concluídos (Encerrados)</option>
+        </select>
 
-          {/* Campo de Busca */}
-          <div style={{ display: 'flex', gap: '8px', minWidth: '280px', flex: 1, maxWidth: '400px' }}>
-            <input
-              type="search"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Buscar por nome, cargo/pasta ou paróquia..."
-              className="filter-input"
-              style={{ width: '100%', fontSize: '0.82rem' }}
-            />
-            {(searchQuery || conditionFilter !== 'all' || sectorFilter !== 'all' || statusFilter !== 'all' || activeTab !== 'all') && (
-              <button
-                type="button"
-                onClick={() => {
-                  setSearchQuery('');
-                  setConditionFilter('all');
-                  setSectorFilter('all');
-                  setStatusFilter('all');
-                  setActiveTab('all');
-                }}
-                className="button button-secondary"
-                style={{ fontSize: '0.78rem', padding: '5px 10px', whiteSpace: 'nowrap' }}
-              >
-                <X size={14} /> Limpar
-              </button>
-            )}
-          </div>
+        {/* Busca por texto */}
+        <div style={{ flex: 1, minWidth: '220px' }}>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Buscar por nome, pasta ou paróquia..."
+            className="filter-input"
+            style={{ width: '100%', fontSize: '0.82rem', padding: '6px 12px' }}
+          />
         </div>
       </div>
 
-      {/* Grid de Mandatos Institucionais */}
+      {/* Conteúdo Principal Organizado em Blocos */}
       {filteredItems.length === 0 ? (
-        <div
-          style={{
-            background: '#ffffff',
-            borderRadius: 'var(--radius-lg)',
-            border: '1px solid var(--border-base)',
-            padding: '60px 20px',
-            textAlign: 'center',
-            color: 'var(--text-muted)',
-          }}
-        >
-          <Scroll size={40} color="var(--text-subtle)" style={{ marginBottom: '10px' }} />
-          <h3 style={{ fontSize: '1rem', color: 'var(--text-main)', marginBottom: '4px' }}>
-            Nenhum mandato institucional encontrado
+        <div className="panel" style={{ textAlign: 'center', padding: '50px 20px', background: '#fff' }}>
+          <Scroll size={40} color="var(--text-subtle)" style={{ margin: '0 auto 12px' }} />
+          <h3 style={{ fontSize: '1.15rem', color: 'var(--text-main)', marginBottom: '6px' }}>
+            Nenhum mandato encontrado
           </h3>
-          <p style={{ fontSize: '0.84rem' }}>
-            Tente redefinir os filtros por setor, condição ou termo de busca acima.
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+            Tente ajustar os filtros de ano, setor ou o termo de busca.
           </p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '16px' }}>
-          {filteredItems.map(({ mandate, meta }) => {
-            const isCasal = mandate.condition === 'Casal';
-            const vigencia = getMandateStatus(mandate.start_year, mandate.end_year);
-
-            return (
-              <div
-                key={mandate.id}
-                style={{
-                  background: '#ffffff',
-                  border: '1px solid var(--border-base)',
-                  borderLeft: isCasal ? '4px solid #d97706' : '4px solid #2563eb',
-                  borderRadius: 'var(--radius-lg)',
-                  padding: '18px 20px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  gap: '14px',
-                  boxShadow: 'var(--shadow-sm)',
-                  position: 'relative',
-                  transition: 'transform 0.15s ease, box-shadow 0.15s ease',
-                }}
-              >
-                <div>
-                  {/* Topo do Card: Badge do Órgão e Status de Vigência */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '12px' }}>
-                    <span
-                      style={{
-                        fontSize: '0.74rem',
-                        fontWeight: 700,
-                        padding: '3px 10px',
-                        borderRadius: '6px',
-                        background: meta.badgeBg,
-                        color: meta.badgeColor,
-                        border: `1px solid ${meta.badgeBorder}`,
-                      }}
-                    >
-                      {meta.badgeLabel}
-                    </span>
-
-                    <span
-                      style={{
-                        fontSize: '0.70rem',
-                        fontWeight: 700,
-                        padding: '2px 8px',
-                        borderRadius: '999px',
-                        background: vigencia.badgeBg,
-                        color: vigencia.badgeColor,
-                        border: `1px solid ${vigencia.badgeBorder}`,
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {vigencia.label}
-                    </span>
-                  </div>
-
-                  {/* Cargo / Pasta Desempenhada */}
-                  <h4
-                    style={{
-                      margin: '0 0 8px 0',
-                      fontSize: '1.15rem',
-                      color: isCasal ? '#92400e' : 'var(--text-main)',
-                      fontFamily: 'var(--font-serif)',
-                      lineHeight: 1.25,
-                    }}
-                  >
-                    {mandate.role}
-                  </h4>
-
-                  {/* Informações da Pessoa no Mandato */}
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginTop: '10px' }}>
-                    <span
-                      style={{
-                        width: '36px',
-                        height: '36px',
-                        borderRadius: '50%',
-                        background: isCasal ? '#fef3c7' : '#eff6ff',
-                        color: isCasal ? '#b45309' : '#1d4ed8',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                        border: isCasal ? '1px solid #fde68a' : '1px solid #bfdbfe',
-                      }}
-                    >
-                      {isCasal ? <Heart size={18} weight="fill" /> : <User size={18} />}
-                    </span>
-
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      {mandate.person ? (
-                        <Link
-                          href={`/pessoas/${mandate.person.id}`}
-                          style={{
-                            fontWeight: 700,
-                            fontSize: '0.94rem',
-                            color: 'var(--text-main)',
-                            textDecoration: 'none',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                          }}
-                        >
-                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {mandate.person.name}
-                          </span>
-                          <ArrowRight size={13} color="var(--brand-primary)" />
-                        </Link>
-                      ) : (
-                        <strong style={{ fontSize: '0.92rem', color: 'var(--text-main)' }}>
-                          Pessoa não vinculada
-                        </strong>
-                      )}
-
-                      {/* Cônjuge se for Casal */}
-                      {isCasal && mandate.spouse && (
-                        <div style={{ fontSize: '0.82rem', color: '#92400e', marginTop: '2px', fontWeight: 600 }}>
-                          &amp;{' '}
-                          <Link
-                            href={`/pessoas/${mandate.spouse.id}`}
-                            style={{ color: '#b45309', textDecoration: 'none' }}
-                          >
-                            {mandate.spouse.name}
-                          </Link>
-                        </div>
-                      )}
-
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
-                        {/* Pílula de Condição */}
-                        <span
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            fontSize: '0.70rem',
-                            fontWeight: 700,
-                            padding: '1px 7px',
-                            borderRadius: '999px',
-                            background: isCasal ? '#fef3c7' : '#eff6ff',
-                            color: isCasal ? '#92400e' : '#1d4ed8',
-                            border: isCasal ? '1px solid #fde68a' : '1px solid #bfdbfe',
-                          }}
-                        >
-                          {isCasal ? '💍 Casal' : '⚡ Jovem'}
-                        </span>
-
-                        {mandate.person?.legacy_id && (
-                          <span style={{ fontSize: '0.72rem', color: 'var(--text-subtle)' }}>
-                            {mandate.person.legacy_id}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Paróquia de Origem ou Vinculação */}
-                  {(mandate.parish || mandate.person?.parish) && (
-                    <div
-                      style={{
-                        fontSize: '0.78rem',
-                        color: 'var(--text-muted)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        marginTop: '12px',
-                        background: '#fafaf9',
-                        padding: '6px 10px',
-                        borderRadius: 'var(--radius-sm)',
-                      }}
-                    >
-                      <Church size={14} color="var(--brand-primary)" />
-                      <span>{mandate.parish || mandate.person?.parish}</span>
-                    </div>
-                  )}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+          {/* 1. SEÇÃO CONSELHO DIOCESANO */}
+          {(activeTab === 'diocesano' || activeTab === 'all') && diocesanoGrouped.sortedYears.length > 0 && (
+            <section>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#b45309' }}>
+                  <Buildings size={22} weight="bold" />
                 </div>
-
-                {/* Rodapé do Cartão com Período Bienal e Ação de Exclusão */}
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    borderTop: '1px solid var(--border-light)',
-                    paddingTop: '12px',
-                    fontSize: '0.78rem',
-                    color: 'var(--text-muted)',
-                  }}
-                >
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                    <CalendarBlank size={14} color="var(--brand-primary)" />
-                    <strong>{vigencia.displayPeriod}</strong>
-                    <span style={{ fontSize: '0.70rem', color: 'var(--text-subtle)' }}>(Biênio)</span>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.25rem', fontFamily: 'var(--font-serif)', color: '#78350f' }}>
+                    Conselho Diocesano
+                  </h3>
+                  <span style={{ fontSize: '0.78rem', color: 'var(--text-subtle)' }}>
+                    Coordenação Diocesana do Segue-me na Diocese de Anápolis
                   </span>
-
-                  {(viewer.role === 'admin' || viewer.role === 'reviewer') && (
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(mandate.id)}
-                      disabled={deletingId === mandate.id}
-                      style={{
-                        background: 'transparent',
-                        border: 'none',
-                        color: '#b91c1c',
-                        cursor: 'pointer',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        fontSize: '0.75rem',
-                        padding: '4px 6px',
-                        borderRadius: '4px',
-                      }}
-                      title="Excluir mandato"
-                    >
-                      <Trash size={14} />
-                      {deletingId === mandate.id ? 'Excluindo...' : 'Excluir'}
-                    </button>
-                  )}
                 </div>
               </div>
-            );
-          })}
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
+                {diocesanoGrouped.sortedYears.map((year) => {
+                  const folders = diocesanoGrouped.byYear[year];
+                  const folderNames = Object.keys(folders).sort();
+
+                  return (
+                    <div
+                      key={year}
+                      style={{
+                        background: '#ffffff',
+                        borderRadius: 'var(--radius-xl)',
+                        border: '1.5px solid #fde68a',
+                        padding: '20px 24px',
+                        boxShadow: '0 2px 6px rgba(180, 83, 9, 0.04)',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #fef3c7', paddingBottom: '12px', marginBottom: '18px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <CalendarBlank size={20} color="#b45309" weight="bold" />
+                          <strong style={{ fontSize: '1.1rem', color: '#92400e' }}>
+                            Gestão {year}
+                          </strong>
+                        </div>
+                        <span className="badge badge-amber" style={{ fontSize: '0.74rem' }}>
+                          {Object.values(folders).flat().length} membros documentados
+                        </span>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                        {folderNames.map((folderName) => (
+                          <div key={folderName}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px' }}>
+                              <FolderSimple size={16} color="#b45309" weight="fill" />
+                              <span style={{ fontSize: '0.84rem', fontWeight: 700, color: '#78350f', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                                {folderName}
+                              </span>
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '14px' }}>
+                              {folders[folderName].map(renderMandateCard)}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
+          {/* 2. SEÇÃO COORDENAÇÕES SETORIAIS */}
+          {(activeTab === 'setorial' || activeTab === 'all') && (
+            <section>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1d4ed8' }}>
+                  <GlobeHemisphereWest size={22} weight="bold" />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.25rem', fontFamily: 'var(--font-serif)', color: '#1e3a8a' }}>
+                    Coordenações Setoriais
+                  </h3>
+                  <span style={{ fontSize: '0.78rem', color: 'var(--text-subtle)' }}>
+                    Lideranças dos 6 Setores Diocesanos (Casal Setorial e Jovens Setoriais)
+                  </span>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                {DIOCESAN_SECTORS.map((sector) => {
+                  const sData = setorialGrouped[sector.id];
+                  if (!sData || Object.keys(sData.byYear).length === 0) return null;
+                  const years = Object.keys(sData.byYear).map(Number).sort((a, b) => b - a);
+
+                  return (
+                    <div
+                      key={sector.id}
+                      style={{
+                        background: '#ffffff',
+                        borderRadius: 'var(--radius-xl)',
+                        border: '1.5px solid #bfdbfe',
+                        padding: '20px 24px',
+                        boxShadow: '0 2px 6px rgba(29, 78, 216, 0.04)',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #dbeafe', paddingBottom: '12px', marginBottom: '18px' }}>
+                        <div>
+                          <strong style={{ fontSize: '1.1rem', color: '#1d4ed8', display: 'block' }}>
+                            {sector.name} — {sector.region}
+                          </strong>
+                          <span style={{ fontSize: '0.76rem', color: 'var(--text-subtle)' }}>
+                            {sector.parishes.length} paróquias vinculadas a este setor
+                          </span>
+                        </div>
+                        <span className="badge badge-blue" style={{ fontSize: '0.74rem' }}>
+                          Setor Diocesano
+                        </span>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                        {years.map((year) => (
+                          <div key={year}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
+                              <CalendarBlank size={15} color="#1d4ed8" />
+                              <span style={{ fontSize: '0.84rem', fontWeight: 700, color: '#1e40af' }}>
+                                Gestão {year}
+                              </span>
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '14px' }}>
+                              {sData.byYear[year].map(renderMandateCard)}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
+          {/* 3. SEÇÃO EQUIPES DIRIGENTES PAROQUIAIS */}
+          {(activeTab === 'equipe_dirigente' || activeTab === 'all') && dirigentesGrouped.sortedParishes.length > 0 && (
+            <section>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#15803d' }}>
+                  <Church size={22} weight="bold" />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.25rem', fontFamily: 'var(--font-serif)', color: '#14532d' }}>
+                    Equipes Dirigentes Paroquiais
+                  </h3>
+                  <span style={{ fontSize: '0.78rem', color: 'var(--text-subtle)' }}>
+                    Divididas por Paróquias e organizadas pelas 5 Pastas Oficiais (Montagem, Fichas, Finanças, Palestra e Pós-Encontro)
+                  </span>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                {dirigentesGrouped.sortedParishes.map((parishName) => {
+                  const pData = dirigentesGrouped.byParish[parishName];
+                  const years = Object.keys(pData.byYear).map(Number).sort((a, b) => b - a);
+
+                  return (
+                    <div
+                      key={parishName}
+                      style={{
+                        background: '#ffffff',
+                        borderRadius: 'var(--radius-xl)',
+                        border: '1.5px solid #bbf7d0',
+                        padding: '20px 24px',
+                        boxShadow: '0 2px 6px rgba(21, 128, 61, 0.04)',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #dcfce7', paddingBottom: '12px', marginBottom: '18px' }}>
+                        <div>
+                          <strong style={{ fontSize: '1.1rem', color: '#166534', display: 'block' }}>
+                            {parishName}
+                          </strong>
+                          <span style={{ fontSize: '0.76rem', color: 'var(--text-subtle)' }}>
+                            {pData.sectorName}
+                          </span>
+                        </div>
+                        <span className="badge badge-green" style={{ fontSize: '0.74rem' }}>
+                          Equipe Dirigente
+                        </span>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                        {years.map((year) => {
+                          const pastas = pData.byYear[year];
+                          const pastaNames = Object.keys(pastas).sort();
+
+                          return (
+                            <div key={year}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px' }}>
+                                <CalendarBlank size={16} color="#166534" weight="bold" />
+                                <strong style={{ fontSize: '0.92rem', color: '#14532d' }}>
+                                  Gestão {year}
+                                </strong>
+                              </div>
+
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                                {pastaNames.map((pastaName) => (
+                                  <div key={pastaName}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+                                      <FolderSimple size={14} color="#15803d" weight="fill" />
+                                      <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#166534', textTransform: 'uppercase' }}>
+                                        {pastaName}
+                                      </span>
+                                    </div>
+
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '12px' }}>
+                                      {pastas[pastaName].map(renderMandateCard)}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          )}
         </div>
       )}
 

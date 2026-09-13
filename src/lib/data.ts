@@ -700,13 +700,30 @@ export async function getPersonExtras(id: string) {
         } : null
       }];
     }
-    return { couples, talks: [], mandates };
+    const demoTalks = (state.participations || [])
+      .filter(p => p.person_id === id && (p.kind === 'Palestrou' || (p.team || '').toLowerCase().includes('palestr') || (p.role || '').toLowerCase().includes('palestr')))
+      .map(p => ({
+        id: p.id,
+        title: p.role || p.team || 'Palestra',
+        location: state.encounters.find(e => e.id === p.encounter_id)?.parish,
+        encounter: state.encounters.find(e => e.id === p.encounter_id),
+        kind: p.kind,
+        team: p.team,
+        role: p.role,
+        notes: p.notes,
+      }));
+    return { couples, talks: demoTalks, mandates };
   }
   const db = await supabaseServer();
-  const [couplesRes, talksRes, mandatesRes] = await Promise.all([
+  const [couplesRes, talksRes, mandatesRes, talkPartsRes] = await Promise.all([
     db.from('couples').select('*').or(`person_1_id.eq.${id},person_2_id.eq.${id}`),
     db.from('talk_speakers').select('*,talk:talks(*)').eq('person_id', id),
-    db.from('mandates').select('*,encounter:encounters(*)').eq('person_id', id).order('start_year', { ascending: false })
+    db.from('mandates').select('*,encounter:encounters(*)').eq('person_id', id).order('start_year', { ascending: false }),
+    db.from('participations')
+      .select('*,encounter:encounters(*)')
+      .eq('person_id', id)
+      .or('kind.eq.Palestrou,team.ilike.%palestr%,role.ilike.%palestr%')
+      .order('created_at', { ascending: false }),
   ]);
   for (const r of [couplesRes, talksRes, mandatesRes]) checkDb(r.error);
 
@@ -724,7 +741,30 @@ export async function getPersonExtras(id: string) {
     return { ...c, spouse };
   }));
 
-  return { couples, talks: talksRes.data || [], mandates: mandatesRes.data || [] };
+  const unifiedTalks: any[] = (talksRes.data || []).map((t: any) => ({
+    id: t.id,
+    title: t.talk?.title || 'Palestra',
+    location: t.talk?.location,
+    notes: t.talk?.notes,
+    encounter: t.talk?.encounter,
+    kind: 'Palestrou',
+  }));
+
+  for (const p of (talkPartsRes.data || [])) {
+    unifiedTalks.push({
+      id: p.id,
+      title: p.role || p.team || 'Palestra Ministrada',
+      location: p.encounter?.parish,
+      notes: p.notes,
+      encounter: p.encounter,
+      kind: p.kind,
+      team: p.team,
+      role: p.role,
+      condition: p.condition,
+    });
+  }
+
+  return { couples, talks: unifiedTalks, mandates: mandatesRes.data || [] };
 }
 
 export interface ParishSummaryItem {
@@ -796,5 +836,261 @@ export async function getSectorsSummary(): Promise<ParishSummaryItem[]> {
     map.set(key, existing);
   }
   return Array.from(map.values()).sort((a, b) => b.people_count - a.people_count);
+}
+
+export interface SpeakerTalkItem {
+  id: string;
+  theme: string;
+  role: string;
+  team: string;
+  encounter_id?: string | null;
+  encounter_title?: string | null;
+  encounter_edition?: string | null;
+  encounter_year?: number | null;
+  parish?: string | null;
+  date_text?: string | null;
+  notes?: string | null;
+  kind: string;
+}
+
+export interface SpeakerCatalogItem {
+  person: {
+    id: string;
+    name: string;
+    legacy_id?: string | null;
+    phone?: string | null;
+    email?: string | null;
+    parish?: string | null;
+    photo_url?: string | null;
+    sex?: string | null;
+  };
+  condition: 'Jovem' | 'Casal';
+  totalTalks: number;
+  themes: string[];
+  years: number[];
+  parishes: string[];
+  talks: SpeakerTalkItem[];
+}
+
+export async function getSpeakersCatalog(filters: {
+  search?: string;
+  theme?: string;
+  parish?: string;
+  condition?: string;
+  year?: string;
+} = {}): Promise<SpeakerCatalogItem[]> {
+  if (isDemoMode()) {
+    const state = await readDemo();
+    const speakerMap = new Map<string, SpeakerCatalogItem>();
+    const talkParts = (state.participations || []).filter(
+      p => p.kind === 'Palestrou' || (p.team || '').toLowerCase().includes('palestr') || (p.role || '').toLowerCase().includes('palestr')
+    );
+    for (const p of talkParts) {
+      const person = state.people.find(pe => pe.id === p.person_id && !pe.merged_into);
+      if (!person) continue;
+      const enc = state.encounters.find(e => e.id === p.encounter_id);
+      let item = speakerMap.get(person.id);
+      if (!item) {
+        const isCasal = p.condition === 'Casal' ||
+          (person.name && (person.name.includes(' & ') || person.name.includes(' e '))) ||
+          ((p.role || '').toLowerCase().includes('casal'));
+
+        item = {
+          person: {
+            id: person.id,
+            name: person.name,
+            legacy_id: person.legacy_id,
+            phone: person.phone,
+            email: person.email,
+            parish: person.parish,
+            photo_url: person.photo_url,
+            sex: person.sex,
+          },
+          condition: isCasal ? 'Casal' : 'Jovem',
+          totalTalks: 0,
+          themes: [],
+          years: [],
+          parishes: [],
+          talks: [],
+        };
+        speakerMap.set(person.id, item);
+      }
+      item.totalTalks += 1;
+      let themeClean = (p.role || p.team || 'Palestra').trim();
+      themeClean = themeClean.replace(/^palestrante\s*[-—–:]\s*/i, '').replace(/^palestra\s*[-—–:]\s*/i, '').trim();
+      if (!themeClean) themeClean = 'Palestra Geral';
+
+      if (!item.themes.includes(themeClean)) item.themes.push(themeClean);
+      if (enc?.year && !item.years.includes(enc.year)) item.years.push(enc.year);
+      const parishName = enc?.parish || person.parish;
+      if (parishName && !item.parishes.includes(parishName)) item.parishes.push(parishName);
+
+      item.talks.push({
+        id: p.id,
+        theme: themeClean,
+        role: p.role || '',
+        team: p.team || '',
+        encounter_id: p.encounter_id,
+        encounter_title: enc?.name,
+        encounter_edition: enc?.edition,
+        encounter_year: enc?.year,
+        parish: enc?.parish,
+        date_text: enc?.date_text,
+        notes: p.notes,
+        kind: p.kind,
+      });
+    }
+
+    let list = Array.from(speakerMap.values());
+    if (filters.search?.trim()) {
+      const q = filters.search.toLowerCase().trim();
+      list = list.filter(s =>
+        s.person.name.toLowerCase().includes(q) ||
+        (s.person.legacy_id || '').toLowerCase().includes(q) ||
+        (s.person.parish || '').toLowerCase().includes(q) ||
+        s.themes.some(t => t.toLowerCase().includes(q))
+      );
+    }
+    if (filters.theme && filters.theme !== 'all') {
+      const tLower = filters.theme.toLowerCase().trim();
+      list = list.filter(s => s.themes.some(t => t.toLowerCase().includes(tLower)));
+    }
+    if (filters.parish && filters.parish !== 'all') {
+      const pLower = filters.parish.toLowerCase().trim();
+      list = list.filter(s =>
+        (s.person.parish || '').toLowerCase().includes(pLower) ||
+        s.parishes.some(p => p.toLowerCase().includes(pLower))
+      );
+    }
+    if (filters.condition && filters.condition !== 'all') {
+      list = list.filter(s => s.condition === filters.condition);
+    }
+    if (filters.year && filters.year !== 'all') {
+      const yNum = Number(filters.year);
+      list = list.filter(s => s.years.includes(yNum));
+    }
+    return list.sort((a, b) => b.totalTalks - a.totalTalks);
+  }
+
+  const db = await supabaseServer();
+  const { data: participations, error } = await db
+    .from('participations')
+    .select('id, kind, role, team, condition, notes, person:people(id, name, legacy_id, phone, email, parish, sex, notes, merged_into), encounter:encounters(id, name, edition, year, parish, city, date_text)')
+    .or('kind.eq.Palestrou,team.ilike.%palestr%,role.ilike.%palestr%')
+    .order('created_at', { ascending: false })
+    .limit(3000);
+
+  if (error) {
+    console.error('Erro ao buscar palestrantes:', error);
+    return [];
+  }
+
+  const speakerMap = new Map<string, SpeakerCatalogItem>();
+
+  for (const row of (participations || [])) {
+    const person = row.person as any;
+    if (!person || person.merged_into) continue;
+    const enc = row.encounter as any;
+
+    let item = speakerMap.get(person.id);
+    if (!item) {
+      let photoUrl: string | null = null;
+      try {
+        const parsedNotes = JSON.parse(person.notes || '{}');
+        photoUrl = parsedNotes.photo_url || null;
+      } catch {}
+
+      const isCasal = row.condition === 'Casal' ||
+        (person.name && (person.name.includes(' & ') || person.name.includes(' e '))) ||
+        (row.role && row.role.toLowerCase().includes('casal'));
+
+      item = {
+        person: {
+          id: person.id,
+          name: person.name,
+          legacy_id: person.legacy_id,
+          phone: person.phone,
+          email: person.email,
+          parish: person.parish,
+          photo_url: photoUrl,
+          sex: person.sex,
+        },
+        condition: isCasal ? 'Casal' : 'Jovem',
+        totalTalks: 0,
+        themes: [],
+        years: [],
+        parishes: [],
+        talks: [],
+      };
+      speakerMap.set(person.id, item);
+    }
+
+    item.totalTalks += 1;
+    let themeClean = (row.role || row.team || 'Palestra').trim();
+    themeClean = themeClean.replace(/^palestrante\s*[-—–:]\s*/i, '').replace(/^palestra\s*[-—–:]\s*/i, '').trim();
+    if (!themeClean) themeClean = 'Palestra Geral';
+
+    if (!item.themes.includes(themeClean)) {
+      item.themes.push(themeClean);
+    }
+    if (enc?.year && !item.years.includes(enc.year)) {
+      item.years.push(enc.year);
+    }
+    const encParish = enc?.parish || person.parish;
+    if (encParish && !item.parishes.includes(encParish)) {
+      item.parishes.push(encParish);
+    }
+
+    item.talks.push({
+      id: row.id,
+      theme: themeClean,
+      role: row.role || '',
+      team: row.team || '',
+      encounter_id: enc?.id,
+      encounter_title: enc?.name,
+      encounter_edition: enc?.edition,
+      encounter_year: enc?.year,
+      parish: enc?.parish,
+      date_text: enc?.date_text,
+      notes: row.notes,
+      kind: row.kind,
+    });
+  }
+
+  let list = Array.from(speakerMap.values());
+
+  if (filters.search?.trim()) {
+    const q = filters.search.toLowerCase().trim();
+    list = list.filter(s =>
+      s.person.name.toLowerCase().includes(q) ||
+      (s.person.legacy_id || '').toLowerCase().includes(q) ||
+      (s.person.parish || '').toLowerCase().includes(q) ||
+      s.themes.some(t => t.toLowerCase().includes(q))
+    );
+  }
+
+  if (filters.theme && filters.theme !== 'all') {
+    const tLower = filters.theme.toLowerCase().trim();
+    list = list.filter(s => s.themes.some(t => t.toLowerCase().includes(tLower)));
+  }
+
+  if (filters.parish && filters.parish !== 'all') {
+    const pLower = filters.parish.toLowerCase().trim();
+    list = list.filter(s =>
+      (s.person.parish || '').toLowerCase().includes(pLower) ||
+      s.parishes.some(p => p.toLowerCase().includes(pLower))
+    );
+  }
+
+  if (filters.condition && filters.condition !== 'all') {
+    list = list.filter(s => s.condition === filters.condition);
+  }
+
+  if (filters.year && filters.year !== 'all') {
+    const yNum = Number(filters.year);
+    list = list.filter(s => s.years.includes(yNum));
+  }
+
+  return list.sort((a, b) => b.totalTalks - a.totalTalks);
 }
 

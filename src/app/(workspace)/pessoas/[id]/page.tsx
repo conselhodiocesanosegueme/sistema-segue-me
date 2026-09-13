@@ -25,6 +25,7 @@ import { PersonActions } from '@/components/person-actions';
 import { SpouseCard } from '@/components/spouse-card';
 import { PersonTimeline } from '@/components/person-timeline';
 import { ManagePhotoModal } from '@/components/manage-photo-modal';
+import { PersonTalksCard } from '@/components/person-talks-card';
 import { isMandateRecord, getMandateStatus, getConditionMeta, normalizeMandateBody } from '@/lib/encounter-config';
 
 interface PersonPageProps {
@@ -84,22 +85,22 @@ export default async function PersonDetailPage({ params }: PersonPageProps) {
       roleGroup = 'pos_encontro';
     }
 
-    // Normaliza ano para biênio aproximado (mandatos duram média de 2 anos)
-    const biennium = Math.floor(startYear / 2) * 2;
+    // Usa o ano real de início do mandato
+    const yearKey = startYear;
 
     // Para Conselho Diocesano: é diocesano (não varia por paróquia)
     if (bodyNorm === 'Conselho Diocesano') {
-      return `conselho-${roleGroup}-${biennium}`;
+      return `conselho-${roleGroup}-${yearKey}`;
     }
 
-    // Para Coordenação Setorial: único por setor e biênio
+    // Para Coordenação Setorial: único por setor e ano
     if (bodyNorm.includes('Setorial')) {
-      return `setorial-${roleGroup}-${biennium}`;
+      return `setorial-${roleGroup}-${yearKey}`;
     }
 
-    // Para Equipe Dirigente: vinculado à paróquia onde serviu e ao biênio
+    // Para Equipe Dirigente: vinculado à paróquia onde serviu e ao ano
     const pClean = (parish || '').toLowerCase().replace(/par[oó]quia/g, '').trim().slice(0, 15);
-    return `dirigente-${roleGroup}-${pClean}-${biennium}`;
+    return `dirigente-${roleGroup}-${pClean}-${yearKey}`;
   }
 
   function addCandidate(
@@ -653,7 +654,7 @@ export default async function PersonDetailPage({ params }: PersonPageProps) {
                       {/* Período do Mandato e Âmbito / Paróquia do Mandato */}
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-subtle)', marginTop: '4px', flexWrap: 'wrap', gap: '6px' }}>
                         <span>
-                          Período: <strong>{st.displayPeriod}</strong> (biênio)
+                          Período: <strong>{st.displayPeriod}</strong>
                         </span>
 
                         {m.body === 'Conselho Diocesano' ? (
@@ -727,38 +728,16 @@ export default async function PersonDetailPage({ params }: PersonPageProps) {
           </section>
 
           {/* 4. Palestras Ministradas */}
-          {extras.talks && extras.talks.length > 0 && (
-            <section className="panel" style={{ padding: '20px' }}>
-              <div className="panel-heading" style={{ marginBottom: '14px' }}>
-                <div>
-                  <span className="section-kicker">FORMAÇÃO</span>
-                  <h2 style={{ fontSize: '1.15rem', margin: '2px 0 0 0' }}>Palestras Ministradas</h2>
-                </div>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {extras.talks.map((t: any) => (
-                  <div
-                    key={t.id}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '10px',
-                      padding: '10px 12px',
-                      background: 'var(--bg-canvas)',
-                      borderRadius: 'var(--radius-sm)',
-                    }}
-                  >
-                    <MicrophoneStage size={18} color="var(--brand-primary)" />
-                    <div>
-                      <strong style={{ fontSize: '0.86rem', display: 'block', color: 'var(--text-main)' }}>
-                        {t.talk?.title || 'Palestra'}
-                      </strong>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
+          <PersonTalksCard
+            person={{
+              id: person.id,
+              name: person.name,
+              legacy_id: person.legacy_id,
+              parish: person.parish,
+            }}
+            talks={extras.talks || []}
+            isStaff={isStaff}
+          />
         </div>
 
         {/* Coluna Direita: Linha do Tempo e Trajetória Completa */}

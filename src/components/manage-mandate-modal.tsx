@@ -43,7 +43,7 @@ export function ManageMandateModal({
   const [role, setRole] = useState<string>('');
   const [customRole, setCustomRole] = useState<string>('');
   const [startYear, setStartYear] = useState<number>(new Date().getFullYear());
-  const [endYear, setEndYear] = useState<number>(new Date().getFullYear() + 1);
+  const [endYear, setEndYear] = useState<number>(new Date().getFullYear());
   const [parish, setParish] = useState<string>(defaultParish || '');
   const [sectorId, setSectorId] = useState<string>('setor-1');
   const [notes, setNotes] = useState<string>('');

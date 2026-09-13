@@ -347,7 +347,7 @@ export function normalizeMandateBody(bodyRaw?: string | null, roleRaw?: string |
 }
 
 /**
- * Determina o status de um mandato (Ativo ou Encerrado) com base nos anos de vigência (média de 2 anos)
+ * Determina o status de um mandato (Ativo ou Encerrado) com base nos anos de vigência
  */
 export function getMandateStatus(
   startYear?: number | null,
@@ -362,9 +362,10 @@ export function getMandateStatus(
   displayPeriod: string;
 } {
   const start = startYear || referenceYear;
-  // Média de 2 anos de mandato caso o fim não tenha sido especificado
-  const end = endYear || start + 1;
+  // Se o ano final não foi informado, considera mandato anual (mesmo ano)
+  const end = endYear || start;
   const isActive = end >= referenceYear && start <= referenceYear;
+  const displayPeriod = start === end ? `${start}` : `${start} - ${end}`;
 
   if (isActive) {
     return {
@@ -373,7 +374,7 @@ export function getMandateStatus(
       badgeBg: '#dcfce7',
       badgeColor: '#15803d',
       badgeBorder: '#bbf7d0',
-      displayPeriod: `${start} - ${end}`,
+      displayPeriod,
     };
   }
 
@@ -383,7 +384,7 @@ export function getMandateStatus(
     badgeBg: '#f4f4f5',
     badgeColor: '#52525b',
     badgeBorder: '#e4e4e7',
-    displayPeriod: `${start} - ${end}`,
+    displayPeriod,
   };
 }
 

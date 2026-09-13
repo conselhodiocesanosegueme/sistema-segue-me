@@ -3,7 +3,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ArrowUpRight, ArrowsClockwise, BookOpen, Buildings, CalendarBlank, CaretDown, GearSix, House, List, MagnifyingGlass, Path, Scroll, ShieldCheck, SignOut, UsersThree, X } from '@phosphor-icons/react';
+import { ArrowUpRight, ArrowsClockwise, BookOpen, Buildings, CalendarBlank, CaretDown, GearSix, House, List, MagnifyingGlass, MicrophoneStage, Path, Scroll, ShieldCheck, SignOut, UsersThree, X } from '@phosphor-icons/react';
 import type { Viewer } from '@/lib/types';
 import { Avatar } from './ui';
 
@@ -12,6 +12,7 @@ const navigation = [
   { href: '/pessoas', label: 'Pessoas', icon: UsersThree },
   { href: '/encontros', label: 'Encontros', icon: CalendarBlank },
   { href: '/mandatos', label: 'Mandatos', icon: Scroll },
+  { href: '/palestrantes', label: 'Palestrantes', icon: MicrophoneStage },
   { href: '/setores', label: 'Setores e Paróquias', icon: Buildings },
   { href: '/pendencias', label: 'Pendências', icon: ShieldCheck },
   { href: '/importacoes', label: 'Importações', icon: ArrowsClockwise },
