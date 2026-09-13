@@ -43,26 +43,50 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Buscar o nome da pessoa para personalizar o e-mail
+    // Buscar o nome correto da pessoa/conta para personalizar o e-mail
     let personName: string | undefined;
-    const { data: person } = await admin
-      .from('people')
-      .select('name')
-      .ilike('email', email)
-      .limit(1)
-      .maybeSingle();
 
-    if (person?.name) {
-      personName = person.name;
-    } else {
+    if (email === 'conselhodiocesano.segueme@gmail.com') {
+      personName = 'Coordenação Diocesana';
+    } else if (linkData?.user) {
+      // 1. Verificar em app_users pelo ID do usuário
       const { data: appUser } = await admin
         .from('app_users')
         .select('full_name')
+        .eq('id', linkData.user.id)
+        .maybeSingle();
+
+      if (appUser?.full_name) {
+        personName = appUser.full_name;
+      } else if (linkData.user.user_metadata?.full_name) {
+        personName = linkData.user.user_metadata.full_name;
+      }
+
+      // 2. Se não achou em app_users, verificar se há vínculo em account_links
+      if (!personName) {
+        const { data: link } = await admin
+          .from('account_links')
+          .select('person:people(name)')
+          .eq('user_id', linkData.user.id)
+          .eq('status', 'active')
+          .maybeSingle();
+
+        if ((link as any)?.person?.name) {
+          personName = (link as any).person.name;
+        }
+      }
+    }
+
+    // 3. Fallback pela tabela people caso ainda não tenha sido identificado
+    if (!personName) {
+      const { data: person } = await admin
+        .from('people')
+        .select('name')
         .ilike('email', email)
         .limit(1)
         .maybeSingle();
-      if (appUser?.full_name) {
-        personName = appUser.full_name;
+      if (person?.name) {
+        personName = person.name;
       }
     }
 
