@@ -9,8 +9,8 @@ interface RouteContext {
 export async function DELETE(_request: NextRequest, { params }: RouteContext) {
   try {
     const viewer = await getViewer();
-    if (!viewer || (viewer.role !== 'admin' && viewer.role !== 'reviewer')) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    if (!viewer || viewer.role !== 'admin') {
+      return NextResponse.json({ error: 'Não autorizado. Apenas a Coordenação Diocesana (Administrador) pode excluir mandatos.' }, { status: 403 });
     }
 
     const { id } = await params;

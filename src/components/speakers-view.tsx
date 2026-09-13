@@ -131,15 +131,17 @@ export function SpeakersView({ initialSpeakers, viewer }: SpeakersViewProps) {
         title="Palestrantes do Segue-me"
         description="Catálogo diocesano de pregadores, jovens e casais que já ministraram palestras nos encontros do Segue-me."
         actions={
-          <button
-            type="button"
-            onClick={() => handleOpenNewTalk()}
-            className="button button-primary"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-          >
-            <Plus size={18} />
-            Registrar Palestra Ministrada
-          </button>
+          viewer.role === 'admin' ? (
+            <button
+              type="button"
+              onClick={() => handleOpenNewTalk()}
+              className="button button-primary"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            >
+              <Plus size={18} />
+              Registrar Palestra Ministrada
+            </button>
+          ) : undefined
         }
       />
 
@@ -520,7 +522,7 @@ export function SpeakersView({ initialSpeakers, viewer }: SpeakersViewProps) {
         speaker={detailSpeaker}
         isOpen={isDetailModalOpen}
         onClose={() => setIsDetailModalOpen(false)}
-        onAddTalk={(person) => handleOpenNewTalk(person)}
+        onAddTalk={viewer.role === 'admin' ? (person) => handleOpenNewTalk(person) : undefined}
       />
 
       {/* Modal para Cadastro de Palestra */}

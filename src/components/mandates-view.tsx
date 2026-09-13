@@ -456,15 +456,17 @@ export function MandatesView({ initialMandates, viewer }: MandatesViewProps) {
         title="Mandatos e Pastas Oficiais"
         description="Estrutura de liderança do Segue-me: Conselho Diocesano, Coordenações dos 6 Setores e Equipes Dirigentes Paroquiais."
         actions={
-          <button
-            type="button"
-            onClick={() => setIsModalOpen(true)}
-            className="button button-primary"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-          >
-            <Plus size={18} />
-            Cadastrar Novo Mandato
-          </button>
+          viewer.role === 'admin' ? (
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(true)}
+              className="button button-primary"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            >
+              <Plus size={18} />
+              Cadastrar Novo Mandato
+            </button>
+          ) : undefined
         }
       />
 

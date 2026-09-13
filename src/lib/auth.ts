@@ -47,9 +47,11 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
   const db = await supabaseServer();
   const { data: { user }, error } = await db.auth.getUser();
   if (error || !user) return null;
-  const { data: profile, error: roleError } = await db.from('app_users').select('full_name,role').eq('id', user.id).single();
-  if (roleError || !profile) return null;
-  return { id: user.id, name: profile.full_name || 'Participante', email: user.email || '', role: profile.role as Role, demo: false, parish: null };
+  const { data: profile } = await db.from('app_users').select('full_name,role,parish').eq('id', user.id).single();
+  const role = (profile?.role || user.user_metadata?.role || 'reviewer') as Role;
+  const fullName = profile?.full_name || (user.user_metadata?.full_name as string) || 'Participante';
+  const parish = profile?.parish || (user.user_metadata?.parish as string) || null;
+  return { id: user.id, name: fullName, email: user.email || '', role, demo: false, parish };
 });
 export async function requireViewer(roles?: Role[]) {
   const viewer = await getViewer();

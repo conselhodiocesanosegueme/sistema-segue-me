@@ -6,8 +6,8 @@ import type { EncounterType, EncounterLevel } from '@/lib/encounter-config';
 export async function POST(request: NextRequest) {
   try {
     const viewer = await getViewer();
-    if (!viewer || (viewer.role !== 'admin' && viewer.role !== 'reviewer')) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    if (!viewer || viewer.role !== 'admin') {
+      return NextResponse.json({ error: 'Não autorizado. Apenas a Coordenação Diocesana (Administrador) pode cadastrar encontros.' }, { status: 403 });
     }
 
     const body = await request.json();

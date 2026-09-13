@@ -28,7 +28,7 @@ interface SpeakerDetailModalProps {
   speaker: SpeakerCatalogItem | null;
   isOpen: boolean;
   onClose: () => void;
-  onAddTalk: (person: { id: string; name: string; legacy_id?: string | null; parish?: string | null }) => void;
+  onAddTalk?: ((person: { id: string; name: string; legacy_id?: string | null; parish?: string | null }) => void) | null;
 }
 
 interface OtherParticipations {
@@ -566,23 +566,25 @@ export function SpeakerDetailModal({ speaker, isOpen, onClose, onAddTalk }: Spea
           </Link>
 
           <div style={{ display: 'flex', gap: '8px' }}>
-            <button
-              type="button"
-              onClick={() => {
-                onClose();
-                onAddTalk({
-                  id: person.id,
-                  name: person.name,
-                  legacy_id: person.legacy_id,
-                  parish: person.parish,
-                });
-              }}
-              className="button button-primary"
-              style={{ fontSize: '0.82rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-            >
-              <Plus size={15} />
-              Registrar Palestra
-            </button>
+            {onAddTalk && (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onAddTalk({
+                    id: person.id,
+                    name: person.name,
+                    legacy_id: person.legacy_id,
+                    parish: person.parish,
+                  });
+                }}
+                className="button button-primary"
+                style={{ fontSize: '0.82rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+              >
+                <Plus size={15} />
+                Registrar Palestra
+              </button>
+            )}
 
             <button
               type="button"

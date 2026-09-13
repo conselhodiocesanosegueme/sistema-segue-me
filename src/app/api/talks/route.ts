@@ -6,7 +6,7 @@ import { mutateDemo } from '@/lib/demo';
 
 export async function POST(request: NextRequest) {
   try {
-    const viewer = await authorize(request, ['reviewer', 'admin']);
+    const viewer = await authorize(request, ['admin']);
     const body = await request.json().catch(() => ({}));
 
     const personId = (body.person_id || '').toString().trim();

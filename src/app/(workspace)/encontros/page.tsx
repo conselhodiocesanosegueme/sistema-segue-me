@@ -30,7 +30,6 @@ export default async function EncontrosPage({ searchParams }: EncontrosPageProps
               <Link href="/" className="button button-secondary">
                 Voltar ao Painel Paroquial
               </Link>
-              <EncountersHeaderActions defaultParish={parochialParish} />
             </div>
           }
         />

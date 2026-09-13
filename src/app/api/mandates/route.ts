@@ -27,8 +27,8 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const viewer = await getViewer();
-    if (!viewer || (viewer.role !== 'admin' && viewer.role !== 'reviewer')) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    if (!viewer || viewer.role !== 'admin') {
+      return NextResponse.json({ error: 'Não autorizado. Apenas a Coordenação Diocesana (Administrador) pode cadastrar mandatos.' }, { status: 403 });
     }
 
     const payload = await request.json();
