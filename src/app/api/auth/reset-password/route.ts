@@ -23,11 +23,10 @@ export async function POST(request: NextRequest) {
     }
 
     const admin = supabaseAdmin();
-    const host = request.headers.get('x-forwarded-host') || request.headers.get('host');
-    const proto = request.headers.get('x-forwarded-proto') || 'https';
-    const origin = (host && !host.includes('localhost'))
-      ? `${proto}://${host}`
-      : appOrigin();
+    // Forçar estritamente HTTPS e WWW no domínio de produção para garantir SSL ativo e cookies seguros
+    const origin = process.env.NODE_ENV === 'development' && request.headers.get('host')?.includes('localhost')
+      ? 'http://localhost:3000'
+      : 'https://www.sistemasegueme.com.br';
 
     // Gera o token de recuperação de senha pelo Supabase Auth Admin
     const { data: linkData, error: linkError } = await admin.auth.admin.generateLink({
