@@ -17,10 +17,10 @@ export default async function PessoasPage({ searchParams }: PessoasPageProps) {
     if (value) filters[key] = value;
   }
 
-  const isParochialReviewer = viewer.role === 'reviewer';
-  const parochialParish = viewer.parish || 'Paróquia São Francisco de Assis';
+  const isParochialReviewer = viewer.role === 'reviewer' && Boolean(viewer.parish);
+  const parochialParish = viewer.parish || '';
 
-  if (isParochialReviewer) {
+  if (isParochialReviewer && parochialParish) {
     filters.parish = parochialParish;
   }
 

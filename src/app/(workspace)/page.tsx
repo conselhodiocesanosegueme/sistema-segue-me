@@ -12,8 +12,8 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
 
   // Se for reviewer (Equipe Dirigente Paroquial), restringe para sua paróquia
   // Se for admin (Coordenação Diocesana), permite selecionar qualquer paróquia ou ver o geral
-  const parishScope = viewer.role === 'reviewer'
-    ? (viewer.parish || 'Paróquia São Francisco de Assis')
+  const parishScope = (viewer.role === 'reviewer' && viewer.parish)
+    ? viewer.parish
     : (params.parish || null);
 
   const overview = await getOverview(parishScope);

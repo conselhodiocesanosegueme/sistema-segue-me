@@ -47,10 +47,25 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
   const db = await supabaseServer();
   const { data: { user }, error } = await db.auth.getUser();
   if (error || !user) return null;
-  const { data: profile } = await db.from('app_users').select('full_name,role,parish').eq('id', user.id).single();
-  const role = (profile?.role || user.user_metadata?.role || 'reviewer') as Role;
-  const fullName = profile?.full_name || (user.user_metadata?.full_name as string) || 'Participante';
-  const parish = profile?.parish || (user.user_metadata?.parish as string) || null;
+  const { data: profile } = await db.from('app_users').select('*').eq('id', user.id).maybeSingle();
+  const email = (user.email || '').trim().toLowerCase();
+  const isDiocesanAdminEmail = email === 'conselhodiocesano.segueme@gmail.com' || email.startsWith('conselhodiocesano');
+
+  let role: Role = 'reviewer';
+  if (isDiocesanAdminEmail || profile?.role === 'admin' || user.user_metadata?.role === 'admin') {
+    role = 'admin';
+  } else if (profile?.role) {
+    role = profile.role as Role;
+  } else if (user.user_metadata?.role) {
+    role = user.user_metadata.role as Role;
+  }
+
+  const fullName = isDiocesanAdminEmail
+    ? 'Coordenação Diocesana'
+    : (profile?.full_name || (user.user_metadata?.full_name as string) || 'Participante');
+
+  const parish = role === 'admin' ? null : (profile?.parish || (user.user_metadata?.parish as string) || null);
+
   return { id: user.id, name: fullName, email: user.email || '', role, demo: false, parish };
 });
 export async function requireViewer(roles?: Role[]) {

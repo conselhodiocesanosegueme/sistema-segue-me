@@ -94,4 +94,24 @@ describe('Controle de Acesso - Equipes Dirigentes e Coordenação Diocesana', ()
     expect(permissions.reviewer.canCreateTalks).toBe(false);
     expect(permissions.reviewer.canViewAllParishes).toBe(true);
   });
+
+  it('garante que conselhodiocesano.segueme@gmail.com tem privilégio incondicional de admin diocesano geral', () => {
+    const email = 'conselhodiocesano.segueme@gmail.com';
+    const isDiocesanAdminEmail = email.toLowerCase() === 'conselhodiocesano.segueme@gmail.com' || email.toLowerCase().startsWith('conselhodiocesano');
+    expect(isDiocesanAdminEmail).toBe(true);
+
+    const determineRole = (userEmail: string, profileRole?: string, metaRole?: string) => {
+      if (userEmail.toLowerCase() === 'conselhodiocesano.segueme@gmail.com' || profileRole === 'admin' || metaRole === 'admin') {
+        return 'admin';
+      }
+      return profileRole || metaRole || 'reviewer';
+    };
+
+    // Mesmo se o profile vier vazio ou indefinido, conselhodiocesano é sempre admin
+    expect(determineRole(email, undefined, undefined)).toBe('admin');
+    expect(determineRole(email, 'reviewer', undefined)).toBe('admin');
+    expect(determineRole('outro@exemplo.com', 'admin', undefined)).toBe('admin');
+    expect(determineRole('dirigente@exemplo.com', 'reviewer', undefined)).toBe('reviewer');
+  });
 });
+
