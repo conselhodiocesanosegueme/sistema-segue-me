@@ -4,38 +4,26 @@ import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
-  ArrowRight,
   Buildings,
-  CalendarBlank,
-  CheckCircle,
   Church,
-  Clock,
-  Funnel,
+  GlobeHemisphereWest,
   Heart,
   Plus,
   Scroll,
   Trash,
   User,
-  UsersThree,
-  X,
-  Sparkle,
   FolderSimple,
-  ShieldCheck,
-  GlobeHemisphereWest,
   MagnifyingGlass,
-  Check,
-  CaretRight,
+  X,
 } from '@phosphor-icons/react';
 import type { Mandate, Viewer } from '@/lib/types';
 import {
-  MANDATE_BODIES,
   normalizeMandateBody,
   type NormalizedMandateMeta,
   getMandateStatus,
-  getConditionMeta,
 } from '@/lib/encounter-config';
 import { DIOCESAN_SECTORS } from '@/lib/sectors';
-import { PageHeading, number } from './ui';
+import { PageHeading } from './ui';
 import { ManageMandateModal } from './manage-mandate-modal';
 
 interface MandatesViewProps {
@@ -77,13 +65,22 @@ interface UnifiedLeadership {
   };
 }
 
+// Normalizador de nomes para desduplicação confiável
+function cleanName(n: string): string {
+  return (n || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z]/g, '');
+}
+
 export function MandatesView({ initialMandates, viewer }: MandatesViewProps) {
   const router = useRouter();
 
-  // Abas principais
+  // Menu Suspenso 1: Instância / Órgão
   const [activeTab, setActiveTab] = useState<'diocesano' | 'setorial' | 'equipe_dirigente' | 'all'>('diocesano');
 
-  // Filtros
+  // Menus Suspensos de Filtro
   const [sectorFilter, setSectorFilter] = useState<string>('all');
   const [parishFilter, setParishFilter] = useState<string>('all');
   const [conditionFilter, setConditionFilter] = useState<string>('all');
@@ -141,10 +138,10 @@ export function MandatesView({ initialMandates, viewer }: MandatesViewProps) {
   // Filtragem combinada
   const filteredItems = useMemo(() => {
     return normalizedList.filter(({ mandate: m, meta }) => {
-      // 1. Aba principal
+      // 1. Aba principal (Instância)
       if (activeTab !== 'all' && meta.category !== activeTab) return false;
 
-      // 2. Filtro de Ano
+      // 2. Filtro de Ano / Gestão
       if (selectedYear !== 'all') {
         const y = Number(selectedYear);
         const start = m.start_year || 0;
@@ -197,18 +194,23 @@ export function MandatesView({ initialMandates, viewer }: MandatesViewProps) {
     });
   }, [normalizedList, activeTab, selectedYear, sectorFilter, parishFilter, conditionFilter, statusFilter, searchQuery]);
 
-  // Função central para unificar casais e agrupar por pasta
+  // Função central para desduplicação e unificação de lideranças
   function unifyLeadershipList(items: Array<{ mandate: Mandate; meta: NormalizedMandateMeta }>): UnifiedLeadership[] {
     const list: UnifiedLeadership[] = [];
     const seenPersonIds = new Set<string>();
+    const seenPersonNames = new Set<string>();
+    const seenCoupleSignatures = new Set<string>();
+    const coupleMemberNames = new Set<string>();
 
     for (const { mandate: m, meta } of items) {
       if (!m.person) continue;
 
       const vigencia = getMandateStatus(m.start_year, m.end_year);
       const isCasal = m.condition === 'Casal';
+      const p1Clean = cleanName(m.person.name);
+      const p2Clean = m.spouse ? cleanName(m.spouse.name) : '';
 
-      // Pasta
+      // Classificação da Pasta Oficial
       const roleLower = m.role.toLowerCase();
       let folder = 'Outras Funções';
       if (roleLower.includes('coordenador') || roleLower.includes('coordenação')) {
@@ -232,14 +234,27 @@ export function MandatesView({ initialMandates, viewer }: MandatesViewProps) {
       }
 
       if (isCasal) {
-        // Se já processamos essa pessoa (ou o cônjuge), pula para não duplicar linha
+        // Assinatura do casal (independente de quem vem primeiro)
+        const coupleSig = p2Clean
+          ? [p1Clean, p2Clean].sort().join('::')
+          : `casal::${p1Clean}`;
+
+        if (seenCoupleSignatures.has(coupleSig)) continue;
         if (seenPersonIds.has(m.person.id)) continue;
         if (m.spouse && seenPersonIds.has(m.spouse.id)) continue;
 
+        seenCoupleSignatures.add(coupleSig);
         seenPersonIds.add(m.person.id);
-        if (m.spouse) seenPersonIds.add(m.spouse.id);
+        seenPersonNames.add(p1Clean);
+        coupleMemberNames.add(p1Clean);
 
-        // Normalização do nome da função para casal
+        if (m.spouse) {
+          seenPersonIds.add(m.spouse.id);
+          seenPersonNames.add(p2Clean);
+          coupleMemberNames.add(p2Clean);
+        }
+
+        // Normalização amigável do cargo de casal
         let displayRole = m.role;
         if (displayRole.toLowerCase() === 'coordenador diocesano' || displayRole.toLowerCase() === 'coordenadora diocesana') {
           displayRole = 'Casal Coordenador Diocesano';
@@ -263,8 +278,14 @@ export function MandatesView({ initialMandates, viewer }: MandatesViewProps) {
           status: vigencia,
         });
       } else {
-        // Jovem / Solteiro
+        // Jovem / Membro Individual
+        // Ignora caso a pessoa já tenha sido cadastrada como Casal nesta mesma pasta (erro comum de duplicata de planilha)
+        if (coupleMemberNames.has(p1Clean)) continue;
+        if (seenPersonIds.has(m.person.id)) continue;
+        if (seenPersonNames.has(p1Clean)) continue;
+
         seenPersonIds.add(m.person.id);
+        seenPersonNames.add(p1Clean);
 
         let displayRole = m.role;
         if (displayRole.toLowerCase() === 'coordenador diocesano' || displayRole.toLowerCase() === 'coordenadora diocesana') {
@@ -600,257 +621,7 @@ export function MandatesView({ initialMandates, viewer }: MandatesViewProps) {
         }
       />
 
-      {/* Faixa Compacta de Estatísticas Gerais (Economiza espaço vertical) */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '16px',
-          flexWrap: 'wrap',
-          background: '#ffffff',
-          padding: '10px 18px',
-          borderRadius: 'var(--radius-lg)',
-          border: '1px solid var(--border-base)',
-          marginBottom: '18px',
-          fontSize: '0.84rem',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <Scroll size={17} color="var(--brand-primary)" />
-          <span style={{ color: 'var(--text-muted)' }}>Total de Registros:</span>
-          <strong style={{ color: 'var(--text-main)' }}>{number(counts.total)}</strong>
-        </div>
-
-        <div style={{ width: '1px', height: '16px', background: 'var(--border-base)' }} />
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <Buildings size={17} color="#b45309" />
-          <span style={{ color: 'var(--text-muted)' }}>Conselho Diocesano:</span>
-          <strong style={{ color: '#92400e' }}>{number(counts.diocesano)}</strong>
-        </div>
-
-        <div style={{ width: '1px', height: '16px', background: 'var(--border-base)' }} />
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <GlobeHemisphereWest size={17} color="#1d4ed8" />
-          <span style={{ color: 'var(--text-muted)' }}>Coordenações Setoriais:</span>
-          <strong style={{ color: '#1d4ed8' }}>{number(counts.setorial)}</strong>
-        </div>
-
-        <div style={{ width: '1px', height: '16px', background: 'var(--border-base)' }} />
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <Church size={17} color="#15803d" />
-          <span style={{ color: 'var(--text-muted)' }}>Equipes Dirigentes:</span>
-          <strong style={{ color: '#15803d' }}>{number(counts.equipe_dirigente)}</strong>
-        </div>
-      </div>
-
-      {/* Abas Principais em Segmented Control Moderno */}
-      <div
-        style={{
-          display: 'flex',
-          gap: '6px',
-          background: 'var(--bg-canvas)',
-          padding: '5px',
-          borderRadius: 'var(--radius-lg)',
-          border: '1px solid var(--border-base)',
-          marginBottom: '16px',
-          overflowX: 'auto',
-        }}
-      >
-        <button
-          type="button"
-          onClick={() => setActiveTab('diocesano')}
-          style={{
-            flex: 1,
-            padding: '9px 16px',
-            borderRadius: 'var(--radius-md)',
-            border: activeTab === 'diocesano' ? '1px solid #fde68a' : 'none',
-            background: activeTab === 'diocesano' ? '#fff' : 'transparent',
-            color: activeTab === 'diocesano' ? '#92400e' : 'var(--text-muted)',
-            fontWeight: activeTab === 'diocesano' ? 700 : 500,
-            fontSize: '0.85rem',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-            boxShadow: activeTab === 'diocesano' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          <Buildings size={17} weight={activeTab === 'diocesano' ? 'fill' : 'regular'} />
-          Conselho Diocesano ({counts.diocesano})
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('setorial')}
-          style={{
-            flex: 1,
-            padding: '9px 16px',
-            borderRadius: 'var(--radius-md)',
-            border: activeTab === 'setorial' ? '1px solid #bfdbfe' : 'none',
-            background: activeTab === 'setorial' ? '#fff' : 'transparent',
-            color: activeTab === 'setorial' ? '#1d4ed8' : 'var(--text-muted)',
-            fontWeight: activeTab === 'setorial' ? 700 : 500,
-            fontSize: '0.85rem',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-            boxShadow: activeTab === 'setorial' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          <GlobeHemisphereWest size={17} weight={activeTab === 'setorial' ? 'fill' : 'regular'} />
-          Coordenações Setoriais ({counts.setorial})
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('equipe_dirigente')}
-          style={{
-            flex: 1,
-            padding: '9px 16px',
-            borderRadius: 'var(--radius-md)',
-            border: activeTab === 'equipe_dirigente' ? '1px solid #bbf7d0' : 'none',
-            background: activeTab === 'equipe_dirigente' ? '#fff' : 'transparent',
-            color: activeTab === 'equipe_dirigente' ? '#15803d' : 'var(--text-muted)',
-            fontWeight: activeTab === 'equipe_dirigente' ? 700 : 500,
-            fontSize: '0.85rem',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-            boxShadow: activeTab === 'equipe_dirigente' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          <Church size={17} weight={activeTab === 'equipe_dirigente' ? 'fill' : 'regular'} />
-          Equipes Dirigentes Paroquiais ({counts.equipe_dirigente})
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('all')}
-          style={{
-            flex: 0.8,
-            padding: '9px 16px',
-            borderRadius: 'var(--radius-md)',
-            border: activeTab === 'all' ? '1px solid var(--border-base)' : 'none',
-            background: activeTab === 'all' ? '#fff' : 'transparent',
-            color: activeTab === 'all' ? 'var(--text-main)' : 'var(--text-muted)',
-            fontWeight: activeTab === 'all' ? 700 : 500,
-            fontSize: '0.85rem',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-            boxShadow: activeTab === 'all' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          <Scroll size={17} weight={activeTab === 'all' ? 'fill' : 'regular'} />
-          Todos ({counts.total})
-        </button>
-      </div>
-
-      {/* SELETOR RÁPIDO DE GESTÃO / ANO (Pills Horizontais) */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          overflowX: 'auto',
-          padding: '6px 2px 14px 2px',
-          scrollbarWidth: 'none',
-        }}
-      >
-        <span
-          style={{
-            fontSize: '0.82rem',
-            fontWeight: 600,
-            color: 'var(--text-muted)',
-            whiteSpace: 'nowrap',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '5px',
-            marginRight: '4px',
-          }}
-        >
-          <CalendarBlank size={16} />
-          Gestão:
-        </span>
-
-        {availableYears.map((year) => {
-          const isCurrent = year === 2026;
-          const isSelected = selectedYear === String(year);
-
-          return (
-            <button
-              key={year}
-              type="button"
-              onClick={() => setSelectedYear(String(year))}
-              style={{
-                padding: '6px 14px',
-                borderRadius: '999px',
-                border: isSelected ? '1px solid #b45309' : '1px solid var(--border-base)',
-                background: isSelected ? '#78350f' : '#ffffff',
-                color: isSelected ? '#ffffff' : 'var(--text-main)',
-                fontSize: '0.82rem',
-                fontWeight: isSelected ? 700 : 500,
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                transition: 'all 0.15s ease',
-              }}
-            >
-              <span>{year}</span>
-              {isCurrent && (
-                <span
-                  style={{
-                    fontSize: '0.68rem',
-                    padding: '1px 5px',
-                    borderRadius: '4px',
-                    background: isSelected ? '#fef3c7' : '#dcfce7',
-                    color: isSelected ? '#78350f' : '#15803d',
-                    fontWeight: 700,
-                  }}
-                >
-                  Atual
-                </span>
-              )}
-            </button>
-          );
-        })}
-
-        <button
-          type="button"
-          onClick={() => setSelectedYear('all')}
-          style={{
-            padding: '6px 14px',
-            borderRadius: '999px',
-            border: selectedYear === 'all' ? '1px solid #b45309' : '1px solid var(--border-base)',
-            background: selectedYear === 'all' ? '#78350f' : '#ffffff',
-            color: selectedYear === 'all' ? '#ffffff' : 'var(--text-main)',
-            fontSize: '0.82rem',
-            fontWeight: selectedYear === 'all' ? 700 : 500,
-            cursor: 'pointer',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          Histórico Completo
-        </button>
-      </div>
-
-      {/* Barra de Filtros Compactos */}
+      {/* BARRA UNIFICADA COM MENUS SUSPENSOS (DROPDOWNS) - LIMPA E COMPACTA */}
       <div
         style={{
           background: '#ffffff',
@@ -859,83 +630,149 @@ export function MandatesView({ initialMandates, viewer }: MandatesViewProps) {
           padding: '12px 16px',
           display: 'flex',
           flexWrap: 'wrap',
-          gap: '10px',
+          gap: '12px',
           alignItems: 'center',
           marginBottom: '20px',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-muted)' }}>
-          <Funnel size={15} />
-          <span>Filtros:</span>
-        </div>
-
-        {/* Busca por texto */}
-        <div style={{ flex: 1, minWidth: '220px', position: 'relative' }}>
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Buscar por nome da liderança, cargo ou paróquia..."
-            className="filter-input"
-            style={{ width: '100%', fontSize: '0.82rem', paddingLeft: '32px' }}
-          />
-          <MagnifyingGlass
-            size={15}
-            style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-subtle)' }}
-          />
-        </div>
-
-        {/* Filtro de Condição (Casal / Jovem) */}
-        <select
-          value={conditionFilter}
-          onChange={(e) => setConditionFilter(e.target.value)}
-          className="filter-input"
-          style={{ fontSize: '0.82rem' }}
-        >
-          <option value="all">👥 Todos (Casais e Jovens)</option>
-          <option value="Casal">💍 Apenas Casais</option>
-          <option value="Jovem">⚡ Apenas Jovens</option>
-        </select>
-
-        {/* Filtro Setorial (se aplicável) */}
-        {(activeTab === 'setorial' || activeTab === 'equipe_dirigente') && (
+        {/* Menu Suspenso 1: Instância / Órgão */}
+        <div style={{ minWidth: '220px' }}>
+          <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-subtle)', marginBottom: '3px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            Instância:
+          </label>
           <select
-            value={sectorFilter}
+            value={activeTab}
             onChange={(e) => {
-              setSectorFilter(e.target.value);
+              setActiveTab(e.target.value as any);
               setParishFilter('all');
             }}
             className="filter-input"
-            style={{ fontSize: '0.82rem' }}
+            style={{ width: '100%', fontSize: '0.84rem', fontWeight: 600, color: 'var(--text-main)', padding: '7px 10px' }}
           >
-            <option value="all">Todos os Setores (I a VI)</option>
-            {DIOCESAN_SECTORS.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name} ({s.roman})
+            <option value="diocesano">🏛️ Conselho Diocesano ({counts.diocesano})</option>
+            <option value="setorial">🌐 Coordenações Setoriais ({counts.setorial})</option>
+            <option value="equipe_dirigente">⛪ Equipes Dirigentes Paroquiais ({counts.equipe_dirigente})</option>
+            <option value="all">📋 Todos os Mandatos ({counts.total})</option>
+          </select>
+        </div>
+
+        {/* Menu Suspenso 2: Gestão / Ano */}
+        <div style={{ minWidth: '170px' }}>
+          <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-subtle)', marginBottom: '3px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            Gestão / Ano:
+          </label>
+          <select
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(e.target.value)}
+            className="filter-input"
+            style={{ width: '100%', fontSize: '0.84rem', fontWeight: 600, color: 'var(--text-main)', padding: '7px 10px' }}
+          >
+            {availableYears.map((y) => (
+              <option key={y} value={String(y)}>
+                📅 Gestão {y} {y === 2026 ? '(Atual)' : ''}
               </option>
             ))}
+            <option value="all">📅 Histórico Completo</option>
           </select>
+        </div>
+
+        {/* Menu Suspenso 3: Condição (Casal / Jovem) */}
+        <div style={{ minWidth: '160px' }}>
+          <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-subtle)', marginBottom: '3px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            Liderança:
+          </label>
+          <select
+            value={conditionFilter}
+            onChange={(e) => setConditionFilter(e.target.value)}
+            className="filter-input"
+            style={{ width: '100%', fontSize: '0.84rem', padding: '7px 10px' }}
+          >
+            <option value="all">👥 Casais e Jovens</option>
+            <option value="Casal">💍 Apenas Casais</option>
+            <option value="Jovem">⚡ Apenas Jovens</option>
+          </select>
+        </div>
+
+        {/* Menu Suspenso 4: Setor (se aplicável) */}
+        {(activeTab === 'setorial' || activeTab === 'equipe_dirigente') && (
+          <div style={{ minWidth: '180px' }}>
+            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-subtle)', marginBottom: '3px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              Setor:
+            </label>
+            <select
+              value={sectorFilter}
+              onChange={(e) => {
+                setSectorFilter(e.target.value);
+                setParishFilter('all');
+              }}
+              className="filter-input"
+              style={{ width: '100%', fontSize: '0.84rem', padding: '7px 10px' }}
+            >
+              <option value="all">🌐 Todos os 6 Setores</option>
+              {DIOCESAN_SECTORS.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name} ({s.roman})
+                </option>
+              ))}
+            </select>
+          </div>
         )}
 
-        {/* Filtro Paroquial (apenas na aba Equipes Dirigentes) */}
+        {/* Menu Suspenso 5: Paróquia (se Equipe Dirigente) */}
         {activeTab === 'equipe_dirigente' && (
-          <select
-            value={parishFilter}
-            onChange={(e) => setParishFilter(e.target.value)}
-            className="filter-input"
-            style={{ fontSize: '0.82rem', maxWidth: '240px' }}
-          >
-            <option value="all">Todas as Paróquias</option>
-            {(sectorFilter === 'all'
-              ? DIOCESAN_SECTORS.flatMap((s) => s.parishes)
-              : DIOCESAN_SECTORS.find((s) => s.id === sectorFilter)?.parishes || []
-            ).map((p) => (
-              <option key={p.name} value={p.name}>
-                {p.name} ({p.city})
-              </option>
-            ))}
-          </select>
+          <div style={{ flex: 1, minWidth: '220px' }}>
+            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-subtle)', marginBottom: '3px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              Paróquia:
+            </label>
+            <select
+              value={parishFilter}
+              onChange={(e) => setParishFilter(e.target.value)}
+              className="filter-input"
+              style={{ width: '100%', fontSize: '0.84rem', padding: '7px 10px' }}
+            >
+              <option value="all">⛪ Todas as Paróquias ({sectorFilter === 'all' ? '43 Paróquias' : 'Do Setor'})</option>
+              {(sectorFilter === 'all'
+                ? DIOCESAN_SECTORS.flatMap((s) => s.parishes)
+                : DIOCESAN_SECTORS.find((s) => s.id === sectorFilter)?.parishes || []
+              ).map((p) => (
+                <option key={p.name} value={p.name}>
+                  {p.name} ({p.city})
+                </option>
+              ))}
+            </select>
+          </div>
         )}
+
+        {/* Campo de Busca Rápida */}
+        <div style={{ flex: 1, minWidth: '220px' }}>
+          <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-subtle)', marginBottom: '3px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            Busca Rápida:
+          </label>
+          <div style={{ position: 'relative' }}>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Nome da liderança, cargo..."
+              className="filter-input"
+              style={{ width: '100%', fontSize: '0.84rem', paddingLeft: '32px', paddingRight: searchQuery ? '30px' : '10px' }}
+            />
+            <MagnifyingGlass
+              size={15}
+              style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-subtle)' }}
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', color: 'var(--text-subtle)', cursor: 'pointer' }}
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* CONTEÚDO PRINCIPAL: TABELA EXECUTIVA DA NOMINATA OFICIAL */}
@@ -946,15 +783,15 @@ export function MandatesView({ initialMandates, viewer }: MandatesViewProps) {
             Nenhum mandato encontrado
           </h3>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>
-            Tente selecionar outro ano na barra de gestão ou ajustar os filtros de busca.
+            Tente selecionar outro ano no menu de Gestão ou ajustar os filtros.
           </p>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {/* 1. ABA: CONSELHO DIOCESANO */}
           {activeTab === 'diocesano' && (
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <Buildings size={20} color="#b45309" weight="bold" />
                   <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#78350f', fontFamily: 'var(--font-serif)' }}>
@@ -1010,7 +847,7 @@ export function MandatesView({ initialMandates, viewer }: MandatesViewProps) {
           {/* 2. ABA: COORDENAÇÕES SETORIAIS */}
           {activeTab === 'setorial' && (
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <GlobeHemisphereWest size={20} color="#1d4ed8" weight="bold" />
                   <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#1e3a8a', fontFamily: 'var(--font-serif)' }}>
@@ -1053,7 +890,7 @@ export function MandatesView({ initialMandates, viewer }: MandatesViewProps) {
                         </span>
                       </div>
                       <span style={{ fontSize: '0.74rem', color: '#1d4ed8', fontWeight: 600 }}>
-                        {leaderships.length} {leaderships.length === 1 ? 'membro' : 'membros'}
+                        {leaderships.length} {leaderships.length === 1 ? 'liderança' : 'lideranças'}
                       </span>
                     </div>
 
@@ -1067,7 +904,7 @@ export function MandatesView({ initialMandates, viewer }: MandatesViewProps) {
           {/* 3. ABA: EQUIPES DIRIGENTES PAROQUIAIS */}
           {activeTab === 'equipe_dirigente' && (
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <Church size={20} color="#15803d" weight="bold" />
                   <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#14532d', fontFamily: 'var(--font-serif)' }}>
@@ -1079,7 +916,7 @@ export function MandatesView({ initialMandates, viewer }: MandatesViewProps) {
                 </span>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 {dirigentesByParish.map(({ parishName, sectorName, folders }) => {
                   const allRows = Object.values(folders).flat();
                   if (allRows.length === 0) return null;
@@ -1098,7 +935,7 @@ export function MandatesView({ initialMandates, viewer }: MandatesViewProps) {
                       {/* Topo da Paróquia */}
                       <div
                         style={{
-                          padding: '12px 18px',
+                          padding: '10px 16px',
                           background: '#f8fafc',
                           borderBottom: '1px solid var(--border-base)',
                           display: 'flex',
@@ -1110,7 +947,7 @@ export function MandatesView({ initialMandates, viewer }: MandatesViewProps) {
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <Church size={18} color="#15803d" weight="fill" />
-                          <strong style={{ fontSize: '0.96rem', color: 'var(--text-main)' }}>
+                          <strong style={{ fontSize: '0.94rem', color: 'var(--text-main)' }}>
                             {parishName}
                           </strong>
                           <span
@@ -1127,8 +964,8 @@ export function MandatesView({ initialMandates, viewer }: MandatesViewProps) {
                           </span>
                         </div>
 
-                        <span style={{ fontSize: '0.76rem', color: 'var(--text-subtle)' }}>
-                          {allRows.length} lideranças registradas
+                        <span style={{ fontSize: '0.74rem', color: 'var(--text-subtle)' }}>
+                          {allRows.length} {allRows.length === 1 ? 'liderança' : 'lideranças'}
                         </span>
                       </div>
 
@@ -1150,10 +987,10 @@ export function MandatesView({ initialMandates, viewer }: MandatesViewProps) {
                 overflow: 'hidden',
               }}
             >
-              <div style={{ padding: '12px 18px', borderBottom: '1px solid var(--border-base)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <strong style={{ fontSize: '0.92rem' }}>Lista Geral de Mandatos</strong>
-                <span style={{ fontSize: '0.78rem', color: 'var(--text-subtle)' }}>
-                  Total: {filteredItems.length} registros filtrados
+              <div style={{ padding: '10px 16px', borderBottom: '1px solid var(--border-base)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <strong style={{ fontSize: '0.90rem' }}>Lista Geral de Mandatos</strong>
+                <span style={{ fontSize: '0.76rem', color: 'var(--text-subtle)' }}>
+                  Total: {filteredItems.length} registros
                 </span>
               </div>
 
