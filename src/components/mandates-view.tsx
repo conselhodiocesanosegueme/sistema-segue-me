@@ -202,16 +202,31 @@ export function MandatesView({ initialMandates, viewer }: MandatesViewProps) {
     const seenCoupleSignatures = new Set<string>();
     const coupleMemberNames = new Set<string>();
 
-    for (const { mandate: m, meta } of items) {
+    // Ordena de modo que cargos principais e específicos venham ANTES de funções genéricas como 'Auxiliar'
+    const sortedItems = [...items].sort((a, b) => {
+      const aRole = a.mandate.role.toLowerCase();
+      const bRole = b.mandate.role.toLowerCase();
+      const aAux = aRole.includes('auxiliar') || aRole === 'membro';
+      const bAux = bRole.includes('auxiliar') || bRole === 'membro';
+      if (aAux && !bAux) return 1;
+      if (!aAux && bAux) return -1;
+      return 0;
+    });
+
+    for (const { mandate: m, meta } of sortedItems) {
       if (!m.person) continue;
 
       const vigencia = getMandateStatus(m.start_year, m.end_year);
-      const isCasal = m.condition === 'Casal';
+      const roleLower = m.role.toLowerCase();
+      const isExplicitJovem = roleLower.includes('jovem');
+      const isExplicitCasal = roleLower.includes('casal');
+      const isConselhoTesouraria = meta.category === 'diocesano' && (roleLower.includes('tesour') || roleLower.includes('finan'));
+      const isCasal = !isExplicitJovem && (m.condition === 'Casal' || isExplicitCasal || isConselhoTesouraria || (Boolean(m.spouse) && !isExplicitJovem));
+
       const p1Clean = cleanName(m.person.name);
       const p2Clean = m.spouse ? cleanName(m.spouse.name) : '';
 
       // Classificação da Pasta Oficial
-      const roleLower = m.role.toLowerCase();
       let folder = 'Outras Funções';
       if (roleLower.includes('coordenador') || roleLower.includes('coordenação')) {
         folder = 'Coordenação Diocesana';
@@ -258,7 +273,9 @@ export function MandatesView({ initialMandates, viewer }: MandatesViewProps) {
         let displayRole = m.role;
         if (displayRole.toLowerCase() === 'coordenador diocesano' || displayRole.toLowerCase() === 'coordenadora diocesana') {
           displayRole = 'Casal Coordenador Diocesano';
-        } else if (displayRole.toLowerCase().includes('tesoureir') && !displayRole.toLowerCase().startsWith('casal')) {
+        } else if (displayRole.toLowerCase().includes('tesour') && !displayRole.toLowerCase().startsWith('casal')) {
+          displayRole = 'Casal Tesoureiro';
+        } else if (displayRole.toLowerCase() === 'casal tesoureira') {
           displayRole = 'Casal Tesoureiro';
         } else if (displayRole.toLowerCase().includes('secretár') && !displayRole.toLowerCase().startsWith('casal')) {
           displayRole = 'Casal Secretário';
@@ -279,7 +296,7 @@ export function MandatesView({ initialMandates, viewer }: MandatesViewProps) {
         });
       } else {
         // Jovem / Membro Individual
-        // Ignora caso a pessoa já tenha sido cadastrada como Casal nesta mesma pasta (erro comum de duplicata de planilha)
+        // Ignora caso a pessoa já tenha sido cadastrada como Casal nesta mesma pasta ou em outra (erro comum de duplicata de planilha)
         if (coupleMemberNames.has(p1Clean)) continue;
         if (seenPersonIds.has(m.person.id)) continue;
         if (seenPersonNames.has(p1Clean)) continue;

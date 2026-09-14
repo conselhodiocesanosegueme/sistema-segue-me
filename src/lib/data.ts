@@ -392,7 +392,9 @@ export async function getMandates(filters: Record<string, string | undefined> = 
   for (const raw of data || []) {
     const meta = normalizeMandateBody(raw.body, raw.role);
     if (!meta) continue;
-    if (raw.condition === 'Casal' && raw.person_id) {
+    const roleLower = (raw.role || '').toLowerCase();
+    const isCoupleCandidate = raw.condition === 'Casal' || roleLower.includes('casal') || roleLower.includes('tesour') || (raw.body || '').includes('Conselho');
+    if (isCoupleCandidate && raw.person_id) {
       couplePersonIds.push(raw.person_id);
     }
     items.push({
@@ -406,35 +408,54 @@ export async function getMandates(filters: Record<string, string | undefined> = 
   // Resolução de cônjuges para casais
   if (couplePersonIds.length > 0) {
     try {
-      const uniqueIds = Array.from(new Set(couplePersonIds)).slice(0, 80);
-      const { data: couplesData } = await db.from('couples')
-        .select('person_1_id, person_2_id')
-        .or(`person_1_id.in.(${uniqueIds.join(',')}),person_2_id.in.(${uniqueIds.join(',')})`);
-      
-      if (couplesData && couplesData.length > 0) {
-        const spouseMap = new Map<string, string>();
-        const spouseIds: string[] = [];
-        for (const c of couplesData) {
-          if (uniqueIds.includes(c.person_1_id)) {
-            spouseMap.set(c.person_1_id, c.person_2_id);
-            spouseIds.push(c.person_2_id);
-          } else if (uniqueIds.includes(c.person_2_id)) {
-            spouseMap.set(c.person_2_id, c.person_1_id);
-            spouseIds.push(c.person_1_id);
+      const uniqueIds = Array.from(new Set(couplePersonIds));
+      const spouseMap = new Map<string, string>();
+      const spouseIds: string[] = [];
+
+      // Consulta em lotes de 50 para contornar limites de URL no PostgREST
+      for (let i = 0; i < uniqueIds.length; i += 50) {
+        const chunk = uniqueIds.slice(i, i + 50);
+        const { data: couplesData } = await db.from('couples')
+          .select('person_1_id, person_2_id')
+          .or(`person_1_id.in.(${chunk.join(',')}),person_2_id.in.(${chunk.join(',')})`);
+
+        if (couplesData && couplesData.length > 0) {
+          for (const c of couplesData) {
+            if (uniqueIds.includes(c.person_1_id)) {
+              spouseMap.set(c.person_1_id, c.person_2_id);
+              spouseIds.push(c.person_2_id);
+            }
+            if (uniqueIds.includes(c.person_2_id)) {
+              spouseMap.set(c.person_2_id, c.person_1_id);
+              spouseIds.push(c.person_1_id);
+            }
           }
         }
-        if (spouseIds.length > 0) {
+      }
+
+      if (spouseIds.length > 0) {
+        const uniqueSpouseIds = Array.from(new Set(spouseIds));
+        const allSpouses: any[] = [];
+        for (let i = 0; i < uniqueSpouseIds.length; i += 50) {
+          const chunk = uniqueSpouseIds.slice(i, i + 50);
           const { data: spousesData } = await db.from('people')
             .select('id, name, legacy_id, phone, email, parish, sex')
-            .in('id', Array.from(new Set(spouseIds)));
+            .in('id', chunk);
           if (spousesData) {
-            const spMap = new Map(spousesData.map(p => [p.id, p]));
-            for (const item of items) {
-              if (item.condition === 'Casal' && item.person_id) {
-                const spId = spouseMap.get(item.person_id);
-                if (spId && spMap.has(spId)) {
-                  item.spouse = spMap.get(spId);
-                }
+            allSpouses.push(...spousesData);
+          }
+        }
+
+        const spMap = new Map(allSpouses.map(p => [p.id, p]));
+        for (const item of items) {
+          if (item.person_id) {
+            const spId = spouseMap.get(item.person_id);
+            if (spId && spMap.has(spId)) {
+              item.spouse = spMap.get(spId);
+              // Se tiver cônjuge e o cargo ou corpo for de casal/tesouraria, define condition = 'Casal'
+              const rLower = (item.role || '').toLowerCase();
+              if (rLower.includes('casal') || rLower.includes('tesour') || item.condition === 'Casal') {
+                item.condition = 'Casal';
               }
             }
           }

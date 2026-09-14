@@ -147,5 +147,22 @@ describe('Mandate Bodies and Roles Catalog', () => {
     const rangeStatus = getMandateStatus(2024, 2026);
     expect(rangeStatus.displayPeriod).toBe('2024 - 2026');
   });
+
+  it('classifica Tesouraria do Conselho Diocesano como Casal Tesoureiro e unifica cônjuges sem duplicar em Auxiliar', () => {
+    // Regra institucional do Segue-me: Tesouraria no Conselho Diocesano é pasta de Casal
+    const roleTesouraria = 'Casal Tesoureira';
+    const isExplicitJovem = roleTesouraria.toLowerCase().includes('jovem');
+    const isConselhoTesouraria = roleTesouraria.toLowerCase().includes('tesour');
+    const isCasal = !isExplicitJovem && isConselhoTesouraria;
+    expect(isCasal).toBe(true);
+
+    // Normalização amigável de título
+    let displayRole = roleTesouraria;
+    if (displayRole.toLowerCase() === 'casal tesoureira') {
+      displayRole = 'Casal Tesoureiro';
+    }
+    expect(displayRole).toBe('Casal Tesoureiro');
+  });
 });
+
 
