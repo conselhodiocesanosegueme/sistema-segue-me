@@ -125,7 +125,7 @@ export default async function PersonDetailPage({ params }: PersonPageProps) {
     const body = isSetorial ? 'Coordenação Setorial' : (isConselho ? 'Conselho Diocesano' : meta.normalizedBody);
 
     const startYear = startYearRaw || new Date().getFullYear();
-    const endYear = endYearRaw || startYear + 1;
+    const endYear = (endYearRaw && endYearRaw >= startYear) ? endYearRaw : startYear;
 
     let role = rawRole || 'Membro';
     let condition = rawCondition || 'Jovem';
@@ -170,8 +170,9 @@ export default async function PersonDetailPage({ params }: PersonPageProps) {
       if (!existing.parish && parish) existing.parish = parish;
       if (!existing.sectorId && sectorId) existing.sectorId = sectorId;
       if (condition === 'Casal') existing.condition = 'Casal';
-      if (role === 'Casal Tesoureiro') existing.role = role;
-      existing.end_year = Math.max(existing.end_year || 0, endYear);
+      if (endYearRaw && endYearRaw > existing.start_year) {
+        existing.end_year = Math.max(existing.end_year || existing.start_year, endYearRaw);
+      }
       existing.status = getMandateStatus(existing.start_year, existing.end_year);
     } else {
       combinedMandatesMap.set(key, {
@@ -196,7 +197,7 @@ export default async function PersonDetailPage({ params }: PersonPageProps) {
 
   // 2. Processa lideranças institucionais registradas nos quadrantes de encontros
   participations.filter(p => isMandateRecord(p)).forEach((p: any) => {
-    addCandidate(p.team, p.role, p.condition, p.encounter?.year, (p.encounter?.year || 2026) + 1, p.encounter?.parish);
+    addCandidate(p.team, p.role, p.condition, p.encounter?.year, p.encounter?.year, p.encounter?.parish);
   });
 
   const allPersonMandates = Array.from(combinedMandatesMap.values()).sort((a, b) => (b.start_year || 0) - (a.start_year || 0));
@@ -654,7 +655,8 @@ export default async function PersonDetailPage({ params }: PersonPageProps) {
                       {/* Período do Mandato e Âmbito / Paróquia do Mandato */}
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-subtle)', marginTop: '4px', flexWrap: 'wrap', gap: '6px' }}>
                         <span>
-                          Período: <strong>{st.displayPeriod}</strong>
+                          {st.displayPeriod.includes('–') || st.displayPeriod.includes('-') ? 'Período: ' : 'Ano: '}
+                          <strong>{st.displayPeriod}</strong>
                         </span>
 
                         {m.body === 'Conselho Diocesano' ? (

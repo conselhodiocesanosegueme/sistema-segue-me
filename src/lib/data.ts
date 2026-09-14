@@ -456,7 +456,7 @@ export async function createMandate(payload: Partial<Mandate>): Promise<Mandate>
     role: payload.role || 'Membro',
     condition: payload.condition || 'Jovem',
     start_year: payload.start_year ? Number(payload.start_year) : new Date().getFullYear(),
-    end_year: payload.end_year ? Number(payload.end_year) : (payload.start_year ? Number(payload.start_year) + 1 : new Date().getFullYear() + 1),
+    end_year: payload.end_year ? Number(payload.end_year) : (payload.start_year ? Number(payload.start_year) : new Date().getFullYear()),
     parish: payload.parish || null,
     sector_id: payload.sector_id || null,
     record_type: payload.record_type || 'manual',

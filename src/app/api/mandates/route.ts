@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     const role = (payload.role || '').trim();
     const condition = (payload.condition || 'Jovem').trim();
     const startYear = Number(payload.start_year);
-    const endYear = payload.end_year ? Number(payload.end_year) : startYear + 1;
+    const endYear = payload.end_year ? Number(payload.end_year) : startYear;
     const parish = payload.parish ? String(payload.parish).trim() : null;
     const sectorId = payload.sector_id ? String(payload.sector_id).trim() : null;
     const notes = payload.notes ? String(payload.notes).trim() : null;

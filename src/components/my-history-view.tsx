@@ -136,10 +136,10 @@ export function MyHistoryView({
               body: p.team || (p.role?.toLowerCase().includes('conselho') ? 'Conselho Diocesano' : 'Equipe Dirigente'),
               role: p.role || 'Membro do Mandato',
               start_year: year || null,
-              end_year: year ? year + 1 : null,
+              end_year: year || null,
               condition: p.condition || 'Jovem',
-              record_type: 'Mandato Bienal (Quadrante)',
-              notes: `Mandato vigente documentado no encontro ${p.encounter?.name || p.encounter?.edition || ''} (${year}).`,
+              record_type: 'Mandato (Quadrante)',
+              notes: `Mandato documentado no encontro ${p.encounter?.name || p.encounter?.edition || ''} (${year}).`,
             },
             year: year,
           });
@@ -827,7 +827,7 @@ export function MyHistoryView({
                         }}
                       >
                         {mandate.start_year
-                          ? `${mandate.start_year}${mandate.end_year ? ` – ${mandate.end_year}` : ''}`
+                          ? `${mandate.start_year}${mandate.end_year && mandate.end_year !== mandate.start_year ? ` – ${mandate.end_year}` : ''}`
                           : 'Mandato'}
                       </span>
                     </div>

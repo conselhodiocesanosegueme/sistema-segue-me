@@ -127,4 +127,25 @@ describe('Mandate Bodies and Roles Catalog', () => {
     expect(ed2.level).toBe('Diocesano');
     expect(ed2.roles.casal).toContain('Casal Montagem da 2ª Etapa');
   });
+
+  it('correctly handles single-year mandate vs multi-year range without assuming +1', async () => {
+    const { getMandateStatus } = await import('@/lib/encounter-config');
+    // Mandato registrado apenas com ano de início (ou start === end)
+    const annualStatus = getMandateStatus(2026, 2026);
+    expect(annualStatus.displayPeriod).toBe('2026');
+    expect(annualStatus.isActive).toBe(true);
+
+    const singleYearDefault = getMandateStatus(2026, null);
+    expect(singleYearDefault.displayPeriod).toBe('2026');
+    expect(singleYearDefault.isActive).toBe(true);
+
+    // Mandato passado anual
+    const pastAnnual = getMandateStatus(2025, 2025);
+    expect(pastAnnual.displayPeriod).toBe('2025');
+
+    // Mandato com período explicitamente cadastrado de mais de um ano
+    const rangeStatus = getMandateStatus(2024, 2026);
+    expect(rangeStatus.displayPeriod).toBe('2024 - 2026');
+  });
 });
+
