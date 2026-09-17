@@ -293,21 +293,21 @@ export function OverviewView({ data, viewer, selectedParish }: OverviewViewProps
           title={parishName}
           description="Acesso aos dados da paróquia: jovens que já vivenciaram o Segue-me, edições realizadas, pessoas que fizeram, pessoas que já trabalharam e casais atuantes."
           actions={
-            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            <div className="overview-page-actions">
               <Link
                 href={`/pessoas?parish=${encodeURIComponent(parishName)}&quickFilter=youth_vivenciou`}
                 className="button button-primary"
               >
-                <UsersThree size={18} />
-                Ver Jovens da Paróquia
-                <ArrowUpRight size={16} />
+                <UsersThree size={17} />
+                <span>Jovens da Paróquia</span>
+                <ArrowUpRight size={15} />
               </Link>
               <Link
                 href={`/encontros?parish=${encodeURIComponent(parishName)}`}
                 className="button button-secondary"
               >
-                <CalendarBlank size={18} />
-                Encontros da Paróquia
+                <CalendarBlank size={17} />
+                <span>Encontros</span>
               </Link>
             </div>
           }
@@ -318,15 +318,15 @@ export function OverviewView({ data, viewer, selectedParish }: OverviewViewProps
           title="Dashboard do Movimento Segue-me"
           description="Acesso central aos dados consolidados da Diocese de Anápolis: participantes, encontros históricos, validações cadastrais e os 6 setores territoriais."
           actions={
-            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            <div className="overview-page-actions">
               <Link href="/setores" className="button button-primary">
-                <Buildings size={18} />
-                Setores e Paróquias (6)
-                <ArrowUpRight size={16} />
+                <Buildings size={17} />
+                <span>Setores e Paróquias (6)</span>
+                <ArrowUpRight size={15} />
               </Link>
               <Link href="/pessoas" className="button button-secondary">
-                <UsersThree size={18} />
-                Pessoas na base
+                <UsersThree size={17} />
+                <span>Pessoas na base</span>
               </Link>
             </div>
           }
@@ -338,13 +338,15 @@ export function OverviewView({ data, viewer, selectedParish }: OverviewViewProps
         {stats.map(({ title, value, detail, icon: Icon, link, className }) => (
           <Link href={link} className={`stat-card ${className}`} key={title}>
             <div className="stat-top">
-              <span>{title}</span>
-              <Icon size={22} weight="duotone" />
+              <span className="stat-label">{title}</span>
+              <div className="stat-icon-wrap">
+                <Icon size={18} weight="duotone" />
+              </div>
             </div>
             <strong className="stat-number">{number(value)}</strong>
             <div className="stat-bottom">
-              <span>{detail}</span>
-              <ArrowUpRight size={16} />
+              <span className="stat-detail">{detail}</span>
+              <ArrowUpRight size={14} className="stat-arrow" />
             </div>
           </Link>
         ))}
