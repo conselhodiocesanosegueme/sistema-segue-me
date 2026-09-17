@@ -1300,6 +1300,264 @@ html, body {
   color: var(--text-muted);
 }
 
+/* Unified People Filters Component */
+.people-filters-wrapper {
+  margin-bottom: 20px;
+}
+
+.people-filters-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.people-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.people-input-box {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.people-search-icon {
+  position: absolute;
+  left: 14px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.people-search-input {
+  width: 100%;
+  height: 44px;
+  padding: 10px 84px 10px 42px;
+  border: 1px solid var(--border-base);
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-size: 0.9rem;
+  color: var(--text-main);
+  background: #ffffff;
+  outline: none;
+  transition: var(--transition);
+  box-shadow: var(--shadow-sm);
+}
+
+.people-search-input:focus {
+  border-color: var(--brand-gold);
+  box-shadow: 0 0 0 3px rgba(255, 183, 23, 0.22);
+}
+
+.people-submit-btn {
+  position: absolute;
+  right: 6px;
+  padding: 6px 14px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: var(--brand-primary);
+  color: #fff;
+  border: none;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.people-submit-btn:hover {
+  background: var(--brand-hover);
+}
+
+.people-filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px;
+  height: 44px;
+  white-space: nowrap;
+  font-size: 0.88rem;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.people-filter-badge {
+  background: var(--brand-gold);
+  color: #78350f;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 999px;
+  line-height: 1;
+}
+
+.people-caret {
+  transition: transform 0.2s ease;
+}
+.people-caret-open {
+  transform: rotate(180deg);
+}
+
+.people-filter-panel {
+  background: #ffffff;
+  border: 1px solid var(--border-base);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: fadeInUp 0.18s ease-out;
+}
+
+.people-filter-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.people-section-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--brand-primary);
+}
+
+.people-pills-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.people-pill {
+  padding: 6px 13px;
+  border-radius: var(--radius-full);
+  font-size: 0.82rem;
+  font-weight: 500;
+  border: 1px solid var(--border-base);
+  background: var(--bg-canvas);
+  color: var(--text-main);
+  cursor: pointer;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  font-family: inherit;
+}
+
+.people-pill:hover {
+  background: var(--bg-subtle);
+  border-color: var(--border-strong);
+}
+
+.people-pill-active {
+  background: var(--brand-light) !important;
+  color: var(--brand-primary) !important;
+  border-color: var(--brand-border) !important;
+  font-weight: 700;
+  box-shadow: 0 1px 2px rgba(180, 83, 9, 0.1);
+}
+
+.people-selects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.people-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.people-label {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.people-select {
+  width: 100%;
+}
+
+.people-panel-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-light);
+}
+
+/* Chips de Filtros Ativos */
+.people-chips-container {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 4px 2px;
+}
+
+.people-chips-title {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.people-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  background: var(--brand-light);
+  border: 1px solid var(--brand-border);
+  color: var(--brand-primary);
+  font-size: 0.76rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: var(--transition);
+}
+
+.people-chip:hover {
+  background: var(--brand-border);
+}
+
+.people-chips-clear {
+  font-size: 0.76rem;
+  color: var(--text-subtle);
+  text-decoration: underline;
+  margin-left: 4px;
+}
+.people-chips-clear:hover {
+  color: var(--brand-primary);
+}
+
+@media (max-width: 640px) {
+  .people-search-bar {
+    gap: 8px;
+  }
+  .people-search-input {
+    padding-right: 74px;
+    font-size: 0.86rem;
+  }
+  .people-submit-btn {
+    padding: 5px 10px;
+    font-size: 0.78rem;
+  }
+  .people-filter-btn {
+    padding: 0 12px;
+    font-size: 0.82rem;
+  }
+  .people-selects-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Data Tables and Filters */
 .table-card {
   background: #fff;

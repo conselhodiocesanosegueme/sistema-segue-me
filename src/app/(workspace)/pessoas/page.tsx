@@ -1,9 +1,10 @@
 import Link from 'next/link';
-import { ArrowRight, MagnifyingGlass, UserPlus, UsersThree, Funnel, X } from '@phosphor-icons/react/dist/ssr';
+import { ArrowRight, UsersThree } from '@phosphor-icons/react/dist/ssr';
 import { requireViewer } from '@/lib/auth';
 import { getFilterOptions, getPeople } from '@/lib/data';
 import { Avatar, Badge, PageHeading, Pagination } from '@/components/ui';
 import { number } from '@/lib/format';
+import { PeopleFilters } from '@/components/people-filters';
 
 interface PessoasPageProps {
   searchParams: Promise<Record<string, string | undefined>>;
@@ -28,20 +29,6 @@ export default async function PessoasPage({ searchParams }: PessoasPageProps) {
     getPeople(filters),
     getFilterOptions(),
   ]);
-
-  const activeQuickFilter = filters.quickFilter || '';
-  const currentParish = isParochialReviewer ? parochialParish : (filters.parish || '');
-  const hasActiveFilters = Boolean(filters.q || (filters.parish && !isParochialReviewer) || filters.year || filters.team || filters.status || filters.quickFilter);
-
-  const baseQueryParam = currentParish ? `parish=${encodeURIComponent(currentParish)}` : '';
-  const makeUrl = (qf?: string) => {
-    const params = new URLSearchParams();
-    if (currentParish) params.set('parish', currentParish);
-    if (qf) params.set('quickFilter', qf);
-    if (filters.q) params.set('q', filters.q);
-    const qs = params.toString();
-    return `/pessoas${qs ? `?${qs}` : ''}`;
-  };
 
   return (
     <div className="page-enter">
@@ -70,111 +57,15 @@ export default async function PessoasPage({ searchParams }: PessoasPageProps) {
         />
       )}
 
-      {/* Pílulas de Filtro Rápido Específicas do Segue-me */}
-      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '16px', alignItems: 'center' }}>
-        <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginRight: '4px' }}>
-          Filtrar por:
-        </span>
-        <Link
-          href={makeUrl()}
-          className={`button ${!activeQuickFilter ? 'button-primary' : 'button-secondary'}`}
-          style={{ padding: '6px 14px', fontSize: '0.8rem', height: 'auto' }}
-        >
-          Todos ({isParochialReviewer ? 'Paróquia' : 'Geral'})
-        </Link>
-        <Link
-          href={makeUrl('youth_vivenciou')}
-          className={`button ${activeQuickFilter === 'youth_vivenciou' ? 'button-primary' : 'button-secondary'}`}
-          style={{ padding: '6px 14px', fontSize: '0.8rem', height: 'auto' }}
-        >
-          Jovens que Vivenciaram
-        </Link>
-        <Link
-          href={makeUrl('worked')}
-          className={`button ${activeQuickFilter === 'worked' ? 'button-primary' : 'button-secondary'}`}
-          style={{ padding: '6px 14px', fontSize: '0.8rem', height: 'auto' }}
-        >
-          Trabalharam nas Equipes
-        </Link>
-        <Link
-          href={makeUrl('couples')}
-          className={`button ${activeQuickFilter === 'couples' ? 'button-primary' : 'button-secondary'}`}
-          style={{ padding: '6px 14px', fontSize: '0.8rem', height: 'auto' }}
-        >
-          Casais Atuantes / Tios
-        </Link>
-        <Link
-          href={makeUrl('musicians')}
-          className={`button ${activeQuickFilter === 'musicians' ? 'button-primary' : 'button-secondary'}`}
-          style={{ padding: '6px 14px', fontSize: '0.8rem', height: 'auto' }}
-        >
-          🎵 Músicos & Cantores
-        </Link>
-      </div>
+      <PeopleFilters
+        parishes={options?.parishes || []}
+        years={options?.years || []}
+        filters={filters}
+        isParochialReviewer={isParochialReviewer}
+        parochialParish={parochialParish}
+      />
 
       <div className="table-card">
-        {/* Barra de Filtros */}
-        <form method="get" className="filter-bar">
-          {activeQuickFilter && (
-            <input type="hidden" name="quickFilter" value={activeQuickFilter} />
-          )}
-
-          <div style={{ position: 'relative', flex: '1', minWidth: '220px' }}>
-            <input
-              type="search"
-              name="q"
-              defaultValue={filters.q || ''}
-              placeholder="Buscar por nome, código PES ou contato…"
-              className="filter-input"
-              style={{ width: '100%' }}
-            />
-          </div>
-
-          {isParochialReviewer ? (
-            <div style={{ display: 'flex', alignItems: 'center', background: 'var(--brand-light)', padding: '6px 12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--brand-border)', fontSize: '0.8rem', color: 'var(--brand-primary)', fontWeight: 600 }}>
-              {parochialParish}
-              <input type="hidden" name="parish" value={parochialParish} />
-            </div>
-          ) : (
-            <select name="parish" defaultValue={filters.parish || ''} className="filter-input">
-              <option value="">Todas as paróquias</option>
-              {options?.parishes?.map((p: string) => (
-                <option key={p} value={p}>{p}</option>
-              ))}
-            </select>
-          )}
-
-          <select name="year" defaultValue={filters.year || ''} className="filter-input">
-            <option value="">Todos os anos</option>
-            {options?.years?.map((y: number) => (
-              <option key={y} value={String(y)}>{y}</option>
-            ))}
-          </select>
-
-          <select name="status" defaultValue={filters.status || ''} className="filter-input">
-            <option value="">Todas as situações</option>
-            <option value="Identificado">Identificado</option>
-            <option value="Dados incompletos">Dados incompletos</option>
-            <option value="Possível duplicidade">Possível duplicidade</option>
-            <option value="Pendente">Pendente</option>
-          </select>
-
-          <button type="submit" className="button button-secondary" style={{ padding: '8px 14px' }}>
-            <Funnel size={16} />
-            Filtrar
-          </button>
-
-          {hasActiveFilters && (
-            <Link
-              href={isParochialReviewer ? `/pessoas?parish=${encodeURIComponent(parochialParish)}` : '/pessoas'}
-              className="button button-secondary"
-              style={{ padding: '8px 14px', color: 'var(--text-muted)' }}
-            >
-              <X size={15} />
-              Limpar
-            </Link>
-          )}
-        </form>
 
         {/* Tabela de Resultados */}
         <div style={{ overflowX: 'auto' }}>
