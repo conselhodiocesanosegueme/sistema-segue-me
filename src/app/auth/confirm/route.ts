@@ -11,9 +11,11 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get('code');
   const next = searchParams.get('next') || '/';
 
-  // Base URL segura com HTTPS e WWW forçados em produção
-  const baseUrl = process.env.NODE_ENV === 'development' && request.headers.get('host')?.includes('localhost')
-    ? 'http://localhost:3000'
+  // Base URL segura: detecta localhost/127.0.0.1 em desenvolvimento ou força https://www.sistemasegueme.com.br em produção
+  const host = request.headers.get('host') || '';
+  const isLocal = process.env.NODE_ENV === 'development' || host.includes('localhost') || host.includes('127.0.0.1');
+  const baseUrl = isLocal
+    ? `http://${host || 'localhost:3000'}`
     : 'https://www.sistemasegueme.com.br';
 
   if (isDemoMode()) {

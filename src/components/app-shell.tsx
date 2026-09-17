@@ -75,15 +75,24 @@ export function AppShell({ viewer, children }: { viewer: Viewer; children: React
     </aside>
     <div className="main-layout">
       <header className="topbar">
-        <div className="topbar-location">
+        <div className="topbar-left">
           <button className="icon-button mobile-menu" onClick={() => setMobileOpen(true)} aria-label="Abrir menu" aria-expanded={mobileOpen}>
             <List size={23} />
           </button>
-          <span>Sistema Segue-me</span>
-          <span className="breadcrumb-separator">/</span>
-          <strong>{title}</strong>
-        </div>
-        <div className="topbar-right">
+          <Link href={staff ? '/' : '/me'} className="topbar-mobile-brand" aria-label="Início Segue-me">
+            <span className="brand-symbol" style={{ width: '32px', height: '32px', background: '#fff', border: '1.5px solid var(--brand-primary)', padding: '2px', borderRadius: '8px' }}>
+              <img
+                src="/logo-segue-me.png"
+                alt="Logo Segue-me"
+                width={26}
+                height={26}
+                style={{ objectFit: 'contain', borderRadius: '50%' }}
+              />
+            </span>
+            <span style={{ fontFamily: 'var(--font-serif)', fontSize: '1.2rem', fontWeight: 600, color: 'var(--brand-primary)' }}>
+              Segue-me
+            </span>
+          </Link>
           {staff && (
             <form className="topbar-search" action="/pessoas" role="search">
               <MagnifyingGlass size={18} />
@@ -91,7 +100,8 @@ export function AppShell({ viewer, children }: { viewer: Viewer; children: React
               <kbd>↵</kbd>
             </form>
           )}
-          <span className="secure-label"><ShieldCheck size={17} weight="fill" />{viewer.role === 'admin' ? 'Acesso Diocesano Geral' : viewer.role === 'reviewer' ? 'Acesso Paroquial' : 'Acesso Protegido'}</span>
+        </div>
+        <div className="topbar-right">
           <details className="account-menu">
             <summary aria-label="Opções da conta">
               <Avatar name={viewer.name} />

@@ -8,6 +8,7 @@ import { PersonActions } from '@/components/person-actions';
 import { IdentityRequestForm } from '@/components/identity-request-form';
 import { MyHistoryView } from '@/components/my-history-view';
 import { ManagePhotoModal } from '@/components/manage-photo-modal';
+import { PersonSkillsCard } from '@/components/person-skills-card';
 
 export default async function MeuHistoricoPage() {
   const viewer = await requireViewer();
@@ -171,6 +172,14 @@ export default async function MeuHistoricoPage() {
                 <PersonActions person={person} viewer={viewer} />
               </div>
             </section>
+
+            {/* Talentos & Habilidades Musicais (Auto-declaração pelo participante) */}
+            <PersonSkillsCard
+              personId={person.id}
+              personName={person.name}
+              initialSkills={person.skills}
+              canEdit={true}
+            />
 
             {/* Minhas Solicitações de Correção */}
             {requests && requests.length > 0 && (

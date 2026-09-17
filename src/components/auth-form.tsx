@@ -1,9 +1,25 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import Link from 'next/link';
-import { CheckCircle, EnvelopeSimple, Lock, User, ShieldCheck, Eye, EyeSlash } from '@phosphor-icons/react';
+import {
+  CheckCircle,
+  EnvelopeSimple,
+  Lock,
+  User,
+  ShieldCheck,
+  Eye,
+  EyeSlash,
+  Camera,
+  Trash,
+  Phone,
+  Church,
+  CalendarBlank,
+  Heart,
+  UploadSimple,
+} from '@phosphor-icons/react';
 import { createClient } from '@/lib/supabase/client';
+import { DIOCESAN_SECTORS } from '@/lib/sectors';
 
 export function AuthForm() {
   const [tab, setTab] = useState<'signin' | 'signup'>('signin');
@@ -20,6 +36,30 @@ export function AuthForm() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showSignUpPassword, setShowSignUpPassword] = useState(false);
+  const [phone, setPhone] = useState('');
+  const [condition, setCondition] = useState<'Jovem' | 'Casal'>('Jovem');
+  const [spouseName, setSpouseName] = useState('');
+  const [vivenciouParish, setVivenciouParish] = useState('');
+  const [vivenciouYear, setVivenciouYear] = useState('');
+  const [parish, setParish] = useState('');
+  const [lgpdAccepted, setLgpdAccepted] = useState(false);
+
+  // Foto de perfil
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Lista de paróquias para autocompletar
+  const allParishes = React.useMemo(() => {
+    return Array.from(
+      new Set(
+        DIOCESAN_SECTORS.flatMap((s) =>
+          s.parishes.map((p) => `${p.name} (${p.city.replace(/ - GO/g, '')})`)
+        )
+      )
+    ).sort();
+  }, []);
 
   async function handleGoogleSignIn() {
     setErrorMsg(null);
@@ -65,23 +105,83 @@ export function AuthForm() {
     }
   }
 
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setErrorMsg('Selecione um arquivo de imagem válido (JPG, PNG ou WebP).');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setErrorMsg('A foto de perfil deve ter no máximo 5MB.');
+      return;
+    }
+
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
+  };
+
+  const handleRemovePhoto = () => {
+    setPhotoFile(null);
+    setPhotoPreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   async function handleSignUp(e: React.FormEvent) {
     e.preventDefault();
     setErrorMsg(null);
     setSuccessMsg(null);
+
+    if (!lgpdAccepted) {
+      setErrorMsg('É necessário concordar com os termos da LGPD para criar seu cadastro.');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const savedEmail = email;
+      let uploadedPhotoUrl = '';
+
+      // Upload da foto para o bucket se fornecida
+      if (photoFile) {
+        try {
+          const photoFormData = new FormData();
+          photoFormData.append('photo', photoFile);
+
+          const photoRes = await fetch('/api/upload-avatar', {
+            method: 'POST',
+            body: photoFormData,
+          });
+
+          if (photoRes.ok) {
+            const photoData = await photoRes.json();
+            uploadedPhotoUrl = photoData.url || '';
+          }
+        } catch (uploadErr) {
+          console.warn('Falha no upload da foto, continuando cadastro:', uploadErr);
+        }
+      }
+
+      const savedEmail = email.trim().toLowerCase();
       const savedPassword = password;
 
       const res = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name,
+          name: name.trim(),
           email: savedEmail,
           password: savedPassword,
+          phone: phone.trim(),
+          parish: parish.trim() || vivenciouParish.trim(),
+          vivenciou_parish: vivenciouParish.trim(),
+          vivenciou_year: vivenciouYear.trim(),
+          vivenciou_stage: '1ª Etapa',
+          condition,
+          spouse_name: condition === 'Casal' ? spouseName.trim() : undefined,
+          photo_url: uploadedPhotoUrl,
+          lgpd_accepted: true,
         }),
       });
 
@@ -90,7 +190,7 @@ export function AuthForm() {
         throw new Error(data.error || 'Erro ao solicitar cadastro.');
       }
 
-      // Login automático para levar o seguidor direto à tela de vincular seu histórico
+      // Login automático para levar o seguidor direto à tela de acompanhamento
       try {
         const signInRes = await fetch('/api/auth/signin', {
           method: 'POST',
@@ -107,13 +207,10 @@ export function AuthForm() {
         // fallback caso o login automático falhe
       }
 
-      setSuccessMsg('Cadastro criado com sucesso! Faça login para informar os dados do seu encontro.');
+      setSuccessMsg('Cadastro criado com sucesso! Sua solicitação foi enviada para conferência do Conselho Diocesano.');
       setSignInEmail(savedEmail);
       setSignInPassword('');
       setTab('signin');
-      setName('');
-      setEmail('');
-      setPassword('');
     } catch (err: any) {
       setErrorMsg(err?.message || 'Erro ao processar cadastro.');
     } finally {
@@ -262,9 +359,9 @@ export function AuthForm() {
           <CheckCircle size={22} style={{ flexShrink: 0, marginTop: '2px', color: '#16a34a' }} />
           <div>
             <strong style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem' }}>
-              Conta criada com sucesso!
+              Cadastro enviado com sucesso!
             </strong>
-            Enviamos um e-mail de confirmação para você. Faça login para informar os dados do seu encontro e vincular seu histórico oficial!
+            {successMsg}
           </div>
         </div>
       )}
@@ -336,7 +433,89 @@ export function AuthForm() {
           </button>
         </form>
       ) : (
-        <form onSubmit={handleSignUp} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        <form onSubmit={handleSignUp} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          
+          {/* UPLOAD DA FOTO DA GALERIA */}
+          <div
+            style={{
+              background: '#f8fafc',
+              border: '1px solid var(--border-base)',
+              borderRadius: 'var(--radius-lg)',
+              padding: '16px',
+              textAlign: 'center',
+            }}
+          >
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                style={{
+                  width: '90px',
+                  height: '90px',
+                  borderRadius: '50%',
+                  border: photoPreview ? '3px solid var(--brand-primary)' : '2px dashed var(--brand-primary)',
+                  background: '#ffffff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  overflow: 'hidden',
+                  position: 'relative',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                }}
+                title="Clique para escolher foto da galeria"
+              >
+                {photoPreview ? (
+                  <img
+                    src={photoPreview}
+                    alt="Foto de perfil"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', color: 'var(--brand-primary)' }}>
+                    <Camera size={28} />
+                    <span style={{ fontSize: '0.68rem', fontWeight: 600, marginTop: '2px' }}>Foto</span>
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={handlePhotoSelect}
+                  style={{ display: 'none' }}
+                />
+                <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="button button-secondary"
+                    style={{ fontSize: '0.76rem', padding: '5px 12px', height: 'auto', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
+                  >
+                    <UploadSimple size={14} />
+                    {photoPreview ? 'Trocar Foto' : 'Escolher Foto da Galeria'}
+                  </button>
+                  {photoPreview && (
+                    <button
+                      type="button"
+                      onClick={handleRemovePhoto}
+                      className="button button-secondary"
+                      style={{ fontSize: '0.76rem', padding: '5px 10px', height: 'auto', color: '#dc2626' }}
+                      title="Remover foto"
+                    >
+                      <Trash size={14} />
+                    </button>
+                  )}
+                </div>
+                <span style={{ fontSize: '0.72rem', color: 'var(--text-subtle)', display: 'block', marginTop: '6px' }}>
+                  📸 Sua foto de rosto ajuda o Conselho a reconhecer você e validar seu histórico com agilidade.
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* DADOS BÁSICOS */}
           <div>
             <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '5px' }}>
               Seu nome completo *
@@ -345,16 +524,155 @@ export function AuthForm() {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Nome como saía no crachá ou quadrante"
+              placeholder="Nome como costumava constar no crachá ou quadrante"
               required
               className="filter-input"
               style={{ width: '100%' }}
             />
           </div>
 
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '5px' }}>
+                WhatsApp / Telefone *
+              </label>
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="(62) 99999-9999"
+                required
+                className="filter-input"
+                style={{ width: '100%' }}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '5px' }}>
+                Condição *
+              </label>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                <button
+                  type="button"
+                  onClick={() => setCondition('Jovem')}
+                  style={{
+                    flex: 1,
+                    padding: '8px',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    borderRadius: 'var(--radius-md)',
+                    border: condition === 'Jovem' ? '1px solid var(--brand-primary)' : '1px solid var(--border-base)',
+                    background: condition === 'Jovem' ? 'var(--brand-primary)' : '#fff',
+                    color: condition === 'Jovem' ? '#fff' : 'var(--text-main)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Jovem
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCondition('Casal')}
+                  style={{
+                    flex: 1,
+                    padding: '8px',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    borderRadius: 'var(--radius-md)',
+                    border: condition === 'Casal' ? '1px solid var(--brand-primary)' : '1px solid var(--border-base)',
+                    background: condition === 'Casal' ? 'var(--brand-primary)' : '#fff',
+                    color: condition === 'Casal' ? '#fff' : 'var(--text-main)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Casal (Tios)
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {condition === 'Casal' && (
+            <div>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '5px' }}>
+                Nome do Cônjuge (Tio ou Tia) *
+              </label>
+              <input
+                type="text"
+                value={spouseName}
+                onChange={(e) => setSpouseName(e.target.value)}
+                placeholder="Ex: Maria dos Santos"
+                required={condition === 'Casal'}
+                className="filter-input"
+                style={{ width: '100%' }}
+              />
+            </div>
+          )}
+
+          {/* DADOS DA VIVÊNCIA */}
+          <div style={{ background: '#fdfbf7', border: '1px solid #fde68a', borderRadius: 'var(--radius-md)', padding: '14px' }}>
+            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#92400e', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
+              Dados do Encontro em que Vivenciou
+            </span>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '10px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#78350f', marginBottom: '4px' }}>
+                  Paróquia da Vivência *
+                </label>
+                <input
+                  type="text"
+                  list="signup-parishes-list"
+                  value={vivenciouParish}
+                  onChange={(e) => setVivenciouParish(e.target.value)}
+                  placeholder="Ex: São Sebastião"
+                  required
+                  className="filter-input"
+                  style={{ width: '100%', fontSize: '0.82rem', background: '#ffffff' }}
+                />
+                <datalist id="signup-parishes-list">
+                  {allParishes.map((p) => (
+                    <option key={p} value={p} />
+                  ))}
+                </datalist>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#78350f', marginBottom: '4px' }}>
+                  Ano aproximado *
+                </label>
+                <input
+                  type="number"
+                  min={1980}
+                  max={2026}
+                  value={vivenciouYear}
+                  onChange={(e) => setVivenciouYear(e.target.value)}
+                  placeholder="Ex: 2018"
+                  required
+                  className="filter-input"
+                  style={{ width: '100%', fontSize: '0.82rem', background: '#ffffff' }}
+                />
+              </div>
+            </div>
+
+            <div style={{ marginTop: '10px' }}>
+              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#78350f', marginBottom: '4px' }}>
+                Paróquia que congrega atualmente (opcional)
+              </label>
+              <input
+                type="text"
+                list="signup-parishes-list"
+                value={parish}
+                onChange={(e) => setParish(e.target.value)}
+                placeholder="Se diferente da paróquia onde vivenciou"
+                className="filter-input"
+                style={{ width: '100%', fontSize: '0.82rem', background: '#ffffff' }}
+              />
+            </div>
+          </div>
+
+          {/* E-MAIL E SENHA */}
           <div>
             <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '5px' }}>
-              Seu e-mail *
+              Seu e-mail de acesso *
             </label>
             <input
               type="email"
@@ -365,39 +683,65 @@ export function AuthForm() {
               className="filter-input"
               style={{ width: '100%' }}
             />
-            <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '3px', display: 'block' }}>
-              Você receberá as notificações e confirmações neste e-mail.
-            </span>
           </div>
 
           <div>
             <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '5px' }}>
               Crie uma senha de acesso * (mínimo 6 caracteres)
             </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              required
-              minLength={6}
-              className="filter-input"
-              style={{ width: '100%' }}
-            />
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <input
+                type={showSignUpPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+                minLength={6}
+                className="filter-input"
+                style={{ width: '100%', paddingRight: '40px' }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowSignUpPassword(!showSignUpPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '10px',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: 'var(--text-subtle)',
+                  padding: '4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                }}
+                aria-label={showSignUpPassword ? 'Ocultar senha' : 'Exibir senha'}
+              >
+                {showSignUpPassword ? <EyeSlash size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
 
+          {/* TERMO DE CONSENTIMENTO LGPD */}
           <div
             style={{
-              padding: '10px 12px',
+              padding: '12px 14px',
               borderRadius: 'var(--radius-md)',
-              background: 'var(--bg-canvas)',
-              border: '1px solid var(--border-light)',
-              fontSize: '0.76rem',
-              color: 'var(--text-muted)',
-              lineHeight: '1.4',
+              background: '#f8fafc',
+              border: '1px solid var(--border-base)',
             }}
           >
-            🛡️ Ao criar sua conta, na próxima tela você poderá informar os encontros que vivenciou ou trabalhou para que o Conselho Diocesano valide seu histórico.
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer', fontSize: '0.78rem', color: 'var(--text-main)', lineHeight: '1.45' }}>
+              <input
+                type="checkbox"
+                checked={lgpdAccepted}
+                onChange={(e) => setLgpdAccepted(e.target.checked)}
+                required
+                style={{ marginTop: '2px', accentColor: 'var(--brand-primary)', width: '16px', height: '16px', flexShrink: 0 }}
+              />
+              <span>
+                <strong>Termo de Consentimento LGPD:</strong> Concordo com o tratamento dos meus dados cadastrais e imagem nos termos da Lei Geral de Proteção de Dados (Lei nº 13.709/2018), exclusivamente para fins de localização, conferência histórica e identificação no Movimento Segue-me da Diocese de Anápolis.
+              </span>
+            </label>
           </div>
 
           <button
@@ -406,7 +750,7 @@ export function AuthForm() {
             className="button button-primary"
             style={{ width: '100%', marginTop: '4px', justifyContent: 'center' }}
           >
-            {loading ? 'Criando conta...' : 'Criar minha conta'}
+            {loading ? 'Processando cadastro...' : 'Criar Conta & Enviar para Validação'}
           </button>
         </form>
       )}

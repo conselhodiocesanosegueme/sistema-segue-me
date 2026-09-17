@@ -4,9 +4,10 @@ export type EncounterType =
   | '1ª Etapa'
   | '2ª Etapa'
   | 'Retiro Mariano'
-  | 'Congresso Eucarístico';
+  | 'Congresso Eucarístico'
+  | 'Implantação Externa';
 
-export type EncounterLevel = 'Paroquial' | 'Diocesano';
+export type EncounterLevel = 'Paroquial' | 'Diocesano' | 'Outra Diocese';
 
 export interface EncounterTypeInfo {
   type: EncounterType;
@@ -89,6 +90,19 @@ export const ENCOUNTER_TYPES: Record<EncounterType, EncounterTypeInfo> = {
       'Lojinha e Artigos Religiosos',
       'Saúde e Primeiros Socorros',
       'Segurança e Trânsito',
+    ],
+  },
+  'Implantação Externa': {
+    type: 'Implantação Externa',
+    level: 'Outra Diocese',
+    badgeColor: '#0e7490',
+    badgeBg: '#cffafe',
+    description: 'Encontro missionário de implantação do Segue-me em outra diocese, apadrinhado e realizado com apoio de jovens e casais da Diocese de Anápolis.',
+    prerequisiteRule: 'Voluntários de Anápolis devem ter vivenciado a 1ª Etapa (ou ser jovem de fora em remessa pioneira).',
+    defaultTeams: [
+      ...STANDARD_SEGUE_ME_TEAMS,
+      'Equipe de Implantação',
+      'Coordenação Missionária',
     ],
   },
 };
@@ -427,6 +441,26 @@ export function getConditionMeta(condition?: string | null, role?: string | null
     roleBadgeColor: '#1e40af',
     roleBadgeBorder: '#93c5fd',
   };
+}
+
+/**
+ * Detecta se um encontro é uma Implantação Externa em outra diocese
+ */
+export function isExternalImplantation(encounter?: {
+  type?: string | null;
+  target_diocese?: string | null;
+  is_external_implantation?: boolean;
+  notes?: string | null;
+} | null): boolean {
+  if (!encounter) return false;
+  if (encounter.is_external_implantation) return true;
+  if (encounter.type === 'Implantação Externa') return true;
+  if (encounter.target_diocese) return true;
+  if (encounter.notes) {
+    const n = encounter.notes.toLowerCase();
+    if (n.includes('implantação externa') || n.includes('implantacao externa') || n.includes('outra diocese')) return true;
+  }
+  return false;
 }
 
 

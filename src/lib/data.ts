@@ -26,13 +26,24 @@ const text=(s:string)=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLower
 export function hydratePerson<T extends Partial<Person>>(p: T | null | undefined): T | null {
   if (!p) return null;
   let photo_url = p.photo_url || null;
-  if (!photo_url && (p as any).notes) {
+  let skills = p.skills || null;
+  let pastoral_notes = p.pastoral_notes || '';
+  let engagement_status = p.engagement_status || 'neutro';
+
+  if ((p as any).notes) {
     try {
       const parsed = typeof (p as any).notes === 'string' ? JSON.parse((p as any).notes) : (p as any).notes;
-      if (parsed?.photo_url) photo_url = parsed.photo_url;
+      if (parsed && typeof parsed === 'object') {
+        if (!photo_url && parsed.photo_url) photo_url = parsed.photo_url;
+        if (!skills && parsed.skills) skills = parsed.skills;
+        if (!pastoral_notes && parsed.pastoral_notes) pastoral_notes = parsed.pastoral_notes;
+        if ((!engagement_status || engagement_status === 'neutro') && parsed.engagement_status) {
+          engagement_status = parsed.engagement_status;
+        }
+      }
     } catch {}
   }
-  return { ...p, photo_url };
+  return { ...p, photo_url, skills, pastoral_notes, engagement_status };
 }
 
 export async function getPeople(filters: Record<string, string>): Promise<PageResult<Person>> {
@@ -76,6 +87,14 @@ export async function getPeople(filters: Record<string, string>): Promise<PageRe
           (!filters.parish || state.encounters.some(e => e.id === h.encounter_id && e.parish === filters.parish))
         ) || (state.couples || []).some(c => (c.person_1_id === p.id || c.person_2_id === p.id) && (!filters.parish || p.parish === filters.parish));
         if (!isCouple) return false;
+      } else if (filters.quickFilter === 'musicians') {
+        const hydrated = hydratePerson(p);
+        const hasMusicalSkill = Boolean(
+          hydrated?.skills?.sings ||
+          (hydrated?.skills?.instruments && hydrated.skills.instruments.length > 0) ||
+          (hydrated?.skills?.other_skills && hydrated.skills.other_skills.length > 0)
+        );
+        if (!hasMusicalSkill) return false;
       }
 
       // Filtros detalhados de encontro, equipe, tipo e ano
@@ -105,6 +124,37 @@ export async function getPeople(filters: Record<string, string>): Promise<PageRe
   }
 
   const db = await supabaseServer();
+  const admin = supabaseAdmin();
+
+  // Tratamento de filtro rápido para Músicos & Cantores em modo Supabase
+  if (filters.quickFilter === 'musicians') {
+    try {
+      let query = admin
+        .from('people')
+        .select('id, legacy_id, name, phone, email, birth_date_text, sex, identification_status, notes, version, parish, photo_url', { count: 'exact' })
+        .is('merged_into', null)
+        .ilike('notes', '%"skills"%');
+
+      if (filters.parish) query = query.eq('parish', filters.parish);
+      if (filters.q) query = query.ilike('name', `%${filters.q}%`);
+
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
+      const { data: peopleData, count, error: queryErr } = await query.order('name', { ascending: true }).range(from, to);
+
+      if (!queryErr && peopleData) {
+        return {
+          items: peopleData.map(p => hydratePerson(p) as Person),
+          total: count ?? peopleData.length,
+          page,
+          pageSize
+        };
+      }
+    } catch {
+      // segue para busca padrão em caso de fallback
+    }
+  }
+
   const { data, error } = await db.rpc('search_people', {
     p_query: filters.q || '',
     p_page: page,
@@ -179,9 +229,11 @@ export async function getEncounters(filters: Record<string, string> = {}): Promi
     return {
       items: list.slice((page - 1) * pageSize, page * pageSize).map(e => ({
         ...e,
-        type: e.type || '1ª Etapa',
-        level: e.level || (e.type === '1ª Etapa' || !e.type ? 'Paroquial' : 'Diocesano'),
-        participation_count: state.participations.filter(p => p.encounter_id === e.id).length
+        type: e.type || (e.is_external_implantation ? 'Implantação Externa' : '1ª Etapa'),
+        level: e.level || (e.is_external_implantation ? 'Outra Diocese' : e.type === '1ª Etapa' || !e.type ? 'Paroquial' : 'Diocesano'),
+        participation_count: state.participations.filter(p => p.encounter_id === e.id).length,
+        target_diocese: e.target_diocese || null,
+        is_external_implantation: Boolean(e.is_external_implantation || e.type === 'Implantação Externa'),
       })),
       total: list.length,
       page,
@@ -206,15 +258,17 @@ export async function getEncounters(filters: Record<string, string> = {}): Promi
     const fallbackRes = await fallbackQuery;
     if (!fallbackRes.error && fallbackRes.data) {
       const allItems = fallbackRes.data.map((e: any) => {
-        const encType = (e.type as EncounterType) || '1ª Etapa';
+        const encType = (e.type as EncounterType) || (e.is_external_implantation ? 'Implantação Externa' : '1ª Etapa');
         const typeInfo = ENCOUNTER_TYPES[encType] || ENCOUNTER_TYPES['1ª Etapa'];
         const pCount = (Array.isArray(e.participations) && e.participations[0]?.count) ?? e.participation_count ?? 0;
         return {
           ...e,
           type: encType,
-          level: e.level || (encType === '1ª Etapa' ? 'Paroquial' : 'Diocesano'),
+          level: e.level || (encType === 'Implantação Externa' ? 'Outra Diocese' : encType === '1ª Etapa' ? 'Paroquial' : 'Diocesano'),
           teams: Array.isArray(e.teams) ? e.teams : (typeInfo.defaultTeams || []),
           participation_count: pCount,
+          target_diocese: e.target_diocese || null,
+          is_external_implantation: Boolean(e.is_external_implantation || encType === 'Implantação Externa'),
         };
       }) as Encounter[];
       const filtered = allItems.filter(e => {
@@ -229,15 +283,17 @@ export async function getEncounters(filters: Record<string, string> = {}): Promi
 
   checkDb(error);
   const items = (data || []).map((e: any) => {
-    const encType = (e.type as EncounterType) || '1ª Etapa';
+    const encType = (e.type as EncounterType) || (e.is_external_implantation ? 'Implantação Externa' : '1ª Etapa');
     const typeInfo = ENCOUNTER_TYPES[encType] || ENCOUNTER_TYPES['1ª Etapa'];
     const pCount = (Array.isArray(e.participations) && e.participations[0]?.count) ?? e.participation_count ?? 0;
     return {
       ...e,
       type: encType,
-      level: e.level || (encType === '1ª Etapa' ? 'Paroquial' : 'Diocesano'),
+      level: e.level || (encType === 'Implantação Externa' ? 'Outra Diocese' : encType === '1ª Etapa' ? 'Paroquial' : 'Diocesano'),
       teams: Array.isArray(e.teams) ? e.teams : (typeInfo.defaultTeams || []),
       participation_count: pCount,
+      target_diocese: e.target_diocese || null,
+      is_external_implantation: Boolean(e.is_external_implantation || encType === 'Implantação Externa'),
     };
   }) as Encounter[];
   return { items, total: count || 0, page, pageSize };
@@ -534,6 +590,33 @@ export async function getReviews(status = 'pending'): Promise<ReviewItem[]> {
   const db = await supabaseServer(); let query = db.from('review_items').select('*').order('created_at', { ascending: false }).limit(100); if (status !== 'all') query = query.eq('status', status); const { data, error } = await query; checkDb(error); const items = data as ReviewItem[]; const ids = [...new Set(items.flatMap(r => [r.person_id, r.related_person_id]).filter(Boolean))] as string[]; if (!ids.length) return items; const { data: people, error: personError } = await db.from('people').select('*').in('id', ids); checkDb(personError); return items.map(r => ({ ...r, person: people?.find(p => p.id === r.person_id), related_person: people?.find(p => p.id === r.related_person_id) }));
 }
 export async function getImports(): Promise<ImportJob[]> { if (isDemoMode()) return (await readDemo()).imports; const db = await supabaseServer(); const { data, error } = await db.from('import_jobs').select('*').order('created_at', { ascending: false }).limit(30); checkDb(error); return data as ImportJob[]; }
+export async function getDatabaseMetrics() {
+  if (isDemoMode()) {
+    const state = await readDemo();
+    return {
+      people: state.people.length,
+      encounters: state.encounters.length,
+      couples: (state.couples || []).length,
+      participations: state.participations.length,
+      mandates: (state.mandates || []).length,
+    };
+  }
+  const db = await supabaseServer();
+  const [peopleRes, encRes, couplesRes, partRes, mandatesRes] = await Promise.all([
+    db.from('people').select('id', { count: 'exact', head: true }),
+    db.from('encounters').select('id', { count: 'exact', head: true }),
+    db.from('couples').select('id', { count: 'exact', head: true }),
+    db.from('participations').select('id', { count: 'exact', head: true }),
+    db.from('mandates').select('id', { count: 'exact', head: true }),
+  ]);
+  return {
+    people: peopleRes.count || 0,
+    encounters: encRes.count || 0,
+    couples: couplesRes.count || 0,
+    participations: partRes.count || 0,
+    mandates: mandatesRes.count || 0,
+  };
+}
 export const getOverview = cache(async (parishScope?: string | null): Promise<Overview> => {
   if (isDemoMode()) {
     const state = await readDemo();

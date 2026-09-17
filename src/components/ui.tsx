@@ -54,8 +54,8 @@ export function Feedback({ message, error = false }: { message?: string; error?:
 
 export function Note({ children }: { children: ReactNode }) { return <div className="note"><Info size={20} /><div>{children}</div></div>; }
 
-export function SubmitButton({ busy, children, className = 'button-primary', ...props }: { busy: boolean; children: ReactNode; className?: string; disabled?: boolean; type?: 'submit' | 'button'; onClick?: () => void }) {
-  return <button className={`button ${className}`} disabled={busy || props.disabled} {...props}>{busy ? <CircleNotch size={18} className="spin" aria-hidden="true" /> : null}{busy ? 'Aguarde…' : children}</button>;
+export function SubmitButton({ busy, children, className = 'button-primary', style, ...props }: { busy: boolean; children: ReactNode; className?: string; disabled?: boolean; type?: 'submit' | 'button'; onClick?: () => void; style?: React.CSSProperties }) {
+  return <button className={`button ${className}`} style={style} disabled={busy || props.disabled} {...props}>{busy ? <CircleNotch size={18} className="spin" aria-hidden="true" /> : null}{busy ? 'Aguarde…' : children}</button>;
 }
 
 export function Modal({ open, title, description, onClose, children, wide = false }: { open: boolean; title: string; description?: string; onClose: () => void; children: ReactNode; wide?: boolean }) {

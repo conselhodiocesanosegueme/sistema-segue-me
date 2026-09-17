@@ -102,6 +102,7 @@ export async function POST(
         const applicantEmail = (rev.proposed_changes as any)?.email || null;
         const applicantPhone = (rev.proposed_changes as any)?.phone || null;
         const applicantParish = (rev.proposed_changes as any)?.parish || null;
+        const applicantPhotoUrl = (rev.proposed_changes as any)?.photo_url || (rev.evidence as any)?.photo_url || null;
         const legacyCode = `PES-${Math.floor(10000 + Math.random() * 90000)}`;
 
         const { data: createdPerson, error: createPersonErr } = await admin
@@ -112,6 +113,7 @@ export async function POST(
             phone: applicantPhone,
             parish: applicantParish,
             legacy_id: legacyCode,
+            photo_url: applicantPhotoUrl,
           })
           .select('id')
           .single();
@@ -133,6 +135,20 @@ export async function POST(
 
         if (matchedPerson?.id) {
           targetPersonId = matchedPerson.id;
+        }
+      }
+
+      // Se há foto enviada e a pessoa aprovada ainda não tem foto, atualiza
+      const photoToSync = (rev.proposed_changes as any)?.photo_url || (rev.evidence as any)?.photo_url;
+      if (targetPersonId && photoToSync) {
+        try {
+          await admin
+            .from('people')
+            .update({ photo_url: photoToSync })
+            .eq('id', targetPersonId)
+            .is('photo_url', null);
+        } catch (photoErr) {
+          console.warn('[REVIEWS] Aviso ao atualizar foto da pessoa existente:', photoErr);
         }
       }
 

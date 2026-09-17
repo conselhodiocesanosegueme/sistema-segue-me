@@ -7,19 +7,21 @@ import {
 } from '@/lib/encounter-config';
 
 describe('Encounter Types and Hierarchy Rules', () => {
-  it('defines all 4 official encounter types with correct levels', () => {
+  it('defines all official encounter types including external implantation with correct levels', () => {
     const types = Object.keys(ENCOUNTER_TYPES);
     expect(types).toEqual([
       '1ª Etapa',
       '2ª Etapa',
       'Retiro Mariano',
       'Congresso Eucarístico',
+      'Implantação Externa',
     ]);
 
     expect(ENCOUNTER_TYPES['1ª Etapa'].level).toBe('Paroquial');
     expect(ENCOUNTER_TYPES['2ª Etapa'].level).toBe('Diocesano');
     expect(ENCOUNTER_TYPES['Retiro Mariano'].level).toBe('Diocesano');
     expect(ENCOUNTER_TYPES['Congresso Eucarístico'].level).toBe('Diocesano');
+    expect(ENCOUNTER_TYPES['Implantação Externa'].level).toBe('Outra Diocese');
   });
 
   it('verifies 1ª Etapa has no prerequisite', () => {

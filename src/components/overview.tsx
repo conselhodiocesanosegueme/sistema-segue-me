@@ -334,13 +334,7 @@ export function OverviewView({ data, viewer, selectedParish }: OverviewViewProps
       )}
 
       {/* Grid de Estatísticas (Dashboard KPIs) */}
-      <div
-        className="stats-grid"
-        style={{
-          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-          marginBottom: '28px',
-        }}
-      >
+      <div className="stats-grid">
         {stats.map(({ title, value, detail, icon: Icon, link, className }) => (
           <Link href={link} className={`stat-card ${className}`} key={title}>
             <div className="stat-top">
@@ -358,28 +352,8 @@ export function OverviewView({ data, viewer, selectedParish }: OverviewViewProps
 
       {/* Widget Panorâmico dos 6 Setores Diocesanos (Visão Executiva) */}
       {!isParochial && (
-        <section
-          style={{
-            background: '#ffffff',
-            border: '1px solid var(--border-base)',
-            borderRadius: 'var(--radius-xl)',
-            padding: '24px 28px',
-            marginBottom: '28px',
-            boxShadow: 'var(--shadow-sm)',
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: '14px',
-              marginBottom: '20px',
-              paddingBottom: '16px',
-              borderBottom: '1px solid var(--border-light)',
-            }}
-          >
+        <section className="overview-sectors-panel">
+          <div className="overview-sectors-header">
             <div>
               <div className="section-kicker" style={{ marginBottom: '4px' }}>
                 <span className="small-line" />
@@ -400,13 +374,7 @@ export function OverviewView({ data, viewer, selectedParish }: OverviewViewProps
             </Link>
           </div>
 
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-              gap: '14px',
-            }}
-          >
+          <div className="sectors-quick-grid">
             {DIOCESAN_SECTORS.map((s) => (
               <Link
                 key={s.id}
@@ -496,32 +464,34 @@ export function OverviewView({ data, viewer, selectedParish }: OverviewViewProps
                   registros entre {years[0].year} e {years.at(-1)?.year}
                 </span>
               </div>
-              <div
-                className="bar-chart"
-                role="img"
-                aria-label={`Participações por ano: ${years.map((item) => `${item.year}: ${item.total}`).join('; ')}`}
-              >
-                <div className="chart-guidelines" aria-hidden="true">
-                  <span>{number(max)}</span>
-                  <span>{number(Math.round(max / 2))}</span>
-                  <span>0</span>
-                </div>
-                <div className="chart-bars">
-                  {years.map((item, index) => (
-                    <div
-                      className="chart-column"
-                      key={item.year}
-                      title={`${item.year}: ${number(item.total)} participações`}
-                    >
+              <div className="bar-chart-scroll">
+                <div
+                  className="bar-chart"
+                  role="img"
+                  aria-label={`Participações por ano: ${years.map((item) => `${item.year}: ${item.total}`).join('; ')}`}
+                >
+                  <div className="chart-guidelines" aria-hidden="true">
+                    <span>{number(max)}</span>
+                    <span>{number(Math.round(max / 2))}</span>
+                    <span>0</span>
+                  </div>
+                  <div className="chart-bars">
+                    {years.map((item, index) => (
                       <div
-                        className={`chart-bar${index === years.length - 1 ? ' chart-bar-current' : ''}`}
-                        style={{ height: `${Math.max(2, (item.total / max) * 100)}%` }}
+                        className="chart-column"
+                        key={item.year}
+                        title={`${item.year}: ${number(item.total)} participações`}
                       >
-                        <span className="chart-tooltip">{number(item.total)}</span>
+                        <div
+                          className={`chart-bar${index === years.length - 1 ? ' chart-bar-current' : ''}`}
+                          style={{ height: `${Math.max(2, (item.total / max) * 100)}%` }}
+                        >
+                          <span className="chart-tooltip">{number(item.total)}</span>
+                        </div>
+                        <span className="chart-year">{item.year}</span>
                       </div>
-                      <span className="chart-year">{item.year}</span>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               </div>
               <div className="chart-footnote">

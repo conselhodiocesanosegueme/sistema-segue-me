@@ -39,18 +39,68 @@ interface ManageUsersViewProps {
   viewer: Viewer;
 }
 
-// Gera slug limpo para o email funcional da paróquia
-function generateParishSlug(parishName: string): string {
-  return parishName
+function cleanCityName(city: string = ''): string {
+  return city
+    .replace(/\s*-\s*GO/gi, '')
+    .replace(/\s*\/GO/gi, '')
+    .trim();
+}
+
+function cleanSlug(text: string = ''): string {
+  return text
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
-    .replace(/^par[oó]quia\s+/i, '')
-    .replace(/^santu[aá]rio\s+diocesano\s+/i, '')
-    .replace(/^santu[aá]rio\s+/i, '')
+    .replace(/^par[oó]quias?\s+/i, '')
+    .replace(/^santu[aá]rio\s+(diocesano\s+)?/i, '')
     .replace(/^quase-par[oó]quia\s+/i, '')
+    .replace(/[-/]\s*go/gi, '')
     .replace(/[^a-z0-9]/g, '')
-    .slice(0, 20);
+    .trim();
+}
+
+function isHomonymousParish(parishName: string): boolean {
+  const norm = cleanSlug(parishName);
+  let count = 0;
+  for (const s of DIOCESAN_SECTORS) {
+    for (const p of s.parishes) {
+      if (cleanSlug(p.name) === norm) {
+        count++;
+        if (count > 1) return true;
+      }
+    }
+  }
+  return false;
+}
+
+// Gera slug limpo para o email funcional da paróquia com diferenciação de cidade
+function generateParishSlug(parishName: string, city?: string): string {
+  let p = cleanSlug(parishName);
+  // Atalhos mnemônicos elegantes para oragos comuns
+  if (p.includes('nossasenhoradocarmo') || p === 'carmo') p = 'carmo';
+  else if (p.includes('nossasenhoradabadia') || p === 'abadia') p = 'abadia';
+  else if (p.includes('saofranciscodeassis') || p === 'saofrancisco') p = 'saofrancisco';
+  else if (p.includes('saopedroesaopaulo') || p === 'pedropaulo') p = 'pedropaulo';
+  else if (p.includes('santissimatrindade')) p = 'trindade';
+  else if (p.includes('divinopaieterno')) p = 'paieterno';
+  else if (p.includes('nossasenhoradefatima')) p = 'fatima';
+  else if (p.includes('nossasenhoradelourdes')) p = 'lourdes';
+  else if (p.includes('nossasenhoradasgracas')) p = 'gracas';
+  else if (p.includes('nossasenhoraaparecida')) p = 'aparecida';
+  else if (p.includes('sagradocoracaodejesus')) p = 'sagradocoracao';
+  else if (p.includes('santateresinhadomeninojesus')) p = 'santateresinha';
+  else if (p.includes('catedralbomjesus')) p = 'catedral';
+  else if (p.includes('saojoseoperario')) p = 'saojoseoperario';
+  else if (p.includes('saojose')) p = 'saojose';
+  else if (p.includes('santoantonio')) p = 'santoantonio';
+  else if (p.includes('saosebastiao')) p = 'saosebastiao';
+  else p = p.slice(0, 18);
+
+  const c = city ? cleanSlug(city).slice(0, 15) : '';
+  if (c) {
+    return `${p}.${c}`;
+  }
+  return p;
 }
 
 // Gera senha segura temporária inicial
@@ -103,14 +153,25 @@ export function ManageUsersView({ initialUsers, viewer }: ManageUsersViewProps) 
     setTimeout(() => setCopiedKey(null), 2500);
   };
 
+  const updateParishSelection = (sectorId: string, parishName: string) => {
+    const sector = DIOCESAN_SECTORS.find((s) => s.id === sectorId);
+    const parish = sector?.parishes.find((p) => p.name === parishName) || sector?.parishes[0];
+    if (!parish) return;
+
+    const cleanCity = cleanCityName(parish.city);
+    const emailSlug = generateParishSlug(parish.name, cleanCity);
+
+    setCreateSectorId(sectorId);
+    setCreateParishName(parish.name);
+    setCreateName(`Equipe Dirigente · ${parish.name} (${cleanCity})`);
+    setCreateEmail(`dirigente.${emailSlug}@sistemasegueme.com.br`);
+  };
+
   // Prepara modal de criação ao abrir
   const handleOpenCreateModal = () => {
     const firstSector = DIOCESAN_SECTORS[0];
     const firstParish = firstSector.parishes[0];
-    setCreateSectorId(firstSector.id);
-    setCreateParishName(firstParish.name);
-    setCreateName(`Equipe Dirigente · ${firstParish.name}`);
-    setCreateEmail(`dirigente.${generateParishSlug(firstParish.name)}@sistemasegueme.com.br`);
+    updateParishSelection(firstSector.id, firstParish.name);
     setCreatePassword(generateSecurePassword());
     setCreateRole('reviewer');
     setCreateError(null);
@@ -123,18 +184,13 @@ export function ManageUsersView({ initialUsers, viewer }: ManageUsersViewProps) 
     setCreateSectorId(sectorId);
     const sector = DIOCESAN_SECTORS.find((s) => s.id === sectorId);
     if (sector && sector.parishes.length > 0) {
-      const parish = sector.parishes[0];
-      setCreateParishName(parish.name);
-      setCreateName(`Equipe Dirigente · ${parish.name}`);
-      setCreateEmail(`dirigente.${generateParishSlug(parish.name)}@sistemasegueme.com.br`);
+      updateParishSelection(sectorId, sector.parishes[0].name);
     }
   };
 
   // Quando a paróquia muda no modal de criação
   const handleParishChangeInCreate = (parishName: string) => {
-    setCreateParishName(parishName);
-    setCreateName(`Equipe Dirigente · ${parishName}`);
-    setCreateEmail(`dirigente.${generateParishSlug(parishName)}@sistemasegueme.com.br`);
+    updateParishSelection(createSectorId, parishName);
   };
 
   // Submissão do novo usuário
@@ -144,6 +200,14 @@ export function ManageUsersView({ initialUsers, viewer }: ManageUsersViewProps) 
     setCreateError(null);
 
     try {
+      const sector = DIOCESAN_SECTORS.find((s) => s.id === createSectorId);
+      const parishObj = sector?.parishes.find((p) => p.name === createParishName);
+      const cleanCity = parishObj ? cleanCityName(parishObj.city) : '';
+      const hasHomonym = parishObj ? isHomonymousParish(parishObj.name) : false;
+      const storedParishName = hasHomonym && cleanCity
+        ? `Paróquia ${createParishName} (${cleanCity})`
+        : `Paróquia ${createParishName}`;
+
       const res = await fetch('/api/admin/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -151,7 +215,7 @@ export function ManageUsersView({ initialUsers, viewer }: ManageUsersViewProps) 
           email: createEmail,
           password: createPassword,
           full_name: createName,
-          parish: createRole === 'reviewer' ? createParishName : null,
+          parish: createRole === 'reviewer' ? storedParishName : null,
           role: createRole,
         }),
       });
@@ -174,7 +238,7 @@ export function ManageUsersView({ initialUsers, viewer }: ManageUsersViewProps) 
       setCreatedSuccessCreds({
         email: createEmail,
         password: createPassword,
-        parish: createParishName,
+        parish: parishObj ? `${parishObj.name} (${cleanCity})` : createParishName,
         name: createName,
       });
     } catch (err: any) {
@@ -598,7 +662,7 @@ export function ManageUsersView({ initialUsers, viewer }: ManageUsersViewProps) 
                   type="button"
                   onClick={() =>
                     copyToClipboard(
-                      `Olá! Aqui estão as credenciais de acesso da Equipe Dirigente ao Sistema Segue-me (Diocese de Anápolis):\n\nParóquia: ${createdSuccessCreds.parish}\nE-mail: ${createdSuccessCreds.email}\nSenha: ${createdSuccessCreds.password}\n\nAcesse em: https://segueme-anapolis.vercel.app/entrar`,
+                      `Olá! Aqui estão as credenciais de acesso da Equipe Dirigente ao Sistema Segue-me (Diocese de Anápolis):\n\nParóquia: ${createdSuccessCreds.parish}\nE-mail: ${createdSuccessCreds.email}\nSenha: ${createdSuccessCreds.password}\n\nAcesse em: https://sistemasegueme.com.br/entrar`,
                       'creds-all'
                     )
                   }

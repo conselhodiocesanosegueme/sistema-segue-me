@@ -17,10 +17,11 @@ import {
   Tag,
   Funnel,
   CaretRight,
+  Buildings,
 } from '@phosphor-icons/react';
 import type { CoupleInfo, Mandate, Participation, Person } from '@/lib/types';
 import { Avatar, Badge } from '@/components/ui';
-import { isMandateRecord } from '@/lib/encounter-config';
+import { isMandateRecord, isExternalImplantation } from '@/lib/encounter-config';
 
 interface MyHistoryViewProps {
   person: Person;
@@ -567,21 +568,55 @@ export function MyHistoryView({
                       >
                         <div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
-                            {/* Badge do Tipo */}
-                            <span
-                              style={{
-                                fontSize: '0.72rem',
-                                fontWeight: 700,
-                                textTransform: 'uppercase',
-                                padding: '3px 8px',
-                                borderRadius: '4px',
-                                background: isVivencia ? 'var(--brand-light)' : 'var(--bg-subtle)',
-                                color: isVivencia ? 'var(--brand-primary)' : 'var(--text-main)',
-                                border: `1px solid ${isVivencia ? 'var(--brand-border)' : 'var(--border-light)'}`,
-                              }}
-                            >
-                              {isVivencia ? '★ Vivenciou o Encontro' : '⚙ Equipe de Trabalho'}
-                            </span>
+                            {/* Badge do Tipo / Missão */}
+                            {isExternalImplantation(part.encounter) && !isVivencia ? (
+                              <span
+                                style={{
+                                  fontSize: '0.72rem',
+                                  fontWeight: 700,
+                                  textTransform: 'uppercase',
+                                  padding: '3px 8px',
+                                  borderRadius: '4px',
+                                  background: '#cffafe',
+                                  color: '#0e7490',
+                                  border: '1px solid #a5f3fc',
+                                }}
+                              >
+                                🌐 Missão de Implantação Externa
+                              </span>
+                            ) : (
+                              <span
+                                style={{
+                                  fontSize: '0.72rem',
+                                  fontWeight: 700,
+                                  textTransform: 'uppercase',
+                                  padding: '3px 8px',
+                                  borderRadius: '4px',
+                                  background: isVivencia ? 'var(--brand-light)' : 'var(--bg-subtle)',
+                                  color: isVivencia ? 'var(--brand-primary)' : 'var(--text-main)',
+                                  border: `1px solid ${isVivencia ? 'var(--brand-border)' : 'var(--border-light)'}`,
+                                }}
+                              >
+                                {isVivencia ? '★ Vivenciou o Encontro' : '⚙ Equipe de Trabalho'}
+                              </span>
+                            )}
+
+                            {isVivencia && part.is_external_seed && (
+                              <span
+                                style={{
+                                  fontSize: '0.72rem',
+                                  fontWeight: 700,
+                                  textTransform: 'uppercase',
+                                  padding: '3px 8px',
+                                  borderRadius: '4px',
+                                  background: '#fef3c7',
+                                  color: '#92400e',
+                                  border: '1px solid #fde68a',
+                                }}
+                              >
+                                🌱 Remessa de Implantação
+                              </span>
+                            )}
 
                             {/* Badge da Condição: Jovem ou Casal */}
                             <span
@@ -690,7 +725,24 @@ export function MyHistoryView({
                         )}
                       </div>
 
-                      {/* Informações da Paróquia e Cidade */}
+                      {/* Informações da Diocese, Paróquia e Cidade */}
+                      {part.encounter?.target_diocese && (
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            fontSize: '0.78rem',
+                            color: '#0e7490',
+                            fontWeight: 600,
+                            marginBottom: '3px',
+                          }}
+                        >
+                          <Buildings size={14} color="#0891b2" />
+                          <span>Diocese: {part.encounter.target_diocese}</span>
+                        </div>
+                      )}
+
                       {part.encounter?.parish && (
                         <div
                           style={{

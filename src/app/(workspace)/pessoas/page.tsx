@@ -103,6 +103,13 @@ export default async function PessoasPage({ searchParams }: PessoasPageProps) {
         >
           Casais Atuantes / Tios
         </Link>
+        <Link
+          href={makeUrl('musicians')}
+          className={`button ${activeQuickFilter === 'musicians' ? 'button-primary' : 'button-secondary'}`}
+          style={{ padding: '6px 14px', fontSize: '0.8rem', height: 'auto' }}
+        >
+          🎵 Músicos & Cantores
+        </Link>
       </div>
 
       <div className="table-card">
@@ -196,12 +203,47 @@ export default async function PessoasPage({ searchParams }: PessoasPageProps) {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <Avatar name={person.name} src={person.photo_url} />
                         <div>
-                          <Link
-                            href={`/pessoas/${person.id}`}
-                            style={{ fontWeight: 600, color: 'var(--text-main)', textDecoration: 'none' }}
-                          >
-                            {person.name}
-                          </Link>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                            <Link
+                              href={`/pessoas/${person.id}`}
+                              style={{ fontWeight: 600, color: 'var(--text-main)', textDecoration: 'none' }}
+                            >
+                              {person.name}
+                            </Link>
+                            {person.skills?.sings && (
+                              <span
+                                title="Canta / Salmista / Coral"
+                                style={{
+                                  fontSize: '0.68rem',
+                                  padding: '1px 6px',
+                                  borderRadius: '999px',
+                                  background: '#fdf2f8',
+                                  color: '#be185d',
+                                  border: '1px solid #fbcfe8',
+                                  fontWeight: 600,
+                                }}
+                              >
+                                🎤 Canto
+                              </span>
+                            )}
+                            {person.skills?.instruments && person.skills.instruments.length > 0 && (
+                              <span
+                                title={person.skills.instruments.join(', ')}
+                                style={{
+                                  fontSize: '0.68rem',
+                                  padding: '1px 6px',
+                                  borderRadius: '999px',
+                                  background: '#eff6ff',
+                                  color: '#1d4ed8',
+                                  border: '1px solid #bfdbfe',
+                                  fontWeight: 600,
+                                }}
+                              >
+                                🎸 {person.skills.instruments[0]}
+                                {person.skills.instruments.length > 1 ? ` +${person.skills.instruments.length - 1}` : ''}
+                              </span>
+                            )}
+                          </div>
                           {person.email && (
                             <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>
                               {person.email}

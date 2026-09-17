@@ -23,6 +23,8 @@ export async function POST(request: Request) {
       worked_history,
       mandates_history,
       notes,
+      photo_url,
+      lgpd_accepted,
     } = data as Record<string, string | undefined>;
 
     if (!name || name.trim().length < 2) {
@@ -39,6 +41,7 @@ export async function POST(request: Request) {
       phone ? `WhatsApp/Telefone: ${phone}` : null,
       parish ? `Paróquia atual: ${parish}` : null,
       notes ? `Observações: ${notes}` : null,
+      lgpd_accepted ? `Consentimento LGPD: Confirmado pelo participante em ${new Date().toLocaleDateString('pt-BR')}` : null,
     ].filter(Boolean);
 
     const fullContext = contextParts.join('\n');
@@ -57,12 +60,15 @@ export async function POST(request: Request) {
             parish,
             condition,
             spouse_name,
+            photo_url: photo_url || '',
           },
           evidence: {
             context: fullContext,
             vivenciou_stage,
             vivenciou_parish,
             vivenciou_year,
+            photo_url: photo_url || '',
+            lgpd_accepted: true,
             solicitante: viewer.email,
           },
           status: 'pending',
@@ -97,6 +103,7 @@ export async function POST(request: Request) {
             parish: parish || '',
             condition: condition || 'Jovem',
             spouse_name: spouse_name || '',
+            photo_url: photo_url || '',
           },
           evidence: {
             context: fullContext,
@@ -107,6 +114,9 @@ export async function POST(request: Request) {
             worked_history: worked_history || '',
             mandates_history: mandates_history || '',
             notes: notes || '',
+            photo_url: photo_url || '',
+            lgpd_accepted: true,
+            lgpd_accepted_at: new Date().toISOString(),
             submitted_by_email: viewer.email,
             submitted_at: new Date().toISOString(),
           },

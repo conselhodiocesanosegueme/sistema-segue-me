@@ -22,8 +22,8 @@ export const DIOCESAN_SECTORS: Sector[] = [
     region: 'Anápolis Norte / Souzânia / Interlândia',
     description: 'Região norte de Anápolis e distritos de Souzânia e Interlândia',
     parishes: [
-      { name: 'São Sebastião', city: 'Interlândia - GO', dbNames: ['Paróquia São Sebastião', 'São Sebastião', 'Paróquia São Sebastião (Interlândia)'] },
-      { name: "Nossa Senhora D'Abadia", city: 'Souzânia - GO', dbNames: ["Paróquia Nossa Senhora D'Abadia (Souzânia)", "Paróquia Nossa Senhora D'Abadia", "Nossa Senhora D'Abadia"] },
+      { name: 'São Sebastião', city: 'Interlândia - GO', dbNames: ['Paróquia São Sebastião (Interlândia)', 'Paróquia São Sebastião', 'São Sebastião', 'São Sebastião (Interlândia)'] },
+      { name: "Nossa Senhora D'Abadia", city: 'Souzânia - GO', dbNames: ["Paróquia Nossa Senhora D'Abadia (Souzânia)", "Paróquia Nossa Senhora D'Abadia", "Nossa Senhora D'Abadia", "Nossa Senhora D'Abadia (Souzânia)"] },
       { name: 'Santíssima Trindade', city: 'Anápolis - GO', dbNames: ['Paróquia Santíssima Trindade', 'Santíssima Trindade'] },
       { name: 'Nossa Senhora de Fátima', city: 'Anápolis - GO', dbNames: ['Paróquia Nossa Senhora de Fátima', 'Nossa Senhora de Fátima'] },
       { name: 'Divino Pai Eterno', city: 'Anápolis - GO', dbNames: ['Paróquia Divino Pai Eterno', 'Divino Pai Eterno'] },
@@ -41,8 +41,8 @@ export const DIOCESAN_SECTORS: Sector[] = [
     parishes: [
       { name: 'São José Operário', city: 'Anápolis - GO', dbNames: ['Paróquia São José Operário', 'São José Operário'] },
       { name: 'Nossa Senhora Aparecida', city: 'Anápolis - GO', dbNames: ['Paróquia Nossa Senhora Aparecida', 'Nossa Senhora Aparecida', 'Paróquia Nossa Senhora Aparecida e São Pedro e São Paulo'] },
-      { name: 'São Pedro e São Paulo', city: 'Anápolis - GO', dbNames: ['Paróquia São Pedro e São Paulo', 'São Pedro e São Paulo'] },
-      { name: 'Santuário Santo Antônio', city: 'Anápolis - GO', dbNames: ['Santuário Diocesano Santo Antônio', 'Santuário Santo Antônio'] },
+      { name: 'São Pedro e São Paulo', city: 'Anápolis - GO', dbNames: ['Paróquia São Pedro e São Paulo (Anápolis)', 'Paróquia São Pedro e São Paulo', 'São Pedro e São Paulo', 'São Pedro e São Paulo (Anápolis)'] },
+      { name: 'Santuário Santo Antônio', city: 'Anápolis - GO', dbNames: ['Santuário Diocesano Santo Antônio', 'Santuário Santo Antônio', 'Paróquia Santo Antônio (Anápolis)', 'Santo Antônio (Anápolis)'] },
       { name: 'São Joaquim', city: 'Anápolis - GO', dbNames: ['Paróquia São Joaquim', 'São Joaquim'] },
       { name: 'Sagrado Coração de Jesus', city: 'Anápolis - GO', dbNames: ['Paróquia Sagrado Coração de Jesus', 'Sagrado Coração de Jesus'] },
       {
@@ -69,11 +69,11 @@ export const DIOCESAN_SECTORS: Sector[] = [
     parishes: [
       { name: 'Nossa Senhora de Lourdes', city: 'Anápolis - GO', dbNames: ['Paróquia Nossa Senhora de Lourdes', 'Nossa Senhora de Lourdes'] },
       { name: 'São Mateus', city: 'Anápolis - GO', dbNames: ['Paróquia São Mateus', 'São Mateus'] },
-      { name: 'Nossa Senhora do Carmo', city: 'Anápolis - GO', dbNames: ['Paróquia Nossa Senhora do Carmo', 'Nossa Senhora do Carmo'] },
-      { name: 'São Francisco de Assis', city: 'Anápolis - GO', dbNames: ['Paróquia São Francisco de Assis', 'São Francisco de Assis'] },
+      { name: 'Nossa Senhora do Carmo', city: 'Anápolis - GO', dbNames: ['Paróquia Nossa Senhora do Carmo (Anápolis)', 'Paróquia Nossa Senhora do Carmo', 'Nossa Senhora do Carmo', 'Nossa Senhora do Carmo (Anápolis)'] },
+      { name: 'São Francisco de Assis', city: 'Anápolis - GO', dbNames: ['Paróquia São Francisco de Assis (Anápolis)', 'Paróquia São Francisco de Assis', 'São Francisco de Assis', 'São Francisco de Assis (Anápolis)'] },
       { name: 'Nossa Senhora das Graças', city: 'Anápolis - GO', dbNames: ['Paróquia Nossa Senhora das Graças', 'Nossa Senhora das Graças'] },
       { name: 'Catedral Bom Jesus', city: 'Anápolis - GO', dbNames: ['Catedral do Bom Jesus', 'Catedral Bom Jesus'] },
-      { name: "Nossa Senhora D'Abadia", city: 'Anápolis - GO', dbNames: ["Paróquia Nossa Senhora D'Abadia", "Nossa Senhora D'Abadia"] },
+      { name: "Nossa Senhora D'Abadia", city: 'Anápolis - GO', dbNames: ["Paróquia Nossa Senhora D'Abadia (Anápolis)", "Paróquia Nossa Senhora D'Abadia", "Nossa Senhora D'Abadia", "Nossa Senhora D'Abadia (Anápolis)"] },
       { name: 'Nossa Senhora Rosa Mística', city: 'Anápolis - GO', status: 'SEM EQUIPE DIRIGENTE', dbNames: ['Paróquia Nossa Senhora Rosa Mística', 'Nossa Senhora Rosa Mística'] },
       { name: 'Santo Expedito', city: 'Anápolis - GO', status: 'SEM EQUIPE DIRIGENTE', dbNames: ['Paróquia Santo Expedito'] },
     ],
@@ -85,11 +85,11 @@ export const DIOCESAN_SECTORS: Sector[] = [
     region: 'Ouro Verde / Petrolina / Nerópolis / Nova Veneza',
     description: 'Municípios do eixo noroeste e norte da diocese',
     parishes: [
-      { name: 'São Sebastião', city: 'Ouro Verde - GO', dbNames: ['Paróquia São Sebastião (Ouro Verde)', 'Paróquia São Sebastião', 'São Sebastião'] },
+      { name: 'São Sebastião', city: 'Ouro Verde - GO', dbNames: ['Paróquia São Sebastião (Ouro Verde)', 'Paróquia São Sebastião', 'São Sebastião', 'São Sebastião (Ouro Verde)'] },
       { name: 'Santa Maria Eterna', city: 'Petrolina - GO', dbNames: ['Paróquia Santa Maria Eterna', 'Santa Maria Eterna'] },
-      { name: 'Santo Antônio', city: 'Damolândia - GO', dbNames: ['Paróquia Santo Antônio (Damolândia)', 'Paróquia Santo Antônio', 'Santo Antônio'] },
-      { name: "Nossa Senhora D'Abadia", city: 'Santa Rosa - GO', dbNames: ["Paróquia Nossa Senhora D'Abadia (Santa Rosa)", "Paróquia Nossa Senhora D'Abadia", "Nossa Senhora D'Abadia"] },
-      { name: 'Nossa Senhora do Carmo', city: 'Nova Veneza - GO', dbNames: ['Paróquia Nossa Senhora do Carmo (Nova Veneza)', 'Paróquia Nossa Senhora do Carmo', 'Nossa Senhora do Carmo'] },
+      { name: 'Santo Antônio', city: 'Damolândia - GO', dbNames: ['Paróquia Santo Antônio (Damolândia)', 'Paróquia Santo Antônio', 'Santo Antônio', 'Santo Antônio (Damolândia)'] },
+      { name: "Nossa Senhora D'Abadia", city: 'Santa Rosa - GO', dbNames: ["Paróquia Nossa Senhora D'Abadia (Santa Rosa)", "Paróquia Nossa Senhora D'Abadia", "Nossa Senhora D'Abadia", "Nossa Senhora D'Abadia (Santa Rosa)"] },
+      { name: 'Nossa Senhora do Carmo', city: 'Nova Veneza - GO', dbNames: ['Paróquia Nossa Senhora do Carmo (Nova Veneza)', 'Paróquia Nossa Senhora do Carmo', 'Nossa Senhora do Carmo', 'Nossa Senhora do Carmo (Nova Veneza)'] },
       { name: 'São Benedito e Imaculado Coração de Maria', city: 'Nerópolis - GO', dbNames: ['Paróquia São Benedito e Imaculado Coração de Maria', 'Paróquia São Benedito', 'São Benedito'] },
     ],
   },
@@ -103,10 +103,10 @@ export const DIOCESAN_SECTORS: Sector[] = [
       { name: 'Nossa Senhora da Penha', city: 'Jaraguá - GO', dbNames: ['Paróquia Nossa Senhora da Penha', 'Nossa Senhora da Penha', 'Paróquias Nossa Senhora da Penha e São José', 'Paróquias Nossa Senhora da Penha, Santa Edwiges e São José'] },
       { name: 'Santa Edwiges', city: 'Jaraguá - GO', dbNames: ['Paróquia Santa Edwiges', 'Santa Edwiges'] },
       { name: 'São José', city: 'Jaraguá - GO', dbNames: ['Paróquia São José', 'São José'] },
-      { name: 'São Francisco de Assis', city: 'São Francisco de Goiás - GO', dbNames: ['Paróquia São Francisco de Assis (São Francisco de Goiás)', 'Paróquia São Francisco de Assis', 'São Francisco de Assis'] },
+      { name: 'São Francisco de Assis', city: 'São Francisco de Goiás - GO', dbNames: ['Paróquia São Francisco de Assis (São Francisco de Goiás)', 'Paróquia São Francisco de Assis', 'São Francisco de Assis', 'São Francisco de Assis (São Francisco de Goiás)'] },
       { name: 'Imaculado Coração de Maria e São Judas Tadeu', city: 'Jaranápolis - GO', dbNames: ['Paróquia Imaculado Coração de Maria e São Judas Tadeu', 'Imaculado Coração de Maria e São Judas Tadeu'] },
       { name: 'Senhor Bom Jesus', city: 'Jesúpolis - GO', status: 'SEM EQUIPE DIRIGENTE', dbNames: ['Paróquia Senhor Bom Jesus', 'Senhor Bom Jesus'] },
-      { name: 'Santo Antônio', city: 'Vila Propício - GO', dbNames: ['Paróquia Santo Antônio de Pádua', 'Santo Antônio de Pádua'] },
+      { name: 'Santo Antônio', city: 'Vila Propício - GO', dbNames: ['Paróquia Santo Antônio de Pádua', 'Santo Antônio de Pádua', 'Paróquia Santo Antônio (Vila Propício)', 'Santo Antônio (Vila Propício)'] },
     ],
   },
   {
@@ -129,13 +129,24 @@ export const DIOCESAN_SECTORS: Sector[] = [
           'Santa Bárbara',
         ],
       },
-      { name: 'São Pedro e São Paulo', city: 'Abadiânia - GO', dbNames: ['Paróquia São Pedro e São Paulo (Abadiânia)', 'Paróquia São Pedro e São Paulo', 'São Pedro e São Paulo'] },
-      { name: 'Santo Antônio', city: 'Cocalzinho - GO', dbNames: ['Paróquia Santo Antônio (Cocalzinho)', 'Paróquia Santo Antônio', 'Santo Antônio'] },
+      { name: 'São Pedro e São Paulo', city: 'Abadiânia - GO', dbNames: ['Paróquia São Pedro e São Paulo (Abadiânia)', 'Paróquia São Pedro e São Paulo', 'São Pedro e São Paulo', 'São Pedro e São Paulo (Abadiânia)'] },
+      { name: 'Santo Antônio', city: 'Cocalzinho - GO', dbNames: ['Paróquia Santo Antônio (Cocalzinho)', 'Paróquia Santo Antônio', 'Santo Antônio', 'Santo Antônio (Cocalzinho)'] },
       { name: 'Imaculado Coração de Maria', city: 'Alexânia - GO', dbNames: ['Paróquia Imaculado Coração de Maria', 'Imaculado Coração de Maria'] },
       { name: 'Nossa Senhora do Livramento', city: 'Girassol - GO', dbNames: ['Paróquia Nossa Senhora do Livramento', 'Nossa Senhora do Livramento'] },
     ],
   },
 ];
+
+export const EXTERNAL_SECTOR: Sector = {
+  id: 'setor-externo',
+  roman: 'EXT',
+  name: 'Missões & Implantações Externas',
+  region: 'Outras Dioceses (Apadrinhadas por Anápolis)',
+  description: 'Encontros de implantação do Segue-me realizados em outras dioceses com apoio missionário de jovens e casais da Diocese de Anápolis.',
+  parishes: [],
+};
+
+export const ALL_SECTORS_WITH_EXTERNAL: Sector[] = [...DIOCESAN_SECTORS, EXTERNAL_SECTOR];
 
 /**
  * Normaliza nome de cidade para comparações seguras sem acentos e sufixos
@@ -188,9 +199,14 @@ export function areCitiesCompatible(encCity?: string, parishCity?: string): bool
  * (ex: São José de Jaraguá vs São José Operário de Anápolis, São Francisco de Assis Anápolis vs São Francisco de Goiás).
  */
 export function matchEncounterToParish(
-  encounter: { parish?: string; city?: string },
+  encounter: { parish?: string; city?: string; type?: string; is_external_implantation?: boolean; target_diocese?: string | null },
   parish: SectorParish
 ): boolean {
+  // Encontros de implantação em outras dioceses nunca colidem com paróquias locais de Anápolis
+  if (encounter.is_external_implantation || encounter.type === 'Implantação Externa' || encounter.target_diocese) {
+    return false;
+  }
+
   const eParishRaw = (encounter.parish || '').trim();
   const eCityRaw = (encounter.city || '').trim();
   if (!eParishRaw) return false;

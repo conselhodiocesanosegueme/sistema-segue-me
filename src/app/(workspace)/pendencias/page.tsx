@@ -77,27 +77,88 @@ export default async function PendenciasPage({ searchParams }: PendenciasPagePro
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          {reviews.map((item) => (
-            <div key={item.id} className="panel" style={{ borderLeft: `4px solid ${item.kind === 'duplicate' ? '#f59e0b' : item.kind === 'correction' ? '#2563eb' : '#0f4c3a'}` }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', marginBottom: '16px' }}>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                    <span className="row-overline" style={{ color: 'var(--brand-primary)' }}>
-                      {kindLabels[item.kind] || item.kind}
-                    </span>
-                    <span style={{ fontSize: '0.74rem', color: 'var(--text-subtle)' }}>·</span>
-                    <span style={{ fontSize: '0.76rem', color: 'var(--text-subtle)' }}>
-                      Criada em {date(item.created_at)}
-                    </span>
-                    <Badge status={item.status} />
-                  </div>
-                  <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.25rem', color: 'var(--text-main)' }}>
-                    {item.title}
-                  </h3>
-                </div>
+          {reviews.map((item) => {
+            const photoUrl = (item.proposed_changes as any)?.photo_url || (item.evidence as any)?.photo_url || item.person?.photo_url || null;
+            const lgpdAccepted = Boolean((item.evidence as any)?.lgpd_accepted);
 
-                <ReviewActions item={item} />
-              </div>
+            return (
+              <div key={item.id} className="panel" style={{ borderLeft: `4px solid ${item.kind === 'duplicate' ? '#f59e0b' : item.kind === 'correction' ? '#2563eb' : '#0f4c3a'}` }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', marginBottom: '16px' }}>
+                  <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+                    {photoUrl ? (
+                      <img
+                        src={photoUrl}
+                        alt={`Foto de ${item.title}`}
+                        style={{
+                          width: '72px',
+                          height: '72px',
+                          borderRadius: '50%',
+                          objectFit: 'cover',
+                          border: '3px solid var(--brand-primary)',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+                          flexShrink: 0,
+                          marginTop: '2px',
+                        }}
+                      />
+                    ) : (
+                      <div
+                        style={{
+                          width: '72px',
+                          height: '72px',
+                          borderRadius: '50%',
+                          background: 'var(--brand-light)',
+                          color: 'var(--brand-primary)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontWeight: 700,
+                          fontSize: '1.4rem',
+                          flexShrink: 0,
+                          marginTop: '2px',
+                          border: '2px solid var(--brand-border)',
+                        }}
+                      >
+                        {item.title.replace(/^Solicitação de cadastro:\s*/i, '').replace(/^Solicitação de histórico:\s*/i, '')[0] || 'S'}
+                      </div>
+                    )}
+
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
+                        <span className="row-overline" style={{ color: 'var(--brand-primary)' }}>
+                          {kindLabels[item.kind] || item.kind}
+                        </span>
+                        <span style={{ fontSize: '0.74rem', color: 'var(--text-subtle)' }}>·</span>
+                        <span style={{ fontSize: '0.76rem', color: 'var(--text-subtle)' }}>
+                          Criada em {date(item.created_at)}
+                        </span>
+                        <Badge status={item.status} />
+                        {lgpdAccepted && (
+                          <span
+                            style={{
+                              fontSize: '0.72rem',
+                              background: '#ecfdf5',
+                              color: '#047857',
+                              border: '1px solid #a7f3d0',
+                              padding: '2px 8px',
+                              borderRadius: '4px',
+                              fontWeight: 600,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                            }}
+                          >
+                            <CheckCircle size={13} weight="fill" /> LGPD Aceito
+                          </span>
+                        )}
+                      </div>
+                      <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.25rem', color: 'var(--text-main)', margin: '4px 0 0' }}>
+                        {item.title}
+                      </h3>
+                    </div>
+                  </div>
+
+                  <ReviewActions item={item} />
+                </div>
 
               {/* Informações da Pessoa envolvida */}
               {item.person && (
@@ -162,7 +223,8 @@ export default async function PendenciasPage({ searchParams }: PendenciasPagePro
                 </div>
               )}
             </div>
-          ))}
+          );
+        })}
         </div>
       )}
     </div>

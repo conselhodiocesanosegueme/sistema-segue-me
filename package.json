@@ -9,7 +9,9 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "db:verify": "tsx scripts/verify-database.ts"
+    "db:verify": "tsx scripts/verify-database.ts",
+    "import:check": "python3 scripts/import-full-database.py --dry-run",
+    "import:run": "python3 scripts/import-full-database.py"
   },
   "dependencies": {
     "next": "16.3.5",

@@ -26,6 +26,8 @@ import { SpouseCard } from '@/components/spouse-card';
 import { PersonTimeline } from '@/components/person-timeline';
 import { ManagePhotoModal } from '@/components/manage-photo-modal';
 import { PersonTalksCard } from '@/components/person-talks-card';
+import { PersonSkillsCard } from '@/components/person-skills-card';
+import { PersonPastoralNotesCard } from '@/components/person-pastoral-notes-card';
 import { isMandateRecord, getMandateStatus, getConditionMeta, normalizeMandateBody } from '@/lib/encounter-config';
 
 interface PersonPageProps {
@@ -740,6 +742,23 @@ export default async function PersonDetailPage({ params }: PersonPageProps) {
             talks={extras.talks || []}
             isStaff={isStaff}
           />
+
+          {/* 5. Talentos & Habilidades Musicais (Público / Visível por todos) */}
+          <PersonSkillsCard
+            personId={person.id}
+            personName={person.name}
+            initialSkills={person.skills}
+            canEdit={isStaff}
+          />
+
+          {/* 6. Acompanhamento Pastoral & Histórico de Convites (Apenas Dirigentes e Conselho) */}
+          {isStaff && (
+            <PersonPastoralNotesCard
+              personId={person.id}
+              initialPastoralNotes={person.pastoral_notes}
+              initialEngagementStatus={person.engagement_status}
+            />
+          )}
         </div>
 
         {/* Coluna Direita: Linha do Tempo e Trajetória Completa */}

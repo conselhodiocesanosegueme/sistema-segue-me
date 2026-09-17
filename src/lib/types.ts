@@ -2,7 +2,34 @@ import type { EncounterType, EncounterLevel, MandateBody } from './encounter-con
 export type { EncounterType, EncounterLevel, MandateBody };
 
 export type Role = 'participant' | 'reviewer' | 'admin';
-export type Person = { id: string; legacy_id: string | null; name: string; phone: string | null; email: string | null; birth_date_text: string | null; sex: string | null; identification_status: string; notes?: string | null; version: number; merged_into?: string | null; participation_count?: number; parish?: string | null; photo_url?: string | null };
+
+export type PersonSkills = {
+  sings?: boolean;
+  singing_types?: string[];
+  instruments?: string[];
+  other_skills?: string[];
+  musical_notes?: string | null;
+};
+
+export type Person = {
+  id: string;
+  legacy_id: string | null;
+  name: string;
+  phone: string | null;
+  email: string | null;
+  birth_date_text: string | null;
+  sex: string | null;
+  identification_status: string;
+  notes?: string | null;
+  version: number;
+  merged_into?: string | null;
+  participation_count?: number;
+  parish?: string | null;
+  photo_url?: string | null;
+  skills?: PersonSkills | null;
+  pastoral_notes?: string | null;
+  engagement_status?: 'disponivel' | 'justificou' | 'sem_compromisso' | 'neutro' | string | null;
+};
 export type Encounter = {
   id: string;
   legacy_id: string;
@@ -20,8 +47,26 @@ export type Encounter = {
   type?: EncounterType;
   level?: EncounterLevel;
   teams?: string[];
+  target_diocese?: string | null;
+  is_external_implantation?: boolean;
 };
-export type Participation = { id: string; person_id: string; encounter_id: string; kind: string; condition: string; team: string | null; circle: string | null; role: string | null; patron: string | null; source_page?: string | null; notes?: string | null; encounter?: Encounter; person?: Person };
+export type Participation = {
+  id: string;
+  person_id: string;
+  encounter_id: string;
+  kind: string;
+  condition: string;
+  team: string | null;
+  circle: string | null;
+  role: string | null;
+  patron: string | null;
+  source_page?: string | null;
+  notes?: string | null;
+  is_external_seed?: boolean;
+  external_diocese?: string | null;
+  encounter?: Encounter;
+  person?: Person;
+};
 export type ReviewItem = { id: string; kind: 'correction' | 'duplicate' | 'identity' | 'import_conflict'; person_id: string | null; related_person_id?: string | null; title: string; proposed_changes: Record<string, unknown>; evidence: Record<string, unknown>; status: 'pending' | 'approved' | 'rejected'; resolution?: string; created_at: string; version: number; person?: Person; related_person?: Person };
 export type ImportJob = { id: string; status: string; source_id: string; source_revision?: string; created_at: string; completed_at?: string; summary: Record<string, number | string>; progress: Record<string, number | string>; error?: string | null };
 export type Overview = {

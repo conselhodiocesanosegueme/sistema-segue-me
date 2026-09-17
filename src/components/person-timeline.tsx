@@ -12,9 +12,10 @@ import {
   ArrowUpRight,
   HandHeart,
   SuitcaseSimple,
+  Buildings,
 } from '@phosphor-icons/react';
 import type { Participation } from '@/lib/types';
-import { isMandateRecord } from '@/lib/encounter-config';
+import { isMandateRecord, isExternalImplantation } from '@/lib/encounter-config';
 import { getConditionMeta } from '@/components/encounter-detail-view';
 
 interface PersonTimelineProps {
@@ -198,7 +199,7 @@ export function PersonTimeline({ participations, isStaff }: PersonTimelineProps)
                   <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', marginBottom: '8px', flexWrap: 'wrap' }}>
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px', flexWrap: 'wrap' }}>
-                        {isVivenciou ? (
+                        {isExternalImplantation(part.encounter) && part.kind === 'Trabalhou' ? (
                           <span
                             style={{
                               fontSize: '0.7rem',
@@ -207,12 +208,47 @@ export function PersonTimeline({ participations, isStaff }: PersonTimelineProps)
                               letterSpacing: '0.06em',
                               padding: '2px 8px',
                               borderRadius: '10px',
-                              background: '#dcfce7',
-                              color: '#15803d',
+                              background: '#cffafe',
+                              color: '#0e7490',
+                              border: '1px solid #a5f3fc',
                             }}
                           >
-                            ★ Vivenciou o encontro
+                            🌐 Missão de Implantação Externa
                           </span>
+                        ) : isVivenciou ? (
+                          <>
+                            <span
+                              style={{
+                                fontSize: '0.7rem',
+                                fontWeight: 700,
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.06em',
+                                padding: '2px 8px',
+                                borderRadius: '10px',
+                                background: '#dcfce7',
+                                color: '#15803d',
+                              }}
+                            >
+                              ★ Vivenciou o encontro
+                            </span>
+                            {part.is_external_seed && (
+                              <span
+                                style={{
+                                  fontSize: '0.7rem',
+                                  fontWeight: 700,
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.06em',
+                                  padding: '2px 8px',
+                                  borderRadius: '10px',
+                                  background: '#fef3c7',
+                                  color: '#92400e',
+                                  border: '1px solid #fde68a',
+                                }}
+                              >
+                                🌱 Remessa de Implantação
+                              </span>
+                            )}
+                          </>
                         ) : part.kind === 'Palestrou' ? (
                           <span
                             style={{
@@ -349,15 +385,24 @@ export function PersonTimeline({ participations, isStaff }: PersonTimelineProps)
                     )}
                   </div>
 
-                  {/* Localização e Paróquia */}
+                  {/* Localização, Diocese e Paróquia */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', marginTop: '6px' }}>
-                    {part.encounter?.parish && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.8rem', color: 'var(--text-subtle)' }}>
-                        <MapPin size={14} color="var(--brand-primary)" />
-                        <strong>{part.encounter.parish}</strong>
-                        {part.encounter.city ? `· ${part.encounter.city}` : ''}
-                      </div>
-                    )}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                      {part.encounter?.target_diocese && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.8rem', color: '#0e7490', fontWeight: 600 }}>
+                          <Buildings size={14} color="#0891b2" />
+                          <span>Diocese: {part.encounter.target_diocese}</span>
+                        </div>
+                      )}
+
+                      {part.encounter?.parish && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.8rem', color: 'var(--text-subtle)' }}>
+                          <MapPin size={14} color="var(--brand-primary)" />
+                          <strong>{part.encounter.parish}</strong>
+                          {part.encounter.city ? `· ${part.encounter.city}` : ''}
+                        </div>
+                      )}
+                    </div>
 
                     {isStaff && part.source_page && (
                       <span style={{ fontSize: '0.72rem', color: 'var(--text-subtle)', fontStyle: 'italic' }}>

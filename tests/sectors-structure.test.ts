@@ -103,6 +103,22 @@ describe('Diocesan Sectors Structure (Edital 2026)', () => {
     const encPedroAbadiania = { parish: 'Paróquia São Pedro e São Paulo', city: 'Abadiânia/GO' };
     expect(matchEncounterToParish(encPedroAbadiania, pedroAbadiania)).toBe(true);
     expect(matchEncounterToParish(encPedroAbadiania, pedroAnapolis)).toBe(false);
+
+    // 6. Resolução direta por string com cidade (nomes institucionais de dirigentes)
+    expect(getSectorForParish('Paróquia Nossa Senhora do Carmo (Nova Veneza)')?.name).toBe('Setor IV');
+    expect(getSectorForParish('Paróquia Nossa Senhora do Carmo (Anápolis)')?.name).toBe('Setor III');
+    expect(getSectorForParish('Paróquia São Sebastião (Interlândia)')?.name).toBe('Setor I');
+    expect(getSectorForParish('Paróquia São Sebastião (Ouro Verde)')?.name).toBe('Setor IV');
+    expect(getSectorForParish("Paróquia Nossa Senhora D'Abadia (Souzânia)")?.name).toBe('Setor I');
+    expect(getSectorForParish("Paróquia Nossa Senhora D'Abadia (Santa Rosa)")?.name).toBe('Setor IV');
+    expect(getSectorForParish("Paróquia Nossa Senhora D'Abadia (Anápolis)")?.name).toBe('Setor III');
+    expect(getSectorForParish('Paróquia São Francisco de Assis (São Francisco de Goiás)')?.name).toBe('Setor V');
+    expect(getSectorForParish('Paróquia São Francisco de Assis (Anápolis)')?.name).toBe('Setor III');
+    expect(getSectorForParish('Paróquia São Pedro e São Paulo (Abadiânia)')?.name).toBe('Setor VI');
+    expect(getSectorForParish('Paróquia São Pedro e São Paulo (Anápolis)')?.name).toBe('Setor II');
+    expect(getSectorForParish('Paróquia Santo Antônio (Damolândia)')?.name).toBe('Setor IV');
+    expect(getSectorForParish('Paróquia Santo Antônio (Cocalzinho)')?.name).toBe('Setor VI');
+    expect(getSectorForParish('Paróquia Santo Antônio (Vila Propício)')?.name).toBe('Setor V');
   });
 
   it('correctly maps cities to parishes across sectors', () => {
