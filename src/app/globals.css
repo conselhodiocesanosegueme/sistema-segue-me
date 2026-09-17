@@ -1630,6 +1630,74 @@ html, body {
   background: var(--bg-subtle);
 }
 
+/* Table Responsive Container */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.person-table-name {
+  font-weight: 600;
+  color: var(--text-main);
+  text-decoration: none;
+  white-space: nowrap;
+  font-size: 0.92rem;
+  transition: var(--transition);
+}
+.person-table-name:hover {
+  color: var(--brand-primary);
+}
+
+.person-action-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--brand-primary);
+  font-size: 0.84rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: var(--transition);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+.person-action-link:hover {
+  background: var(--brand-light);
+}
+
+/* Sectors View Component Styles */
+.sectors-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 28px;
+}
+.sectors-filter-card {
+  background: #ffffff;
+  border: 1px solid var(--border-base);
+  border-radius: var(--radius-lg);
+  padding: 18px 22px;
+  margin-bottom: 28px;
+  box-shadow: var(--shadow-sm);
+}
+.sectors-filter-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+.sectors-tabs-scroll {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 4px;
+  max-width: 100%;
+}
+
 /* Pagination */
 .pagination {
   display: flex;
@@ -2024,6 +2092,44 @@ html, body {
   }
   .sync-strip div {
     width: 100%;
+  }
+  .col-participations {
+    display: none !important;
+  }
+  .data-table th, .data-table td {
+    padding: 10px 12px;
+    font-size: 0.84rem;
+  }
+  .data-table th {
+    padding: 8px 12px;
+    font-size: 0.72rem;
+  }
+  .person-action-label {
+    display: none;
+  }
+  .person-action-link {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--brand-light);
+    border: 1px solid var(--brand-border);
+    justify-content: center;
+    padding: 0;
+  }
+  .sectors-stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .sectors-stats-grid .stat-card {
+    padding: 14px 12px;
+  }
+  .sectors-stats-grid .stat-value {
+    font-size: 1.65rem;
+  }
+  .sectors-filter-card {
+    padding: 14px 14px;
+    margin-bottom: 20px;
   }
   .table-card {
     overflow-x: auto;

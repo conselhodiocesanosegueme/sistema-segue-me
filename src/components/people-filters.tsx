@@ -109,12 +109,13 @@ export function PeopleFilters({
               type="search"
               name="q"
               defaultValue={filters.q || ''}
-              placeholder="Buscar por nome, código PES ou contato…"
+              placeholder="Buscar por nome ou código PES…"
               className="people-search-input"
-              aria-label="Buscar pessoa por nome, código ou contato"
+              aria-label="Buscar pessoa por nome ou código PES"
             />
             <button type="submit" className="people-submit-btn" title="Buscar">
-              Buscar
+              <span className="people-btn-text">Buscar</span>
+              <MagnifyingGlass size={15} className="people-btn-icon" />
             </button>
           </div>
 

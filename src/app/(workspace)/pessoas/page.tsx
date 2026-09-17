@@ -68,16 +68,16 @@ export default async function PessoasPage({ searchParams }: PessoasPageProps) {
       <div className="table-card">
 
         {/* Tabela de Resultados */}
-        <div style={{ overflowX: 'auto' }}>
+        <div className="table-responsive">
           <table className="data-table">
             <thead>
               <tr>
-                <th>Pessoa</th>
-                <th>Código</th>
-                <th>Paróquia / Origem</th>
-                <th>Participações</th>
-                <th>Situação</th>
-                <th style={{ textAlign: 'right' }}>Ações</th>
+                <th style={{ minWidth: '220px', whiteSpace: 'nowrap' }}>Pessoa</th>
+                <th style={{ minWidth: '95px', whiteSpace: 'nowrap' }}>Código</th>
+                <th style={{ minWidth: '150px', whiteSpace: 'nowrap' }}>Paróquia / Origem</th>
+                <th className="col-participations" style={{ minWidth: '130px', whiteSpace: 'nowrap' }}>Participações</th>
+                <th style={{ minWidth: '120px', whiteSpace: 'nowrap' }}>Situação</th>
+                <th style={{ textAlign: 'right', minWidth: '70px', whiteSpace: 'nowrap' }}>Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -90,14 +90,15 @@ export default async function PessoasPage({ searchParams }: PessoasPageProps) {
               ) : (
                 result.items.map((person) => (
                   <tr key={person.id}>
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <td style={{ whiteSpace: 'nowrap' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', whiteSpace: 'nowrap' }}>
                         <Avatar name={person.name} src={person.photo_url} />
-                        <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}>
                             <Link
                               href={`/pessoas/${person.id}`}
-                              style={{ fontWeight: 600, color: 'var(--text-main)', textDecoration: 'none' }}
+                              className="person-table-name"
+                              style={{ fontWeight: 600, color: 'var(--text-main)', textDecoration: 'none', whiteSpace: 'nowrap', display: 'inline-block' }}
                             >
                               {person.name}
                             </Link>
@@ -112,6 +113,7 @@ export default async function PessoasPage({ searchParams }: PessoasPageProps) {
                                   color: '#be185d',
                                   border: '1px solid #fbcfe8',
                                   fontWeight: 600,
+                                  whiteSpace: 'nowrap',
                                 }}
                               >
                                 🎤 Canto
@@ -128,6 +130,7 @@ export default async function PessoasPage({ searchParams }: PessoasPageProps) {
                                   color: '#1d4ed8',
                                   border: '1px solid #bfdbfe',
                                   fontWeight: 600,
+                                  whiteSpace: 'nowrap',
                                 }}
                               >
                                 🎸 {person.skills.instruments[0]}
@@ -136,34 +139,35 @@ export default async function PessoasPage({ searchParams }: PessoasPageProps) {
                             )}
                           </div>
                           {person.email && (
-                            <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
                               {person.email}
                             </div>
                           )}
                         </div>
                       </div>
                     </td>
-                    <td>
-                      <code style={{ fontSize: '0.8rem', background: 'var(--bg-subtle)', padding: '2px 6px', borderRadius: '4px' }}>
+                    <td style={{ whiteSpace: 'nowrap' }}>
+                      <code style={{ fontSize: '0.8rem', background: 'var(--bg-subtle)', padding: '2px 6px', borderRadius: '4px', whiteSpace: 'nowrap', display: 'inline-block' }}>
                         {person.legacy_id || 'Sem código'}
                       </code>
                     </td>
-                    <td>
-                      <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                    <td style={{ whiteSpace: 'nowrap' }}>
+                      <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
                         {person.parish || 'Não informada'}
                       </span>
                     </td>
-                    <td>
-                      <span className="badge badge-neutral">
+                    <td className="col-participations" style={{ whiteSpace: 'nowrap' }}>
+                      <span className="badge badge-neutral" style={{ whiteSpace: 'nowrap' }}>
                         {person.participation_count ?? 0} {person.participation_count === 1 ? 'encontro' : 'encontros'}
                       </span>
                     </td>
-                    <td>
+                    <td style={{ whiteSpace: 'nowrap' }}>
                       <Badge status={person.identification_status} />
                     </td>
-                    <td style={{ textAlign: 'right' }}>
-                      <Link href={`/pessoas/${person.id}`} className="text-link">
-                        Ver histórico <ArrowRight size={14} />
+                    <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                      <Link href={`/pessoas/${person.id}`} className="person-action-link" title="Ver histórico completo">
+                        <span className="person-action-label">Ver histórico</span>
+                        <ArrowRight size={15} />
                       </Link>
                     </td>
                   </tr>

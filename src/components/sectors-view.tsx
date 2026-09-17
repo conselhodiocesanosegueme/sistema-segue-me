@@ -152,14 +152,7 @@ export function SectorsView({ parishSummaries }: SectorsViewProps) {
       />
 
       {/* 4 Cards de Resumo Executivo */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
-          gap: '16px',
-          marginBottom: '28px',
-        }}
-      >
+      <div className="sectors-stats-grid">
         <div className="stat-card stat-primary">
           <div className="stat-icon"><Buildings size={24} /></div>
           <div className="stat-label">Setores Oficiais</div>
@@ -190,18 +183,9 @@ export function SectorsView({ parishSummaries }: SectorsViewProps) {
       </div>
 
       {/* Barra de Filtros e Abas dos Setores */}
-      <div
-        style={{
-          background: '#ffffff',
-          border: '1px solid var(--border-base)',
-          borderRadius: 'var(--radius-lg)',
-          padding: '18px 22px',
-          marginBottom: '28px',
-          boxShadow: 'var(--shadow-sm)',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '14px', marginBottom: '16px' }}>
-          <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
+      <div className="sectors-filter-card">
+        <div className="sectors-filter-header">
+          <div className="sectors-tabs-scroll">
             <button
               type="button"
               onClick={() => setActiveSectorId('all')}
