@@ -218,10 +218,10 @@ export function MandatesView({ initialMandates, viewer }: MandatesViewProps) {
 
       const vigencia = getMandateStatus(m.start_year, m.end_year);
       const roleLower = m.role.toLowerCase();
-      const isExplicitJovem = roleLower.includes('jovem');
-      const isExplicitCasal = roleLower.includes('casal');
+      const isExplicitJovem = m.condition === 'Jovem' || roleLower.includes('jovem');
+      const isExplicitCasal = m.condition === 'Casal' || roleLower.includes('casal');
       const isConselhoTesouraria = meta.category === 'diocesano' && (roleLower.includes('tesour') || roleLower.includes('finan'));
-      const isCasal = !isExplicitJovem && (m.condition === 'Casal' || isExplicitCasal || isConselhoTesouraria || (Boolean(m.spouse) && !isExplicitJovem));
+      const isCasal = !isExplicitJovem && (isExplicitCasal || isConselhoTesouraria || (Boolean(m.spouse) && !isExplicitJovem));
 
       const p1Clean = cleanName(m.person.name);
       const p2Clean = m.spouse ? cleanName(m.spouse.name) : '';

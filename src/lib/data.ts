@@ -505,6 +505,10 @@ export async function getMandates(filters: Record<string, string | undefined> = 
         const spMap = new Map(allSpouses.map(p => [p.id, p]));
         for (const item of items) {
           if (item.person_id) {
+            // Mandatos com condição explicitamente Jovem NUNCA recebem cônjuge nem viram Casal
+            if (item.condition === 'Jovem') {
+              continue;
+            }
             const spId = spouseMap.get(item.person_id);
             if (spId && spMap.has(spId)) {
               item.spouse = spMap.get(spId);
