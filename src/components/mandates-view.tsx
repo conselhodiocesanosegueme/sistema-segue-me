@@ -270,7 +270,7 @@ export function MandatesView({ initialMandates, viewer }: MandatesViewProps) {
         }
 
         // Normalização amigável do cargo de casal
-        let displayRole = m.role;
+        let displayRole = m.role.replace(/\s*\(casal\)\s*/ig, ' ').trim();
         if (displayRole.toLowerCase() === 'coordenador diocesano' || displayRole.toLowerCase() === 'coordenadora diocesana') {
           displayRole = 'Casal Coordenador Diocesano';
         } else if (displayRole.toLowerCase().includes('tesour') && !displayRole.toLowerCase().startsWith('casal')) {
@@ -279,6 +279,8 @@ export function MandatesView({ initialMandates, viewer }: MandatesViewProps) {
           displayRole = 'Casal Tesoureiro';
         } else if (displayRole.toLowerCase().includes('secretár') && !displayRole.toLowerCase().startsWith('casal')) {
           displayRole = 'Casal Secretário';
+        } else if (/jovem\s+e\s+casal\s+setorial/i.test(displayRole)) {
+          displayRole = displayRole.replace(/jovem\s+e\s+casal\s+setorial/i, 'Casal Setorial');
         }
 
         list.push({
@@ -304,9 +306,11 @@ export function MandatesView({ initialMandates, viewer }: MandatesViewProps) {
         seenPersonIds.add(m.person.id);
         seenPersonNames.add(p1Clean);
 
-        let displayRole = m.role;
+        let displayRole = m.role.replace(/\s*\(casal\)\s*/ig, ' ').trim();
         if (displayRole.toLowerCase() === 'coordenador diocesano' || displayRole.toLowerCase() === 'coordenadora diocesana') {
           displayRole = 'Jovem Coordenador(a) Diocesano';
+        } else if (/jovem\s+e\s+casal\s+setorial/i.test(displayRole)) {
+          displayRole = displayRole.replace(/jovem\s+e\s+casal\s+setorial/i, 'Jovem Setorial');
         }
 
         list.push({
