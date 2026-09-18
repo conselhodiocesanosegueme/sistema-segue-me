@@ -30,13 +30,32 @@ interface SectorsViewProps {
 export function SectorsView({ parishSummaries }: SectorsViewProps) {
   const [activeSectorId, setActiveSectorId] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [collapsedSectors, setCollapsedSectors] = useState<Record<string, boolean>>({});
+  const [collapsedSectors, setCollapsedSectors] = useState<Record<string, boolean>>(() => {
+    const initial: Record<string, boolean> = {};
+    for (const s of DIOCESAN_SECTORS) {
+      initial[s.id] = true;
+    }
+    return initial;
+  });
 
   const toggleSector = (sectorId: string) => {
-    setCollapsedSectors((prev) => ({
-      ...prev,
-      [sectorId]: !prev[sectorId],
-    }));
+    setCollapsedSectors((prev) => {
+      const isCurrentlyCollapsed = Boolean(prev[sectorId]);
+      if (isCurrentlyCollapsed) {
+        // Ao abrir um setor: recolhe os outros para manter a tela compacta (Accordion Único iOS)
+        const next: Record<string, boolean> = {};
+        for (const s of DIOCESAN_SECTORS) {
+          next[s.id] = true;
+        }
+        next[sectorId] = false;
+        return next;
+      } else {
+        return {
+          ...prev,
+          [sectorId]: true,
+        };
+      }
+    });
   };
 
   // Mapear dados das paróquias vindos do banco de dados
@@ -264,119 +283,72 @@ export function SectorsView({ parishSummaries }: SectorsViewProps) {
         </div>
       </div>
 
-      {/* Lista de Setores e Paróquias */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+      {/* Lista de Setores e Paróquias (Estilo Lista Compacta iOS) */}
+      <div className="sectors-list-container">
         {filteredSectors.length === 0 ? (
           <div style={{ padding: '60px 20px', textAlign: 'center', background: '#fff', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-base)', color: 'var(--text-muted)' }}>
             Nenhuma paróquia correspondente à busca realizada.
           </div>
         ) : (
           filteredSectors.map((sector) => {
-            const isSectorCollapsed = Boolean(collapsedSectors[sector.id]);
+            const isSectorCollapsed = searchQuery.trim() ? false : Boolean(collapsedSectors[sector.id]);
             return (
               <section
                 key={sector.id}
-                style={{
-                  background: '#ffffff',
-                  border: '1px solid var(--border-base)',
-                  borderRadius: 'var(--radius-xl)',
-                  padding: '24px 28px',
-                  boxShadow: 'var(--shadow-sm)',
-                }}
+                className={`sector-compact-card ${isSectorCollapsed ? 'is-collapsed' : 'is-expanded'}`}
               >
-                {/* Header do Setor (Menu Suspenso / Retrátil) */}
+                {/* Header do Setor (Linha Clicável Estilo iOS) */}
                 <div
                   onClick={() => toggleSector(sector.id)}
                   role="button"
                   tabIndex={0}
                   aria-expanded={!isSectorCollapsed}
-                  className="sector-accordion-header"
+                  className="sector-compact-header"
                   title={isSectorCollapsed ? `Expandir ${sector.name}` : `Recolher ${sector.name}`}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    flexWrap: 'wrap',
-                    gap: '14px',
-                    marginBottom: isSectorCollapsed ? '0' : '20px',
-                    paddingBottom: isSectorCollapsed ? '0' : '16px',
-                    borderBottom: isSectorCollapsed ? 'none' : '1px solid var(--border-light)',
-                    cursor: 'pointer',
-                    userSelect: 'none',
-                    borderRadius: 'var(--radius-md)',
-                    padding: '4px',
-                  }}
                 >
-                  <div style={{ flex: 1, minWidth: '220px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
-                      <span
-                        style={{
-                          fontSize: '0.78rem',
-                          fontWeight: 800,
-                          letterSpacing: '0.08em',
-                          textTransform: 'uppercase',
-                          background: 'var(--brand-light)',
-                          color: 'var(--brand-primary)',
-                          padding: '3px 10px',
-                          borderRadius: '6px',
-                        }}
-                      >
-                        {sector.name}
-                      </span>
-                      <span style={{ fontSize: '0.82rem', color: 'var(--text-subtle)', fontWeight: 600 }}>
-                        {sector.region}
-                      </span>
+                  <div className="sector-compact-title-wrap">
+                    <span className="sector-roman-badge">
+                      {sector.roman}
+                    </span>
+                    <div className="sector-compact-title-text">
+                      <h3 className="sector-compact-name">
+                        <span>{sector.name}</span>
+                        <span className="sector-compact-region">&bull; {sector.region}</span>
+                      </h3>
                     </div>
-                    <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0 }}>
-                      {sector.description} · {sector.parishes.length} paróquias catalogadas
-                    </p>
                   </div>
 
-                  {/* Métricas Resumo do Setor + Botão de Recolher/Expandir */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                    <div style={{ background: 'var(--bg-canvas)', border: '1px solid var(--border-light)', borderRadius: 'var(--radius-md)', padding: '6px 14px', textAlign: 'center' }}>
-                      <span style={{ display: 'block', fontSize: '0.68rem', color: 'var(--text-subtle)', textTransform: 'uppercase', fontWeight: 700 }}>
-                        Pessoas no Setor
-                      </span>
-                      <strong style={{ fontSize: '1.05rem', color: 'var(--brand-primary)' }}>
-                        {number(sector.totalPeople)}
-                      </strong>
-                    </div>
+                  <div className="sector-compact-meta">
+                    <span className="sector-count-pill-muted">
+                      <strong>{number(sector.totalPeople)}</strong>
+                      <span className="sector-count-pill-text">pessoas</span>
+                    </span>
 
-                    <div style={{ background: 'var(--bg-canvas)', border: '1px solid var(--border-light)', borderRadius: 'var(--radius-md)', padding: '6px 14px', textAlign: 'center' }}>
-                      <span style={{ display: 'block', fontSize: '0.68rem', color: 'var(--text-subtle)', textTransform: 'uppercase', fontWeight: 700 }}>
-                        Encontros Realizados
-                      </span>
-                      <strong style={{ fontSize: '1.05rem', color: 'var(--text-main)' }}>
-                        {number(sector.totalEncounters)}
-                      </strong>
-                    </div>
+                    <span className="sector-count-pill">
+                      <strong>{number(sector.totalEncounters)}</strong>
+                      <span className="sector-count-pill-text">encontros</span>
+                    </span>
 
-                    <button
-                      type="button"
-                      className="sector-collapse-btn"
-                      style={{
-                        background: 'var(--bg-canvas)',
-                        border: '1px solid var(--border-light)',
-                        borderRadius: '50%',
-                        width: '34px',
-                        height: '34px',
-                        color: 'var(--brand-primary)',
-                        cursor: 'pointer',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                      aria-label={isSectorCollapsed ? `Expandir ${sector.name}` : `Recolher ${sector.name}`}
+                    <span
+                      className="sector-chevron-btn"
+                      aria-hidden="true"
                     >
-                      {isSectorCollapsed ? <CaretDown size={18} weight="bold" /> : <CaretUp size={18} weight="bold" />}
-                    </button>
+                      {isSectorCollapsed ? <CaretDown size={15} weight="bold" /> : <CaretUp size={15} weight="bold" />}
+                    </span>
                   </div>
                 </div>
 
-                {/* Grid das Paróquias */}
+                {/* Conteúdo Expandido do Setor */}
                 {!isSectorCollapsed && (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
+                  <div className="sector-compact-body">
+                    {sector.description && (
+                      <p className="sector-compact-desc">
+                        {sector.description} · {sector.parishes.length} paróquias catalogadas
+                      </p>
+                    )}
+
+                    {/* Grid das Paróquias */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
                 {sector.parishesWithData.map((parish) => {
                   const pTarget = parish.metrics.parish || parish.dbNames[0] || parish.name;
                   const hasHistory = parish.metrics.encounter_count > 0;
@@ -506,6 +478,7 @@ export function SectorsView({ parishSummaries }: SectorsViewProps) {
                   );
                 })}
               </div>
+            </div>
             )}
           </section>
         );
