@@ -390,157 +390,95 @@ export function EncountersHierarchyView({ encounters, viewer, headerActions }: E
         </div>
       </div>
 
-      {/* Abas de Setores Diocesanos */}
-      <div
-        style={{
-          display: 'flex',
-          gap: '8px',
-          marginBottom: '22px',
-          overflowX: 'auto',
-          paddingBottom: '4px',
-          scrollbarWidth: 'thin',
-        }}
-      >
-        <button
-          type="button"
-          onClick={() => setActiveSectorId('all')}
-          style={{
-            padding: '8px 16px',
-            fontSize: '0.82rem',
-            fontWeight: 700,
-            borderRadius: '999px',
-            border: activeSectorId === 'all' ? '1px solid var(--brand-primary)' : '1px solid var(--border-base)',
-            background: activeSectorId === 'all' ? 'var(--brand-primary)' : '#ffffff',
-            color: activeSectorId === 'all' ? '#ffffff' : 'var(--text-main)',
-            cursor: 'pointer',
-            whiteSpace: 'nowrap',
-            transition: 'all 0.15s ease',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-          }}
-        >
-          <span>Todos os Setores</span>
-          <span
-            style={{
-              fontSize: '0.70rem',
-              background: activeSectorId === 'all' ? 'rgba(255,255,255,0.25)' : '#f1f5f9',
-              padding: '1px 7px',
-              borderRadius: '999px',
-            }}
-          >
-            {encounters.length}
-          </span>
-        </button>
-
-        {sectorsWithData.map((sector) => {
-          const isActive = activeSectorId === sector.id;
-          return (
-            <button
-              key={sector.id}
-              type="button"
-              onClick={() => setActiveSectorId(sector.id)}
-              style={{
-                padding: '8px 16px',
-                fontSize: '0.82rem',
-                fontWeight: 700,
-                borderRadius: '999px',
-                border: isActive ? '1px solid var(--brand-primary)' : '1px solid var(--border-base)',
-                background: isActive ? 'var(--brand-primary)' : '#ffffff',
-                color: isActive ? '#ffffff' : 'var(--text-main)',
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-                transition: 'all 0.15s ease',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-              }}
+      {/* Seletor de Setores (Menu Suspenso no Mobile e Abas no Desktop) */}
+      <div className="sector-selector-bar">
+        <div className="sector-dropdown-wrapper">
+          <label htmlFor="encounters-sector-select" className="sector-dropdown-label">
+            <Buildings size={16} weight="duotone" />
+            <span>Setor:</span>
+          </label>
+          <div className="sector-select-box">
+            <select
+              id="encounters-sector-select"
+              value={activeSectorId}
+              onChange={(e) => setActiveSectorId(e.target.value)}
+              className="sector-select-input"
+              aria-label="Filtrar encontros por setor diocesano"
             >
-              <span>{sector.name}</span>
-              <span
-                style={{
-                  fontSize: '0.70rem',
-                  background: isActive ? 'rgba(255,255,255,0.25)' : '#f1f5f9',
-                  color: isActive ? '#ffffff' : 'var(--text-muted)',
-                  padding: '1px 7px',
-                  borderRadius: '999px',
-                }}
+              <option value="all">Todos os Setores ({encounters.length} encontros)</option>
+              {sectorsWithData.map((sector) => (
+                <option key={sector.id} value={sector.id}>
+                  {sector.name} · {sector.region.split('/')[0]} ({sector.totalEncounters} {sector.totalEncounters === 1 ? 'encontro' : 'encontros'})
+                </option>
+              ))}
+              {diocesanGeneralEncounters.length > 0 && (
+                <option value="diocesano">
+                  Âmbito Geral Diocesano ({diocesanGeneralEncounters.length} encontros)
+                </option>
+              )}
+              {externalImplantationEncounters.length > 0 && (
+                <option value="setor-externo">
+                  🌐 Missões & Implantações ({externalImplantationEncounters.length} encontros)
+                </option>
+              )}
+            </select>
+            <CaretDown size={14} className="sector-select-arrow" />
+          </div>
+        </div>
+
+        <div className="sector-pills-scroll">
+          <button
+            type="button"
+            onClick={() => setActiveSectorId('all')}
+            className={`sector-pill-btn ${activeSectorId === 'all' ? 'active' : ''}`}
+          >
+            <span>Todos os Setores</span>
+            <span className="sector-pill-badge">{encounters.length}</span>
+          </button>
+
+          {sectorsWithData.map((sector) => {
+            const isActive = activeSectorId === sector.id;
+            return (
+              <button
+                key={sector.id}
+                type="button"
+                onClick={() => setActiveSectorId(sector.id)}
+                className={`sector-pill-btn ${isActive ? 'active' : ''}`}
               >
-                {sector.totalEncounters}
-              </span>
+                <span>{sector.name}</span>
+                <span className="sector-pill-badge">{sector.totalEncounters}</span>
+              </button>
+            );
+          })}
+
+          {diocesanGeneralEncounters.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setActiveSectorId('diocesano')}
+              className={`sector-pill-btn ${activeSectorId === 'diocesano' ? 'active' : ''}`}
+            >
+              <Sparkle size={14} />
+              <span>Âmbito Diocesano</span>
+              <span className="sector-pill-badge">{diocesanGeneralEncounters.length}</span>
             </button>
-          );
-        })}
+          )}
 
-        {diocesanGeneralEncounters.length > 0 && (
-          <button
-            type="button"
-            onClick={() => setActiveSectorId('diocesano')}
-            style={{
-              padding: '8px 16px',
-              fontSize: '0.82rem',
-              fontWeight: 700,
-              borderRadius: '999px',
-              border: activeSectorId === 'diocesano' ? '1px solid #7c3aed' : '1px solid var(--border-base)',
-              background: activeSectorId === 'diocesano' ? '#7c3aed' : '#ffffff',
-              color: activeSectorId === 'diocesano' ? '#ffffff' : 'var(--text-main)',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-              transition: 'all 0.15s ease',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-            }}
-          >
-            <Sparkle size={14} />
-            <span>Âmbito Diocesano</span>
-            <span
+          {externalImplantationEncounters.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setActiveSectorId('setor-externo')}
+              className={`sector-pill-btn ${activeSectorId === 'setor-externo' ? 'active' : ''}`}
               style={{
-                fontSize: '0.70rem',
-                background: activeSectorId === 'diocesano' ? 'rgba(255,255,255,0.25)' : '#f1f5f9',
-                padding: '1px 7px',
-                borderRadius: '999px',
+                borderColor: activeSectorId === 'setor-externo' ? '#0891b2' : '#cffafe',
+                background: activeSectorId === 'setor-externo' ? '#0891b2' : '#f0fdfa',
+                color: activeSectorId === 'setor-externo' ? '#ffffff' : '#0e7490',
               }}
             >
-              {diocesanGeneralEncounters.length}
-            </span>
-          </button>
-        )}
-
-        {externalImplantationEncounters.length > 0 && (
-          <button
-            type="button"
-            onClick={() => setActiveSectorId('setor-externo')}
-            style={{
-              padding: '8px 16px',
-              fontSize: '0.82rem',
-              fontWeight: 700,
-              borderRadius: '999px',
-              border: activeSectorId === 'setor-externo' ? '1px solid #0891b2' : '1px solid #cffafe',
-              background: activeSectorId === 'setor-externo' ? '#0891b2' : '#f0fdfa',
-              color: activeSectorId === 'setor-externo' ? '#ffffff' : '#0e7490',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-              transition: 'all 0.15s ease',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-            }}
-          >
-            <span>🌐 Missões & Implantações</span>
-            <span
-              style={{
-                fontSize: '0.70rem',
-                background: activeSectorId === 'setor-externo' ? 'rgba(255,255,255,0.25)' : '#ccfbf1',
-                color: activeSectorId === 'setor-externo' ? '#ffffff' : '#0f766e',
-                padding: '1px 7px',
-                borderRadius: '999px',
-              }}
-            >
-              {externalImplantationEncounters.length}
-            </span>
-          </button>
-        )}
+              <span>🌐 Missões & Implantações</span>
+              <span className="sector-pill-badge">{externalImplantationEncounters.length}</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Conteúdo: Blocos de Setores e Paróquias */}

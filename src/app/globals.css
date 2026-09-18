@@ -1810,6 +1810,125 @@ html, body {
   max-width: 100%;
 }
 
+/* Sector Selector & Dropdown (Menu Suspenso) */
+.sector-selector-bar {
+  margin-bottom: 22px;
+}
+
+.sector-dropdown-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #ffffff;
+  border: 1px solid var(--border-base);
+  border-radius: var(--radius-md);
+  padding: 8px 14px;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+}
+.sector-dropdown-wrapper:focus-within {
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 3px rgba(180, 83, 9, 0.12);
+}
+
+.sector-dropdown-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--brand-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.sector-select-box {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.sector-select-input {
+  width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background: transparent;
+  border: none;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-main);
+  padding-right: 24px;
+  cursor: pointer;
+  outline: none;
+}
+
+.sector-select-arrow {
+  position: absolute;
+  right: 2px;
+  pointer-events: none;
+  color: var(--brand-primary);
+  flex-shrink: 0;
+}
+
+.sector-pills-scroll {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 4px;
+  scrollbar-width: thin;
+}
+
+.sector-pill-btn {
+  padding: 8px 16px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  border-radius: 999px;
+  border: 1px solid var(--border-base);
+  background: #ffffff;
+  color: var(--text-main);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.sector-pill-btn:hover {
+  border-color: var(--brand-border);
+  background: var(--brand-light);
+  color: var(--brand-text);
+}
+.sector-pill-btn.active {
+  border-color: var(--brand-primary);
+  background: var(--brand-primary);
+  color: #ffffff;
+}
+
+.sector-pill-badge {
+  font-size: 0.70rem;
+  background: #f1f5f9;
+  color: var(--text-muted);
+  padding: 1px 7px;
+  border-radius: 999px;
+  transition: all 0.15s ease;
+}
+.sector-pill-btn.active .sector-pill-badge {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+@media (min-width: 769px) {
+  .sector-dropdown-wrapper {
+    display: none;
+  }
+}
+
 /* Pagination */
 .pagination {
   display: flex;
@@ -2334,6 +2453,25 @@ html, body {
   .sectors-filter-card {
     padding: 14px 14px;
     margin-bottom: 20px;
+  }
+  .sector-dropdown-wrapper {
+    display: flex !important;
+    width: 100%;
+    margin-bottom: 12px;
+  }
+  .sector-pills-scroll,
+  .sectors-tabs-scroll {
+    display: none !important;
+  }
+  .sectors-filter-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .sectors-filter-header .sectors-search-wrapper,
+  .sectors-filter-header > div:last-child {
+    width: 100% !important;
+    max-width: 100% !important;
   }
   .table-card {
     overflow-x: auto;

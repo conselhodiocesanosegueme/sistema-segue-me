@@ -15,7 +15,8 @@ import {
   Globe,
   Sparkle,
   Eye,
-  CheckCircle
+  CheckCircle,
+  CaretDown
 } from '@phosphor-icons/react';
 import { DIOCESAN_SECTORS, matchEncounterToParish, type Sector, type SectorParish } from '@/lib/sectors';
 import type { ParishSummaryItem } from '@/lib/data';
@@ -185,24 +186,39 @@ export function SectorsView({ parishSummaries }: SectorsViewProps) {
       {/* Barra de Filtros e Abas dos Setores */}
       <div className="sectors-filter-card">
         <div className="sectors-filter-header">
-          <div className="sectors-tabs-scroll">
+          {/* Menu Suspenso de Seleção de Setor (Especialmente no Mobile) */}
+          <div className="sector-dropdown-wrapper">
+            <label htmlFor="sectors-page-select" className="sector-dropdown-label">
+              <Buildings size={16} weight="duotone" />
+              <span>Setor:</span>
+            </label>
+            <div className="sector-select-box">
+              <select
+                id="sectors-page-select"
+                value={activeSectorId}
+                onChange={(e) => setActiveSectorId(e.target.value)}
+                className="sector-select-input"
+                aria-label="Filtrar por setor diocesano"
+              >
+                <option value="all">Todos os Setores (6 setores, 43 paróquias)</option>
+                {sectorsWithData.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name} · {s.region.split('/')[0]} ({s.parishes.length} paróquias)
+                  </option>
+                ))}
+              </select>
+              <CaretDown size={14} className="sector-select-arrow" />
+            </div>
+          </div>
+
+          <div className="sectors-tabs-scroll sector-pills-scroll">
             <button
               type="button"
               onClick={() => setActiveSectorId('all')}
-              style={{
-                padding: '8px 16px',
-                fontSize: '0.84rem',
-                fontWeight: 600,
-                borderRadius: 'var(--radius-md)',
-                border: activeSectorId === 'all' ? '2px solid var(--brand-primary)' : '1px solid var(--border-base)',
-                background: activeSectorId === 'all' ? 'var(--brand-primary)' : '#ffffff',
-                color: activeSectorId === 'all' ? '#ffffff' : 'var(--text-main)',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
-                whiteSpace: 'nowrap',
-              }}
+              className={`sector-pill-btn ${activeSectorId === 'all' ? 'active' : ''}`}
             >
-              Todos os Setores (6)
+              <span>Todos os Setores</span>
+              <span className="sector-pill-badge">6</span>
             </button>
 
             {sectorsWithData.map((s) => {
@@ -212,20 +228,10 @@ export function SectorsView({ parishSummaries }: SectorsViewProps) {
                   key={s.id}
                   type="button"
                   onClick={() => setActiveSectorId(s.id)}
-                  style={{
-                    padding: '8px 16px',
-                    fontSize: '0.84rem',
-                    fontWeight: 600,
-                    borderRadius: 'var(--radius-md)',
-                    border: isSelected ? '2px solid var(--brand-primary)' : '1px solid var(--border-base)',
-                    background: isSelected ? 'var(--brand-light)' : '#ffffff',
-                    color: isSelected ? 'var(--brand-text)' : 'var(--text-main)',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease',
-                    whiteSpace: 'nowrap',
-                  }}
+                  className={`sector-pill-btn ${isSelected ? 'active' : ''}`}
                 >
-                  {s.name}
+                  <span>{s.name}</span>
+                  <span className="sector-pill-badge">{s.parishes.length}</span>
                 </button>
               );
             })}
