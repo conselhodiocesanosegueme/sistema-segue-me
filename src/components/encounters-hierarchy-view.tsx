@@ -55,6 +55,16 @@ export function EncountersHierarchyView({ encounters, viewer, headerActions }: E
     return initial;
   });
 
+  // Controle de setores recolhidos (menu suspenso / acordeão por setor)
+  const [collapsedSectors, setCollapsedSectors] = useState<Record<string, boolean>>({});
+
+  const toggleSector = (sectorId: string) => {
+    setCollapsedSectors((prev) => ({
+      ...prev,
+      [sectorId]: !prev[sectorId],
+    }));
+  };
+
   const toggleParish = (parishKey: string) => {
     setExpandedParishes((prev) => ({
       ...prev,
@@ -66,6 +76,7 @@ export function EncountersHierarchyView({ encounters, viewer, headerActions }: E
     const updated = { ...expandedParishes };
     for (const k of parishKeys) updated[k] = true;
     setExpandedParishes(updated);
+    setCollapsedSectors({});
   };
 
   const collapseAll = (parishKeys: string[]) => {
@@ -524,76 +535,123 @@ export function EncountersHierarchyView({ encounters, viewer, headerActions }: E
         // Lista de Setores Ativos
         <div style={{ display: 'flex', flexDirection: 'column', gap: '26px' }}>
           {activeSectors.map((sector) => {
+            const isSectorCollapsed = Boolean(collapsedSectors[sector.id]);
             return (
               <div
                 key={sector.id}
                 className="panel"
                 style={{
                   background: '#ffffff',
-                  padding: '22px 24px',
+                  padding: '20px 22px',
                   borderRadius: 'var(--radius-lg)',
                   boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
                 }}
               >
-                {/* Cabeçalho do Setor */}
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span
-                        style={{
-                          width: '28px',
-                          height: '28px',
-                          borderRadius: '6px',
-                          background: 'var(--brand-light)',
-                          color: 'var(--brand-primary)',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontWeight: 800,
-                          fontSize: '0.86rem',
-                        }}
-                      >
-                        {sector.roman}
-                      </span>
+                {/* Cabeçalho do Setor (Menu Suspenso / Retrátil) */}
+                <div
+                  onClick={() => toggleSector(sector.id)}
+                  role="button"
+                  tabIndex={0}
+                  aria-expanded={!isSectorCollapsed}
+                  className="sector-accordion-header"
+                  title={isSectorCollapsed ? `Expandir ${sector.name}` : `Recolher ${sector.name}`}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    justifyContent: 'space-between',
+                    marginBottom: isSectorCollapsed ? '0' : '16px',
+                    flexWrap: 'wrap',
+                    gap: '12px',
+                    cursor: 'pointer',
+                    userSelect: 'none',
+                    padding: '4px',
+                    borderRadius: 'var(--radius-md)',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', flex: 1, minWidth: '220px' }}>
+                    <span
+                      style={{
+                        width: '30px',
+                        height: '30px',
+                        borderRadius: '6px',
+                        background: 'var(--brand-light)',
+                        color: 'var(--brand-primary)',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: 800,
+                        fontSize: '0.86rem',
+                        flexShrink: 0,
+                        marginTop: '2px',
+                      }}
+                    >
+                      {sector.roman}
+                    </span>
+                    <div>
                       <h3
                         style={{
                           margin: 0,
-                          fontSize: '1.22rem',
+                          fontSize: '1.2rem',
                           color: 'var(--text-main)',
                           fontFamily: 'var(--font-serif)',
                           fontWeight: 700,
+                          lineHeight: 1.25,
                         }}
                       >
                         {sector.name} &bull; {sector.region}
                       </h3>
+                      <p style={{ margin: '4px 0 0', fontSize: '0.80rem', color: 'var(--text-muted)' }}>
+                        {sector.description}
+                      </p>
                     </div>
-                    <p style={{ margin: '4px 0 0 36px', fontSize: '0.80rem', color: 'var(--text-muted)' }}>
-                      {sector.description}
-                    </p>
                   </div>
 
-                  <span
-                    style={{
-                      fontSize: '0.76rem',
-                      fontWeight: 700,
-                      color: 'var(--brand-primary)',
-                      background: 'var(--brand-light)',
-                      padding: '4px 12px',
-                      borderRadius: '999px',
-                      border: '1px solid var(--brand-border)',
-                    }}
-                  >
-                    {sector.totalEncounters} {sector.totalEncounters === 1 ? 'encontro' : 'encontros'}
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span
+                      style={{
+                        fontSize: '0.76rem',
+                        fontWeight: 700,
+                        color: 'var(--brand-primary)',
+                        background: 'var(--brand-light)',
+                        padding: '4px 12px',
+                        borderRadius: '999px',
+                        border: '1px solid var(--brand-border)',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {sector.totalEncounters} {sector.totalEncounters === 1 ? 'encontro' : 'encontros'}
+                    </span>
+
+                    <button
+                      type="button"
+                      className="sector-collapse-btn"
+                      style={{
+                        background: 'var(--bg-canvas)',
+                        border: '1px solid var(--border-light)',
+                        borderRadius: '50%',
+                        width: '32px',
+                        height: '32px',
+                        color: 'var(--brand-primary)',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                      aria-label={isSectorCollapsed ? `Expandir ${sector.name}` : `Recolher ${sector.name}`}
+                    >
+                      {isSectorCollapsed ? <CaretDown size={18} weight="bold" /> : <CaretUp size={18} weight="bold" />}
+                    </button>
+                  </div>
                 </div>
 
                 {/* Paróquias do Setor */}
-                {sector.parishes.length === 0 ? (
-                  <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-subtle)', fontSize: '0.84rem' }}>
-                    Nenhuma paróquia correspondente à busca neste setor.
-                  </div>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {!isSectorCollapsed && (
+                  sector.parishes.length === 0 ? (
+                    <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-subtle)', fontSize: '0.84rem' }}>
+                      Nenhuma paróquia correspondente à busca neste setor.
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     {sector.parishes.map((parish) => {
                       const parishKey = parish.name.toLowerCase().trim();
                       const isExpanded = Boolean(expandedParishes[parishKey]);
@@ -777,8 +835,9 @@ export function EncountersHierarchyView({ encounters, viewer, headerActions }: E
                       );
                     })}
                   </div>
-                )}
-              </div>
+                )
+              )}
+            </div>
             );
           })}
 
