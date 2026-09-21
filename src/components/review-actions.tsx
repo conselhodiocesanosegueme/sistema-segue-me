@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Check, X, UserCheck, UserPlus, MagnifyingGlass, CheckCircle } from '@phosphor-icons/react';
+import { Check, X, UserCheck, UserPlus, MagnifyingGlass, CheckCircle, Sparkle } from '@phosphor-icons/react';
 import { Modal, SubmitButton, Feedback, post } from '@/components/ui';
 import type { ReviewItem } from '@/lib/types';
 
@@ -11,6 +11,11 @@ interface SearchedPerson {
   name: string;
   phone?: string;
   parish?: string;
+}
+
+interface SmartMatchResult extends SearchedPerson {
+  score: number;
+  reasons: string[];
 }
 
 export function ReviewActions({ item }: { item: ReviewItem }) {
@@ -28,6 +33,8 @@ export function ReviewActions({ item }: { item: ReviewItem }) {
   const [searchResults, setSearchResults] = useState<SearchedPerson[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [selectedPerson, setSelectedPerson] = useState<SearchedPerson | null>(null);
+  const [smartMatch, setSmartMatch] = useState<SmartMatchResult | null>(null);
+  const [matchLoading, setMatchLoading] = useState(false);
 
   // Busca em tempo real de pessoas existentes
   useEffect(() => {
@@ -95,6 +102,49 @@ export function ReviewActions({ item }: { item: ReviewItem }) {
     }
   }
 
+  async function handleOpenApproval() {
+    setDecision('approved');
+    setError('');
+    setSuccess('');
+    setReason('Identidade e histórico confirmados nos registros oficiais da diocese.');
+    setPersonMode('new');
+    setSelectedPerson(null);
+    setSmartMatch(null);
+    setModalOpen(true);
+
+    if (isIdentity && !item.person_id) {
+      setMatchLoading(true);
+      try {
+        const changes = item.proposed_changes as any;
+        const applicantName = changes?.name || item.title?.replace('Solicitação de histórico: ', '').replace('Cadastro: ', '') || '';
+        const applicantParish = changes?.parish || (item.evidence as any)?.vivenciou_parish || '';
+        const applicantSpouse = changes?.spouse_name || '';
+        const applicantPhone = changes?.phone || '';
+
+        const params = new URLSearchParams({
+          match: 'true',
+          name: applicantName,
+          parish: applicantParish,
+          spouse: applicantSpouse,
+          phone: applicantPhone,
+        });
+
+        const res = await fetch(`/api/people/search?${params.toString()}`);
+        const data = await res.json();
+        if (data.match && data.match.score >= 45) {
+          setSmartMatch(data.match);
+          setPersonMode('existing');
+          setSelectedPerson(data.match);
+          setSearchQuery(data.match.name);
+        }
+      } catch (err) {
+        console.warn('Smart match error:', err);
+      } finally {
+        setMatchLoading(false);
+      }
+    }
+  }
+
   if (item.status !== 'pending') {
     return (
       <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
@@ -110,15 +160,7 @@ export function ReviewActions({ item }: { item: ReviewItem }) {
           type="button"
           className="button button-primary"
           style={{ padding: '6px 14px', fontSize: '0.82rem' }}
-          onClick={() => {
-            setDecision('approved');
-            setError('');
-            setSuccess('');
-            setReason('Identidade e histórico confirmados nos registros oficiais da diocese.');
-            setPersonMode('new');
-            setSelectedPerson(null);
-            setModalOpen(true);
-          }}
+          onClick={handleOpenApproval}
         >
           <Check size={15} weight="bold" />
           Aprovar
@@ -157,6 +199,40 @@ export function ReviewActions({ item }: { item: ReviewItem }) {
               <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '10px' }}>
                 Vínculo da Ficha no Sistema:
               </label>
+
+              {matchLoading && (
+                <div style={{ fontSize: '0.78rem', color: '#b45309', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px', background: '#fffbeb', padding: '8px 12px', borderRadius: 'var(--radius-sm)' }}>
+                  <Sparkle size={15} weight="fill" />
+                  Analisando quadrantes diocesanos em busca de correspondência...
+                </div>
+              )}
+
+              {smartMatch && (
+                <div style={{ background: '#ecfdf5', border: '1.5px solid #6ee7b7', borderRadius: 'var(--radius-md)', padding: '12px 14px', marginBottom: '14px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#065f46', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Sparkle size={16} weight="fill" color="#059669" />
+                      Sugestão Inteligente do Sistema ({smartMatch.score}% de probabilidade)
+                    </span>
+                    <span className="badge badge-green" style={{ fontSize: '0.7rem', fontWeight: 600 }}>
+                      Correspondência Encontrada
+                    </span>
+                  </div>
+                  <p style={{ fontSize: '0.8rem', color: '#047857', margin: '3px 0 6px' }}>
+                    Identificamos uma pessoa já registrada nos quadrantes com alta chance de ser este participante:
+                  </p>
+                  <div style={{ fontSize: '0.86rem', fontWeight: 600, color: '#064e3b', marginBottom: '6px' }}>
+                    {smartMatch.name} <span style={{ fontWeight: 400, color: '#047857', fontSize: '0.78rem' }}>({smartMatch.legacy_id || 'sem código'} • {smartMatch.parish || 'Paróquia não informada'})</span>
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                    {smartMatch.reasons?.map((r, i) => (
+                      <span key={i} style={{ fontSize: '0.72rem', background: '#d1fae5', color: '#065f46', padding: '2px 8px', borderRadius: '12px', fontWeight: 500 }}>
+                        ✓ {r}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div style={{ display: 'flex', gap: '10px', marginBottom: '14px' }}>
                 <button

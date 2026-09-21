@@ -55,7 +55,7 @@ export function AuthForm() {
     return Array.from(
       new Set(
         DIOCESAN_SECTORS.flatMap((s) =>
-          s.parishes.map((p) => `${p.name} (${p.city.replace(/ - GO/g, '')})`)
+          s.parishes.map((p) => `${p.name} — ${p.city.replace(/ - GO/g, '').replace(/\/GO/g, '')}`)
         )
       )
     ).sort();
@@ -136,6 +136,20 @@ export function AuthForm() {
     if (!lgpdAccepted) {
       setErrorMsg('É necessário concordar com os termos da LGPD para criar seu cadastro.');
       return;
+    }
+
+    const nameParts = name.trim().split(/\s+/).filter(Boolean);
+    if (nameParts.length < 2) {
+      setErrorMsg('Por favor, informe seu nome e sobrenome completos (no mínimo duas palavras).');
+      return;
+    }
+
+    if (condition === 'Casal') {
+      const spouseParts = spouseName.trim().split(/\s+/).filter(Boolean);
+      if (spouseParts.length < 2) {
+        setErrorMsg('Por favor, informe o nome e sobrenome completos do seu cônjuge.');
+        return;
+      }
     }
 
     setLoading(true);
@@ -524,11 +538,16 @@ export function AuthForm() {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Nome como costumava constar no crachá ou quadrante"
+              placeholder="Digite seu nome e sobrenomes completos"
               required
               className="filter-input"
               style={{ width: '100%' }}
             />
+            {name.trim() && name.trim().split(/\s+/).filter(Boolean).length < 2 && (
+              <span style={{ fontSize: '0.75rem', color: '#b45309', display: 'block', marginTop: '4px', fontWeight: 500 }}>
+                ⚠️ Por favor, informe seu nome e sobrenome completos.
+              </span>
+            )}
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
@@ -599,11 +618,16 @@ export function AuthForm() {
                 type="text"
                 value={spouseName}
                 onChange={(e) => setSpouseName(e.target.value)}
-                placeholder="Ex: Maria dos Santos"
+                placeholder="Nome e sobrenome completos do cônjuge"
                 required={condition === 'Casal'}
                 className="filter-input"
                 style={{ width: '100%' }}
               />
+              {spouseName.trim() && spouseName.trim().split(/\s+/).filter(Boolean).length < 2 && (
+                <span style={{ fontSize: '0.75rem', color: '#b45309', display: 'block', marginTop: '4px', fontWeight: 500 }}>
+                  ⚠️ Por favor, informe o nome e sobrenome completos do cônjuge.
+                </span>
+              )}
             </div>
           )}
 

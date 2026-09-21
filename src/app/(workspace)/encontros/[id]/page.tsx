@@ -1,12 +1,12 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ArrowLeft, CalendarBlank, HandHeart, MapPin, UsersThree, User, IdentificationCard } from '@phosphor-icons/react/dist/ssr';
+import { ArrowLeft, CalendarBlank, HandHeart, MapPin, UsersThree, User, IdentificationCard, MicrophoneStage } from '@phosphor-icons/react/dist/ssr';
 import { requireViewer } from '@/lib/auth';
 import { getEncounter, getParticipations } from '@/lib/data';
 import { Avatar, Badge, PageHeading } from '@/components/ui';
 import { number } from '@/lib/format';
 import { EncounterDetailView } from '@/components/encounter-detail-view';
-import { isMandateRecord } from '@/lib/encounter-config';
+import { isMandateRecord, normalizeMandateBody } from '@/lib/encounter-config';
 
 interface EncounterDetailPageProps {
   params: Promise<{ id: string }>;
@@ -26,9 +26,23 @@ export default async function EncounterDetailPage({ params }: EncounterDetailPag
   }
 
   const vivenciantes = participations.filter((p) => p.kind === 'Vivenciou');
-  // Mandatos vigentes (Conselho Diocesano e Equipe Dirigente) separados de trabalho em equipe
+  const palestrantes = participations.filter(
+    (p) => p.kind === 'Palestrou' || (p.team || '').toLowerCase() === 'palestrantes'
+  );
+  // Mandatos vigentes separados em Equipe Dirigente e Conselho (Diocesano / Setorial)
   const liderancaMandato = participations.filter((p) => isMandateRecord(p));
-  const trabalhadores = participations.filter((p) => p.kind === 'Trabalhou' && !isMandateRecord(p));
+  const equipeDirigente = liderancaMandato.filter((p) => {
+    const meta = normalizeMandateBody(p.team, p.role);
+    if (meta) return meta.category === 'equipe_dirigente';
+    const t = (p.team || '').toLowerCase();
+    const r = (p.role || '').toLowerCase();
+    return !t.includes('conselho') && !r.includes('conselho') && !t.includes('setor') && !r.includes('setorial');
+  });
+  const conselho = liderancaMandato.filter((p) => !equipeDirigente.includes(p));
+
+  const trabalhadores = participations.filter(
+    (p) => p.kind === 'Trabalhou' && !isMandateRecord(p) && !palestrantes.includes(p)
+  );
 
   // Agrupamento de voluntários operacionais por equipe
   const equipesMap = new Map<string, typeof participations>();
@@ -82,7 +96,7 @@ export default async function EncounterDetailPage({ params }: EncounterDetailPag
 
         <div className="stat-card">
           <div className="stat-top">
-            <span>Vivenciaram</span>
+            <span>Vivenciou</span>
             <IdentificationCard size={20} />
           </div>
           <strong className="stat-number">{number(vivenciantes.length)}</strong>
@@ -93,7 +107,7 @@ export default async function EncounterDetailPage({ params }: EncounterDetailPag
 
         <div className="stat-card">
           <div className="stat-top">
-            <span>Equipes de Serviço</span>
+            <span>Trabalhou</span>
             <HandHeart size={20} />
           </div>
           <strong className="stat-number">{number(trabalhadores.length)}</strong>
@@ -102,25 +116,59 @@ export default async function EncounterDetailPage({ params }: EncounterDetailPag
           </div>
         </div>
 
-        <div className="stat-card">
-          <div className="stat-top">
-            <span>Mandatos Vigentes</span>
-            <span style={{ fontSize: '1.2rem' }}>🏛️</span>
+        {equipeDirigente.length > 0 && (
+          <div className="stat-card">
+            <div className="stat-top">
+              <span>Equipe Dirigente</span>
+              <span style={{ fontSize: '1.2rem' }}>⛪</span>
+            </div>
+            <strong className="stat-number" style={{ color: '#15803d' }}>
+              {number(equipeDirigente.length)}
+            </strong>
+            <div className="stat-bottom">
+              <span>Mandato Paroquial</span>
+            </div>
           </div>
-          <strong className="stat-number" style={{ color: '#92400e' }}>
-            {number(liderancaMandato.length)}
-          </strong>
-          <div className="stat-bottom">
-            <span>Conselho & Equipe Dirigente</span>
+        )}
+
+        {conselho.length > 0 && (
+          <div className="stat-card">
+            <div className="stat-top">
+              <span>Conselho</span>
+              <span style={{ fontSize: '1.2rem' }}>🏛️</span>
+            </div>
+            <strong className="stat-number" style={{ color: '#92400e' }}>
+              {number(conselho.length)}
+            </strong>
+            <div className="stat-bottom">
+              <span>Diocesano & Setorial</span>
+            </div>
           </div>
-        </div>
+        )}
+
+        {palestrantes.length > 0 && (
+          <div className="stat-card">
+            <div className="stat-top">
+              <span>Palestrantes</span>
+              <MicrophoneStage size={20} color="#0284c7" />
+            </div>
+            <strong className="stat-number" style={{ color: '#0369a1' }}>
+              {number(palestrantes.length)}
+            </strong>
+            <div className="stat-bottom">
+              <span>Palestras ministradas</span>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Conteúdo: Vivenciantes, Equipes e Mandatos em Menus Suspensos / Acordeom */}
+      {/* Conteúdo: Vivenciou, Trabalhou, Equipe Dirigente, Conselho e Palestrantes */}
       <EncounterDetailView
         vivenciantes={vivenciantes}
         trabalhadores={trabalhadores}
-        liderancaMandato={liderancaMandato}
+        equipeDirigente={equipeDirigente}
+        conselho={conselho}
+        palestrantes={palestrantes}
       />
     </div>
   );

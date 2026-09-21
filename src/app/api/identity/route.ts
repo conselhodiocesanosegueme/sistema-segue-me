@@ -27,8 +27,15 @@ export async function POST(request: Request) {
       lgpd_accepted,
     } = data as Record<string, string | undefined>;
 
-    if (!name || name.trim().length < 2) {
-      throw new HttpError(400, 'Informe seu nome completo.');
+    if (!name || name.trim().split(/\s+/).filter(Boolean).length < 2) {
+      throw new HttpError(400, 'Informe seu nome e sobrenome completos (no mínimo duas palavras).');
+    }
+
+    if (condition === 'Casal' && spouse_name) {
+      const spouseParts = spouse_name.trim().split(/\s+/).filter(Boolean);
+      if (spouseParts.length < 2) {
+        throw new HttpError(400, 'Informe o nome e sobrenome completos do cônjuge.');
+      }
     }
 
     // Montar descrição legível e detalhada para os quadrantes

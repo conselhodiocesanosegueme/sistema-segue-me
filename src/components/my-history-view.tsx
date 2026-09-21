@@ -21,7 +21,7 @@ import {
 } from '@phosphor-icons/react';
 import type { CoupleInfo, Mandate, Participation, Person } from '@/lib/types';
 import { Avatar, Badge } from '@/components/ui';
-import { isMandateRecord, isExternalImplantation } from '@/lib/encounter-config';
+import { isMandateRecord, isExternalImplantation, normalizeMandateBody } from '@/lib/encounter-config';
 
 interface MyHistoryViewProps {
   person: Person;
@@ -56,33 +56,107 @@ export function MyHistoryView({
     [participations]
   );
 
-  const totalMandatesCount = useMemo(() => {
-    const unrecorded = mandateParticipations.filter((p) => {
-      const y = p.encounter?.year;
-      return !mandates.some((m) => m.start_year === y);
-    });
-    return mandates.length + unrecorded.length;
+  // Consolidação inteligente e unificada de todos os mandatos (tabela mandates e quadrantes)
+  // 1. Mesmo ano + mesma função: vira 1 único bloco consolidando as anotações
+  // 2. Anos consecutivos na mesma função (mandato bienal contínuo): une no mesmo bloco com período (ex: Mandato 2025 – 2026)
+  // 3. Outros anos / mandatos distintos: aparecem como blocos separados identificando o respectivo mandato
+  const consolidatedMandates = useMemo(() => {
+    const rawCandidates: Mandate[] = [];
+
+    // Candidatos da tabela de mandatos
+    for (const m of mandates) {
+      const meta = normalizeMandateBody(m.body, m.role);
+      rawCandidates.push({
+        ...m,
+        body: meta?.normalizedBody || m.body || 'Conselho Diocesano',
+        role: m.role || 'Membro do Mandato',
+        start_year: m.start_year || null,
+        end_year: m.end_year || m.start_year || null,
+      });
+    }
+
+    // Candidatos de participações em quadrantes
+    for (const p of mandateParticipations) {
+      const meta = normalizeMandateBody(p.team, p.role);
+      const year = p.encounter?.year || null;
+      rawCandidates.push({
+        id: `mand-part-${p.id}`,
+        person_id: p.person_id,
+        body: meta?.normalizedBody || p.team || (p.role?.toLowerCase().includes('conselho') ? 'Conselho Diocesano' : 'Equipe Dirigente'),
+        role: p.role || 'Membro do Mandato',
+        condition: p.condition || 'Jovem',
+        start_year: year,
+        end_year: year,
+        record_type: 'Mandato (Quadrante)',
+        notes: p.encounter?.name ? `Documentado no encontro ${p.encounter.name} (${year})` : null,
+        status: (year && year >= new Date().getFullYear()) ? 'Ativo' : 'Concluído',
+      });
+    }
+
+    // Ordena do ano mais recente para o mais antigo
+    rawCandidates.sort((a, b) => (b.start_year || 0) - (a.start_year || 0));
+
+    const result: Mandate[] = [];
+    for (const c of rawCandidates) {
+      const cBody = (c.body || '').trim().toLowerCase();
+      const cRole = (c.role || '').trim().toLowerCase();
+      const startY = c.start_year || 0;
+      const endY = c.end_year || startY;
+
+      const existing = result.find((item) => {
+        const itemBody = (item.body || '').trim().toLowerCase();
+        const itemRole = (item.role || '').trim().toLowerCase();
+        if (itemBody !== cBody || itemRole !== cRole) return false;
+
+        const itemStart = item.start_year || 0;
+        const itemEnd = item.end_year || itemStart;
+
+        // Mesmo ano ou sobreposição
+        if (startY === itemStart || (startY >= itemStart && startY <= itemEnd)) return true;
+        // Anos adjacentes (consecutivos de mandato bienal, ex: 2025 e 2026)
+        if (Math.abs(startY - itemEnd) <= 1 || Math.abs(endY - itemStart) <= 1) return true;
+
+        return false;
+      });
+
+      if (existing) {
+        existing.start_year = Math.min(existing.start_year || startY, startY);
+        existing.end_year = Math.max(existing.end_year || endY, endY);
+        if (c.condition?.toLowerCase().includes('casal')) {
+          existing.condition = 'Casal';
+        }
+        if (c.notes && !existing.notes?.includes(c.notes)) {
+          existing.notes = existing.notes ? `${existing.notes} • ${c.notes}` : c.notes;
+        }
+      } else {
+        result.push({ ...c, start_year: startY, end_year: endY });
+      }
+    }
+
+    return result;
   }, [mandates, mandateParticipations]);
 
+  const totalMandatesCount = useMemo(() => {
+    return consolidatedMandates.length;
+  }, [consolidatedMandates]);
+
   const totalJovem = useMemo(() => {
-    const partJovem = participations.filter((p) =>
-      p.condition?.toLowerCase().includes('jovem')
-    ).length;
-    const mandJovem = mandates.filter((m) =>
+    const partJovem = vivencias.filter((p) => p.condition?.toLowerCase().includes('jovem')).length +
+                      trabalhos.filter((p) => p.condition?.toLowerCase().includes('jovem')).length;
+    const mandJovem = consolidatedMandates.filter((m) =>
       m.condition?.toLowerCase().includes('jovem')
     ).length;
     return partJovem + mandJovem;
-  }, [participations, mandates]);
+  }, [vivencias, trabalhos, consolidatedMandates]);
 
   const totalCasal = useMemo(() => {
-    const partCasal = participations.filter((p) =>
-      p.condition?.toLowerCase().includes('casal')
-    ).length;
-    const mandCasal = mandates.filter((m) =>
+    const partCasal = vivencias.filter((p) => p.condition?.toLowerCase().includes('casal')).length +
+                      trabalhos.filter((p) => p.condition?.toLowerCase().includes('casal')).length;
+    const mandCasal = consolidatedMandates.filter((m) =>
       m.condition?.toLowerCase().includes('casal')
     ).length;
     return partCasal + mandCasal;
-  }, [participations, mandates]);
+  }, [vivencias, trabalhos, consolidatedMandates]);
 
   // Lista unificada filtrada
   const filteredTimeline = useMemo(() => {
@@ -113,38 +187,12 @@ export function MyHistoryView({
     }
 
     if (activeTab === 'all' || activeTab === 'mandatos') {
-      for (const m of mandates) {
+      for (const m of consolidatedMandates) {
         list.push({
           type: 'mandate',
           data: m,
           year: m.start_year || 0,
         });
-      }
-
-      for (const p of mandateParticipations) {
-        const year = p.encounter?.year || 0;
-        const exists = mandates.some(
-          (m) =>
-            m.start_year === year &&
-            (m.body.toLowerCase().includes('dirigente') || m.body.toLowerCase().includes('conselho'))
-        );
-        if (!exists) {
-          list.push({
-            type: 'mandate',
-            data: {
-              id: p.id,
-              person_id: p.person_id,
-              body: p.team || (p.role?.toLowerCase().includes('conselho') ? 'Conselho Diocesano' : 'Equipe Dirigente'),
-              role: p.role || 'Membro do Mandato',
-              start_year: year || null,
-              end_year: year || null,
-              condition: p.condition || 'Jovem',
-              record_type: 'Mandato (Quadrante)',
-              notes: `Mandato documentado no encontro ${p.encounter?.name || p.encounter?.edition || ''} (${year}).`,
-            },
-            year: year,
-          });
-        }
       }
     }
 
@@ -162,7 +210,7 @@ export function MyHistoryView({
 
     // Ordenação decrescente por ano
     return filtered.sort((a, b) => b.year - a.year);
-  }, [activeTab, conditionFilter, vivencias, trabalhos, mandates]);
+  }, [activeTab, conditionFilter, vivencias, trabalhos, consolidatedMandates]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -870,18 +918,40 @@ export function MyHistoryView({
                         </h3>
                       </div>
 
-                      <span
-                        className="badge badge-amber"
-                        style={{
-                          fontWeight: 700,
-                          fontSize: '0.82rem',
-                          padding: '4px 10px',
-                        }}
-                      >
-                        {mandate.start_year
-                          ? `${mandate.start_year}${mandate.end_year && mandate.end_year !== mandate.start_year ? ` – ${mandate.end_year}` : ''}`
-                          : 'Mandato'}
-                      </span>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
+                        <span
+                          className="badge badge-amber"
+                          style={{
+                            fontWeight: 700,
+                            fontSize: '0.82rem',
+                            padding: '4px 12px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                          }}
+                        >
+                          <span>🏛️</span>
+                          <span>
+                            {mandate.start_year
+                              ? `Mandato ${mandate.start_year}${mandate.end_year && mandate.end_year !== mandate.start_year ? ` – ${mandate.end_year}` : ''}`
+                              : 'Mandato'}
+                          </span>
+                        </span>
+
+                        <span
+                          style={{
+                            fontSize: '0.70rem',
+                            fontWeight: 700,
+                            padding: '2px 8px',
+                            borderRadius: '4px',
+                            background: (mandate.end_year || mandate.start_year || 0) >= new Date().getFullYear() ? '#dcfce7' : '#f4f4f5',
+                            color: (mandate.end_year || mandate.start_year || 0) >= new Date().getFullYear() ? '#15803d' : '#52525b',
+                            border: `1px solid ${(mandate.end_year || mandate.start_year || 0) >= new Date().getFullYear() ? '#bbf7d0' : '#e4e4e7'}`,
+                          }}
+                        >
+                          {(mandate.end_year || mandate.start_year || 0) >= new Date().getFullYear() ? 'Vigente (Ativo)' : 'Mandato Concluído'}
+                        </span>
+                      </div>
                     </div>
 
                     <div

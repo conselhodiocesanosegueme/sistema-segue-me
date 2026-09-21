@@ -59,6 +59,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const nameParts = name.split(/\s+/).filter(Boolean);
+    if (nameParts.length < 2) {
+      return NextResponse.json(
+        { error: 'Por favor, informe seu nome e sobrenome completos (no mínimo duas palavras).' },
+        { status: 400 }
+      );
+    }
+
+    if (condition === 'Casal' && spouseName) {
+      const spouseParts = spouseName.split(/\s+/).filter(Boolean);
+      if (spouseParts.length < 2) {
+        return NextResponse.json(
+          { error: 'Por favor, informe o nome e sobrenome completos do seu cônjuge.' },
+          { status: 400 }
+        );
+      }
+    }
+
     if (password.length < 6) {
       return NextResponse.json(
         { error: 'A senha deve ter pelo menos 6 caracteres.' },

@@ -162,6 +162,74 @@ export async function POST(
           console.warn('[REVIEWS] Aviso ao confirmar e-mail do requester:', confirmErr);
         }
       }
+
+      // Garantir que a vivência informada pelo participante esteja registrada no histórico
+      const vivYearStr = (rev.evidence as any)?.vivenciou_year || (rev.proposed_changes as any)?.vivenciou_year;
+      const vivParish = (rev.evidence as any)?.vivenciou_parish || (rev.proposed_changes as any)?.vivenciou_parish || (rev.proposed_changes as any)?.parish;
+      const vivStage = (rev.evidence as any)?.vivenciou_stage || (rev.proposed_changes as any)?.vivenciou_stage || '1ª Etapa';
+      const vivCircle = (rev.evidence as any)?.vivenciou_circle || (rev.proposed_changes as any)?.vivenciou_circle || null;
+      const vivCondition = (rev.proposed_changes as any)?.condition || 'Jovem';
+
+      if (targetPersonId && vivYearStr && vivParish) {
+        try {
+          const vivYear = parseInt(vivYearStr, 10);
+          if (!isNaN(vivYear) && vivYear > 1970) {
+            const cleanParish = vivParish.split('—')[0].trim().replace('Paróquia ', '');
+            let { data: enc } = await admin
+              .from('encounters')
+              .select('id')
+              .eq('year', vivYear)
+              .ilike('parish', `%${cleanParish}%`)
+              .maybeSingle();
+
+            if (!enc) {
+              const newLegacyId = `${vivYear}-${cleanParish.slice(0, 3).toUpperCase()}-VAL-${Math.floor(10 + Math.random() * 90)}`;
+              const { data: createdEnc, error: encCreateErr } = await admin
+                .from('encounters')
+                .insert({
+                  legacy_id: newLegacyId,
+                  name: `${vivStage} do Segue-me`,
+                  edition: 'Histórica',
+                  year: vivYear,
+                  parish: vivParish.split('—')[0].trim(),
+                  city: 'Diocese de Anápolis',
+                  date_text: `${vivYear}`,
+                  extraction_status: 'Aguardando Quadrante',
+                  notes: 'Encontro cadastrado automaticamente via validação de histórico do participante',
+                })
+                .select('id')
+                .single();
+
+              if (!encCreateErr && createdEnc) {
+                enc = createdEnc;
+              }
+            }
+
+            if (enc?.id) {
+              const { data: existingPart } = await admin
+                .from('participations')
+                .select('id')
+                .eq('person_id', targetPersonId)
+                .eq('encounter_id', enc.id)
+                .maybeSingle();
+
+              if (!existingPart) {
+                await admin.from('participations').insert({
+                  person_id: targetPersonId,
+                  encounter_id: enc.id,
+                  kind: 'Vivenciou',
+                  condition: vivCondition,
+                  circle: vivCircle || null,
+                  role: 'Seguidor',
+                  notes: 'Vivência informada pelo participante e confirmada pelo Conselho Diocesano',
+                });
+              }
+            }
+          }
+        } catch (vivErr) {
+          console.warn('[REVIEWS] Aviso ao sincronizar vivência informada:', vivErr);
+        }
+      }
     }
 
     // Se temos um person_id para atribuir antes de resolver

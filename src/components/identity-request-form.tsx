@@ -48,10 +48,15 @@ export function IdentityRequestForm({ defaultName = '' }: IdentityRequestFormPro
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // Lista de paróquias conhecidas para autocompletar
+  // Lista de paróquias conhecidas com cidade para autocompletar
   const allParishes = Array.from(
     new Set(
-      DIOCESAN_SECTORS.flatMap((s) => s.parishes.map((p) => p.name))
+      DIOCESAN_SECTORS.flatMap((s) =>
+        s.parishes.map((p) => {
+          const cleanCity = p.city.replace(/ - GO/g, '').replace(/\/GO/g, '');
+          return `${p.name} — ${cleanCity}`;
+        })
+      )
     )
   ).sort();
 
@@ -85,7 +90,18 @@ export function IdentityRequestForm({ defaultName = '' }: IdentityRequestFormPro
     setSuccess('');
 
     try {
-      if (!name.trim()) throw new Error('Informe seu nome completo como constava no crachá ou quadrante.');
+      const nameParts = name.trim().split(/\s+/).filter(Boolean);
+      if (nameParts.length < 2) {
+        throw new Error('Por favor, informe seu nome e sobrenome completos (como costumava constar no quadrante ou crachá).');
+      }
+
+      if (condition === 'Casal') {
+        const spouseParts = spouseName.trim().split(/\s+/).filter(Boolean);
+        if (spouseParts.length < 2) {
+          throw new Error('Por favor, informe o nome e sobrenome completos do seu cônjuge.');
+        }
+      }
+
       if (!vivenciouParish.trim()) throw new Error('Informe a paróquia onde você vivenciou o Segue-me.');
       if (!vivenciouYear.trim()) throw new Error('Informe o ano em que você vivenciou o encontro.');
       if (!lgpdAccepted) throw new Error('É necessário concordar com os termos da LGPD para enviar seu histórico.');
@@ -240,11 +256,16 @@ export function IdentityRequestForm({ defaultName = '' }: IdentityRequestFormPro
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Nome como costumava constar no crachá ou quadrante"
+              placeholder="Digite seu nome e sobrenomes completos"
               required
               className="filter-input"
               style={{ width: '100%' }}
             />
+            {name.trim() && name.trim().split(/\s+/).filter(Boolean).length < 2 && (
+              <span style={{ fontSize: '0.75rem', color: '#b45309', display: 'block', marginTop: '4px', fontWeight: 500 }}>
+                ⚠️ Por favor, informe seu nome e sobrenome completos.
+              </span>
+            )}
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
@@ -313,11 +334,16 @@ export function IdentityRequestForm({ defaultName = '' }: IdentityRequestFormPro
                 type="text"
                 value={spouseName}
                 onChange={(e) => setSpouseName(e.target.value)}
-                placeholder="Nome completo do cônjuge"
+                placeholder="Nome e sobrenome completos do cônjuge"
                 required={condition === 'Casal'}
                 className="filter-input"
                 style={{ width: '100%' }}
               />
+              {spouseName.trim() && spouseName.trim().split(/\s+/).filter(Boolean).length < 2 && (
+                <span style={{ fontSize: '0.75rem', color: '#b45309', display: 'block', marginTop: '4px', fontWeight: 500 }}>
+                  ⚠️ Por favor, informe o nome e sobrenome completos do cônjuge.
+                </span>
+              )}
             </div>
           )}
         </div>
@@ -377,7 +403,7 @@ export function IdentityRequestForm({ defaultName = '' }: IdentityRequestFormPro
                 list="parishes-list"
                 value={vivenciouParish}
                 onChange={(e) => setVivenciouParish(e.target.value)}
-                placeholder="Ex: Paróquia São Benedito (Nerópolis)"
+                placeholder="Ex: São Benedito e Imaculado Coração de Maria — Nerópolis"
                 required
                 className="filter-input"
                 style={{ width: '100%' }}
