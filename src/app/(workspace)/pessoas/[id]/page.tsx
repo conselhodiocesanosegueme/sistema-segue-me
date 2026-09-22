@@ -16,7 +16,8 @@ import {
   WhatsappLogo,
   EnvelopeSimple,
   Church,
-  Info
+  Info,
+  Buildings
 } from '@phosphor-icons/react/dist/ssr';
 import { requireViewer } from '@/lib/auth';
 import { getPerson, getParticipations, getPersonExtras } from '@/lib/data';
@@ -213,6 +214,12 @@ export default async function PersonDetailPage({ params }: PersonPageProps) {
   const hasPalestraSkill = (person?.skills?.other_skills || []).some(s => s.toLowerCase().includes('palestr') || s.toLowerCase().includes('prega'));
   const isSpeakerPerson = Boolean((extras.talks && extras.talks.length > 0) || parsedNotes.is_speaker || hasPalestraSkill);
 
+  const currentYear = new Date().getFullYear();
+  const activeMandate = allPersonMandates.find((m: any) => {
+    const end = m.end_year || m.start_year || 0;
+    return end >= currentYear;
+  }) || (allPersonMandates.length > 0 && (allPersonMandates[0].start_year || 0) >= currentYear ? allPersonMandates[0] : null);
+
   return (
     <div className="page-enter">
       {/* Link de Retorno */}
@@ -323,7 +330,25 @@ export default async function PersonDetailPage({ params }: PersonPageProps) {
                   🌟 Deseja 2ª Etapa
                 </span>
               )}
-              {isSpeakerPerson && (
+              {activeMandate ? (
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    fontSize: '0.76rem',
+                    color: '#86198f',
+                    background: '#fdf4ff',
+                    padding: '2px 8px',
+                    borderRadius: '12px',
+                    border: '1px solid #f0abfc',
+                    fontWeight: 600,
+                  }}
+                  title={`${activeMandate.body} · Mandato Vigente (${activeMandate.start_year || ''})`}
+                >
+                  <Buildings size={13} weight="bold" /> {activeMandate.role}
+                </span>
+              ) : isSpeakerPerson ? (
                 <span
                   style={{
                     display: 'inline-flex',
@@ -340,7 +365,7 @@ export default async function PersonDetailPage({ params }: PersonPageProps) {
                 >
                   <MicrophoneStage size={13} weight="bold" /> Palestrante
                 </span>
-              )}
+              ) : null}
             </div>
 
             <h1 style={{ fontSize: '2.1rem', fontFamily: 'var(--font-serif)', color: 'var(--text-main)', margin: '0 0 4px 0', lineHeight: 1.15 }}>
