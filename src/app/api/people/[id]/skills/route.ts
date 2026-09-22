@@ -32,15 +32,24 @@ export async function PUT(request: Request, context: RouteContext) {
     // 1. Administrador ou Dirigente pode alterar qualquer pessoa
     // 2. Participante comum só pode alterar suas próprias habilidades (se vinculado)
     if (viewer.role === 'participant') {
-      const { data: link } = await admin
+      let profilePersonId: string | null = null;
+      try {
+        const { data: profileData } = await db.rpc('get_my_profile');
+        if (profileData && (profileData as any).id) {
+          profilePersonId = (profileData as any).id;
+        }
+      } catch {}
+
+      const linkRes = await admin
         .from('account_links')
-        .select('person_id')
+        .select('id')
         .eq('user_id', viewer.id)
         .eq('person_id', personId)
         .eq('status', 'active')
         .maybeSingle();
 
-      if (!link) {
+      const isLinked = Boolean(linkRes.data) || profilePersonId === personId;
+      if (!isLinked) {
         throw new HttpError(403, 'Você só pode editar as habilidades do seu próprio perfil.');
       }
     }
@@ -69,25 +78,24 @@ export async function PUT(request: Request, context: RouteContext) {
 
     existingNotesObj.skills = skills;
 
-    // Tenta atualizar a coluna direta 'skills' e também o backup em 'notes'
-    const updatePayload: Record<string, any> = {
-      notes: JSON.stringify(existingNotesObj),
-    };
+    // 1. Salva obrigatoriamente na coluna notes (garantia de persistência no Postgres)
+    const { error: updateNotesErr } = await admin
+      .from('people')
+      .update({ notes: JSON.stringify(existingNotesObj) })
+      .eq('id', personId);
 
-    try {
-      // Se a coluna 'skills' existir no banco, atualiza também diretamente
-      const { error: directErr } = await admin
-        .from('people')
-        .update({ skills, ...updatePayload })
-        .eq('id', personId);
-
-      if (directErr && directErr.message?.includes('column "skills" of relation "people" does not exist')) {
-        // Fallback apenas com notes
-        await admin.from('people').update(updatePayload).eq('id', personId);
-      }
-    } catch {
-      await admin.from('people').update(updatePayload).eq('id', personId);
+    if (updateNotesErr) {
+      console.error('[SKILLS] Erro ao salvar skills na coluna notes:', updateNotesErr);
+      throw new HttpError(500, `Falha ao salvar habilidades: ${updateNotesErr.message}`);
     }
+
+    // 2. Se a coluna 'skills' existir no schema, tenta atualizar diretamente
+    try {
+      await admin
+        .from('people')
+        .update({ skills })
+        .eq('id', personId);
+    } catch {}
 
     return NextResponse.json({ ok: true, skills });
   } catch (error) {

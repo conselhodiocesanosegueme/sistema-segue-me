@@ -118,19 +118,24 @@ async function handleUpdate(request: Request, context: RouteContext) {
       updatePayload.engagement_status = 'disponivel';
     }
 
-    try {
-      // Tenta salvar coluna direta 'availability' se existir no banco
-      const { error: directErr } = await admin
-        .from('people')
-        .update({ availability, ...updatePayload })
-        .eq('id', personId);
+    // 1. Salva obrigatoriamente na coluna notes (garantia de persistência no Postgres)
+    const { error: updateNotesErr } = await admin
+      .from('people')
+      .update(updatePayload)
+      .eq('id', personId);
 
-      if (directErr && directErr.message?.includes('column "availability" of relation "people" does not exist')) {
-        await admin.from('people').update(updatePayload).eq('id', personId);
-      }
-    } catch {
-      await admin.from('people').update(updatePayload).eq('id', personId);
+    if (updateNotesErr) {
+      console.error('[AVAILABILITY] Erro ao salvar disponibilidade na coluna notes:', updateNotesErr);
+      throw new HttpError(500, `Falha ao salvar disponibilidade: ${updateNotesErr.message}`);
     }
+
+    // 2. Se a coluna 'availability' existir no schema, tenta atualizar diretamente
+    try {
+      await admin
+        .from('people')
+        .update({ availability })
+        .eq('id', personId);
+    } catch {}
 
     return NextResponse.json({ ok: true, availability });
   } catch (error) {

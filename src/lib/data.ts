@@ -832,14 +832,17 @@ export async function getMyData(): Promise<MyHistoryData> {
 
   let personData = profile.data as Person | null;
   if (personData?.id) {
-    const { data: pDetails } = await admin
+    const { data: pDetails, error: pDetailsErr } = await admin
       .from('people')
-      .select('photo_url, notes, parish, skills, availability, pastoral_notes')
+      .select('*')
       .eq('id', personData.id)
       .maybeSingle();
     if (pDetails) {
       personData = hydratePerson({ ...personData, ...pDetails });
     } else {
+      if (pDetailsErr) {
+        console.error('[DATA] Erro ao carregar detalhes da pessoa em getMyData:', pDetailsErr);
+      }
       personData = hydratePerson(personData);
     }
   }

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   MicrophoneStage,
   Guitar,
@@ -51,6 +52,7 @@ export function PersonSkillsCard({
   initialSkills,
   canEdit = false,
 }: PersonSkillsCardProps) {
+  const router = useRouter();
   const [skills, setSkills] = useState<PersonSkills>(initialSkills || {});
   const [isEditing, setIsEditing] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -63,7 +65,6 @@ export function PersonSkillsCard({
   const [instruments, setInstruments] = useState<string[]>(initialSkills?.instruments || []);
   const [customInstrument, setCustomInstrument] = useState('');
   const [otherSkills, setOtherSkills] = useState<string[]>(initialSkills?.other_skills || []);
-  const [musicalNotes, setMusicalNotes] = useState(initialSkills?.musical_notes || '');
 
   const toggleSingingType = (type: string) => {
     setSingingTypes((prev) =>
@@ -102,7 +103,6 @@ export function PersonSkillsCard({
       singing_types: sings ? singingTypes : [],
       instruments,
       other_skills: otherSkills,
-      musical_notes: musicalNotes.trim() || undefined,
     };
 
     try {
@@ -119,10 +119,11 @@ export function PersonSkillsCard({
 
       setSkills(newSkills);
       setSuccess('Talentos e habilidades atualizados com sucesso!');
+      router.refresh();
       setTimeout(() => {
         setIsEditing(false);
         setSuccess('');
-      }, 1200);
+      }, 1000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao salvar.');
     } finally {
@@ -133,8 +134,7 @@ export function PersonSkillsCard({
   const hasAnySkill =
     skills.sings ||
     (skills.instruments && skills.instruments.length > 0) ||
-    (skills.other_skills && skills.other_skills.length > 0) ||
-    skills.musical_notes;
+    (skills.other_skills && skills.other_skills.length > 0);
 
   return (
     <div className="panel" style={{ background: '#ffffff', border: '1px solid var(--border-base)', borderRadius: 'var(--radius-lg)' }}>
@@ -295,21 +295,6 @@ export function PersonSkillsCard({
             </div>
           </div>
 
-          {/* 4. OBSERVAÇÃO MUSICAL */}
-          <div>
-            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '4px' }}>
-              Observação Adicional sobre Música / Habilidade:
-            </label>
-            <input
-              type="text"
-              value={musicalNotes}
-              onChange={(e) => setMusicalNotes(e.target.value)}
-              placeholder="Ex: Toca violão na missa de jovens; participou da banda do Segue-me de 2022..."
-              className="filter-input"
-              style={{ width: '100%', fontSize: '0.84rem' }}
-            />
-          </div>
-
           {/* Botões do Editor */}
           <div style={{ display: 'flex', gap: '10px', marginTop: '6px' }}>
             <SubmitButton busy={busy} type="submit" className="button-primary" style={{ padding: '6px 16px', fontSize: '0.84rem' }}>
@@ -452,13 +437,6 @@ export function PersonSkillsCard({
                       </span>
                     ))}
                   </div>
-                </div>
-              )}
-
-              {/* Observação */}
-              {skills.musical_notes && (
-                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontStyle: 'italic', background: 'var(--bg-canvas)', padding: '6px 10px', borderRadius: '4px' }}>
-                  "{skills.musical_notes}"
                 </div>
               )}
             </div>
