@@ -123,6 +123,40 @@ export default async function PessoasPage({ searchParams }: PessoasPageProps) {
                                 🎙️ Palestrante
                               </span>
                             )}
+                            {person.availability?.status === 'disponivel' && (
+                              <span
+                                title="Disponível para servir nos próximos encontros"
+                                style={{
+                                  fontSize: '0.68rem',
+                                  padding: '1px 6px',
+                                  borderRadius: '999px',
+                                  background: '#f0fdf4',
+                                  color: '#15803d',
+                                  border: '1px solid #bbf7d0',
+                                  fontWeight: 600,
+                                  whiteSpace: 'nowrap',
+                                }}
+                              >
+                                🟢 Disponível
+                              </span>
+                            )}
+                            {person.availability?.second_stage_status === 'desejo_vivenciar' && (
+                              <span
+                                title="Tem interesse em vivenciar a 2ª Etapa"
+                                style={{
+                                  fontSize: '0.68rem',
+                                  padding: '1px 6px',
+                                  borderRadius: '999px',
+                                  background: '#fef9c3',
+                                  color: '#854d0e',
+                                  border: '1px solid #fde047',
+                                  fontWeight: 600,
+                                  whiteSpace: 'nowrap',
+                                }}
+                              >
+                                🌟 2ª Etapa
+                              </span>
+                            )}
                             {person.skills?.sings && (
                               <span
                                 title="Canta / Salmista / Coral"

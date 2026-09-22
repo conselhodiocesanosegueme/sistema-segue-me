@@ -20,6 +20,8 @@ const QUICK_FILTERS = [
   { id: 'musicians', label: 'Músicos & Cantores', icon: '🎵' },
   { id: 'speakers', label: 'Palestrantes', icon: '🎙️' },
   { id: 'talents', label: 'Com Habilidades', icon: '✨' },
+  { id: 'available', label: 'Disponíveis p/ Servir', icon: '🟢' },
+  { id: 'second_stage', label: 'Interesse 2ª Etapa', icon: '🌟' },
 ];
 
 export function PeopleFilters({

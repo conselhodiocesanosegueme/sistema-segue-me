@@ -11,6 +11,20 @@ export type PersonSkills = {
   musical_notes?: string | null;
 };
 
+export type PersonAvailability = {
+  status?: 'disponivel' | 'restrito' | 'indisponivel' | null;
+  scope?: 'diocese_e_paroquia' | 'apenas_paroquia' | null;
+  second_stage_status?: 'desejo_vivenciar' | 'ja_vivenciou' | 'aguardar' | null;
+  second_stage_year?: number | null;
+  second_stage_parish?: string | null;
+  last_served_year?: number | null;
+  last_served_parish?: string | null;
+  last_served_team?: string | null;
+  preferred_teams?: string[];
+  notes?: string | null;
+  updated_at?: string | null;
+};
+
 export type Person = {
   id: string;
   legacy_id: string | null;
@@ -29,6 +43,7 @@ export type Person = {
   skills?: PersonSkills | null;
   pastoral_notes?: string | null;
   engagement_status?: 'disponivel' | 'justificou' | 'sem_compromisso' | 'neutro' | string | null;
+  availability?: PersonAvailability | null;
 };
 export type Encounter = {
   id: string;

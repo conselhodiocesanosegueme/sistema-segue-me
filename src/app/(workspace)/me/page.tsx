@@ -10,6 +10,7 @@ import { MyHistoryView } from '@/components/my-history-view';
 import { ManagePhotoModal } from '@/components/manage-photo-modal';
 import { PersonSkillsCard } from '@/components/person-skills-card';
 import { PersonTalksCard } from '@/components/person-talks-card';
+import { PersonAvailabilityCard } from '@/components/person-availability-card';
 
 export default async function MeuHistoricoPage() {
   const viewer = await requireViewer();
@@ -136,6 +137,32 @@ export default async function MeuHistoricoPage() {
                     <span className="badge badge-green">
                       Vínculo ativo
                     </span>
+                    {person.availability?.status === 'disponivel' && (
+                      <span
+                        className="badge badge-green"
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                        title="Disponível para servir nos próximos encontros"
+                      >
+                        🟢 Disponível p/ Servir
+                      </span>
+                    )}
+                    {person.availability?.second_stage_status === 'desejo_vivenciar' && (
+                      <span
+                        className="badge"
+                        style={{
+                          background: '#fef9c3',
+                          color: '#854d0e',
+                          border: '1px solid #fde047',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          fontWeight: 600,
+                        }}
+                        title="Interesse declarado em vivenciar a 2ª Etapa"
+                      >
+                        🌟 Deseja 2ª Etapa
+                      </span>
+                    )}
                     {isSpeakerPerson && (
                       <span
                         className="badge"
@@ -198,6 +225,14 @@ export default async function MeuHistoricoPage() {
                 <PersonActions person={person} viewer={viewer} />
               </div>
             </section>
+
+            {/* Prontidão Pastoral, Jornada da 2ª Etapa e Último Serviço */}
+            <PersonAvailabilityCard
+              personId={person.id}
+              personName={person.name}
+              initialAvailability={person.availability}
+              canEdit={true}
+            />
 
             {/* Talentos & Habilidades Musicais (Auto-declaração pelo participante) */}
             <PersonSkillsCard

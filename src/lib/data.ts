@@ -17,6 +17,7 @@ import type {
   PageResult,
   Participation,
   Person,
+  PersonAvailability,
   ReviewItem,
 } from './types';
 import { ENCOUNTER_TYPES } from './encounter-config';
@@ -29,6 +30,7 @@ export function hydratePerson<T extends Partial<Person>>(p: T | null | undefined
   let skills = p.skills || null;
   let pastoral_notes = p.pastoral_notes || '';
   let engagement_status = p.engagement_status || 'neutro';
+  let availability: PersonAvailability | null = (p as any).availability || null;
 
   if ((p as any).notes) {
     try {
@@ -40,10 +42,13 @@ export function hydratePerson<T extends Partial<Person>>(p: T | null | undefined
         if ((!engagement_status || engagement_status === 'neutro') && parsed.engagement_status) {
           engagement_status = parsed.engagement_status;
         }
+        if (!availability && parsed.availability) {
+          availability = parsed.availability;
+        }
       }
     } catch {}
   }
-  return { ...p, photo_url, skills, pastoral_notes, engagement_status };
+  return { ...p, photo_url, skills, pastoral_notes, engagement_status, availability };
 }
 
 export async function getPeople(filters: Record<string, string>): Promise<PageResult<Person>> {
@@ -109,6 +114,14 @@ export async function getPeople(filters: Record<string, string>): Promise<PageRe
           (hydrated?.skills?.other_skills && hydrated.skills.other_skills.length > 0)
         );
         if (!hasAnyTalent) return false;
+      } else if (filters.quickFilter === 'available') {
+        const hydrated = hydratePerson(p);
+        const isAvailable = hydrated?.availability?.status === 'disponivel' || hydrated?.engagement_status === 'disponivel';
+        if (!isAvailable) return false;
+      } else if (filters.quickFilter === 'second_stage') {
+        const hydrated = hydratePerson(p);
+        const wantsSecondStage = hydrated?.availability?.second_stage_status === 'desejo_vivenciar';
+        if (!wantsSecondStage) return false;
       }
 
       // Filtros detalhados de encontro, equipe, tipo e ano
@@ -140,8 +153,14 @@ export async function getPeople(filters: Record<string, string>): Promise<PageRe
   const db = await supabaseServer();
   const admin = supabaseAdmin();
 
-  // Tratamento de filtros rápidos para Músicos, Palestrantes e Habilidades em modo Supabase
-  if (filters.quickFilter === 'musicians' || filters.quickFilter === 'speakers' || filters.quickFilter === 'talents') {
+  // Tratamento de filtros rápidos para Músicos, Palestrantes, Habilidades, Disponibilidade e 2ª Etapa em modo Supabase
+  if (
+    filters.quickFilter === 'musicians' ||
+    filters.quickFilter === 'speakers' ||
+    filters.quickFilter === 'talents' ||
+    filters.quickFilter === 'available' ||
+    filters.quickFilter === 'second_stage'
+  ) {
     try {
       let query = admin
         .from('people')
@@ -150,6 +169,10 @@ export async function getPeople(filters: Record<string, string>): Promise<PageRe
 
       if (filters.quickFilter === 'speakers') {
         query = query.or('notes.ilike.%"is_speaker":true%,notes.ilike.%"Palestra%');
+      } else if (filters.quickFilter === 'available') {
+        query = query.or('notes.ilike.%"status":"disponivel"%,notes.ilike.%"engagement_status":"disponivel"%');
+      } else if (filters.quickFilter === 'second_stage') {
+        query = query.ilike('notes', '%"second_stage_status":"desejo_vivenciar"%');
       } else {
         query = query.ilike('notes', '%"skills"%');
       }

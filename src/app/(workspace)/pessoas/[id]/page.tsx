@@ -27,6 +27,7 @@ import { PersonTimeline } from '@/components/person-timeline';
 import { ManagePhotoModal } from '@/components/manage-photo-modal';
 import { PersonTalksCard } from '@/components/person-talks-card';
 import { PersonSkillsCard } from '@/components/person-skills-card';
+import { PersonAvailabilityCard } from '@/components/person-availability-card';
 import { PersonPastoralNotesCard } from '@/components/person-pastoral-notes-card';
 import { isMandateRecord, getMandateStatus, getConditionMeta, normalizeMandateBody } from '@/lib/encounter-config';
 
@@ -282,6 +283,44 @@ export default async function PersonDetailPage({ params }: PersonPageProps) {
                   }}
                 >
                   <Church size={13} /> {person.parish}
+                </span>
+              )}
+              {person.availability?.status === 'disponivel' && (
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    fontSize: '0.76rem',
+                    color: '#15803d',
+                    background: '#f0fdf4',
+                    padding: '2px 8px',
+                    borderRadius: '12px',
+                    border: '1px solid #bbf7d0',
+                    fontWeight: 600,
+                  }}
+                  title="Disponível para servir nos próximos encontros"
+                >
+                  🟢 Disponível p/ Servir
+                </span>
+              )}
+              {person.availability?.second_stage_status === 'desejo_vivenciar' && (
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    fontSize: '0.76rem',
+                    color: '#854d0e',
+                    background: '#fef9c3',
+                    padding: '2px 8px',
+                    borderRadius: '12px',
+                    border: '1px solid #fde047',
+                    fontWeight: 600,
+                  }}
+                  title="Interesse declarado em vivenciar a 2ª Etapa"
+                >
+                  🌟 Deseja 2ª Etapa
                 </span>
               )}
               {isSpeakerPerson && (
@@ -753,7 +792,15 @@ export default async function PersonDetailPage({ params }: PersonPageProps) {
             )}
           </section>
 
-          {/* 4. Palestras Ministradas */}
+          {/* 4. Prontidão Pastoral, Jornada da 2ª Etapa e Último Serviço */}
+          <PersonAvailabilityCard
+            personId={person.id}
+            personName={person.name}
+            initialAvailability={person.availability}
+            canEdit={isStaff}
+          />
+
+          {/* 5. Palestras Ministradas */}
           <PersonTalksCard
             person={{
               id: person.id,
