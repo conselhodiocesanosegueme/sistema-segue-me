@@ -143,6 +143,23 @@ export function EncounterDetailView({
     ).length;
   }, [vivenciantes, equipesReais, dirigenteMembers, conselhoMembers, palestrantesList]);
 
+  // Seções raízes expandidas (por padrão todas abertas)
+  const [expandedRoots, setExpandedRoots] = useState<Set<string>>(
+    () => new Set(['vivenciou', 'trabalhou', 'dirigente', 'conselho', 'palestrantes'])
+  );
+
+  function toggleRoot(rootKey: string) {
+    setExpandedRoots((prev) => {
+      const next = new Set(prev);
+      if (next.has(rootKey)) {
+        next.delete(rootKey);
+      } else {
+        next.add(rootKey);
+      }
+      return next;
+    });
+  }
+
   // Itens expandidos
   const [expandedItems, setExpandedItems] = useState<Set<string>>(() => {
     const initial = new Set<string>();
@@ -167,6 +184,7 @@ export function EncounterDetailView({
   }
 
   function expandAll() {
+    setExpandedRoots(new Set(['vivenciou', 'trabalhou', 'dirigente', 'conselho', 'palestrantes']));
     const all = new Set<string>();
     allCircleNames.forEach((c) => all.add(`circulo-${c}`));
     allTeamNames.forEach((t) => all.add(`equipe-${t}`));
@@ -177,6 +195,7 @@ export function EncounterDetailView({
   }
 
   function collapseAll() {
+    setExpandedRoots(new Set());
     setExpandedItems(new Set());
   }
 
@@ -337,9 +356,22 @@ export function EncounterDetailView({
     return result;
   }, [palestrantesMap, term, selectedFilter, conditionFilter]);
 
-  // Se o usuário estiver pesquisando algo, auto-expande os itens correspondentes
+  // Se o usuário estiver pesquisando algo ou filtrando, auto-expande os itens e raízes correspondentes
+  const effectiveExpandedRoots = useMemo(() => {
+    if (term || conditionFilter !== 'all' || selectedFilter !== 'all') {
+      const set = new Set(expandedRoots);
+      if (filteredCirculos.length > 0) set.add('vivenciou');
+      if (filteredEquipes.length > 0) set.add('trabalhou');
+      if (filteredDirigente.length > 0) set.add('dirigente');
+      if (filteredConselho.length > 0) set.add('conselho');
+      if (filteredPalestrantes.length > 0) set.add('palestrantes');
+      return set;
+    }
+    return expandedRoots;
+  }, [term, conditionFilter, selectedFilter, expandedRoots, filteredCirculos, filteredEquipes, filteredDirigente, filteredConselho, filteredPalestrantes]);
+
   const effectiveExpanded = useMemo(() => {
-    if (term || conditionFilter !== 'all') {
+    if (term || conditionFilter !== 'all' || selectedFilter !== 'all') {
       const set = new Set(expandedItems);
       filteredCirculos.forEach(([name]) => set.add(`circulo-${name}`));
       filteredEquipes.forEach(([name]) => set.add(`equipe-${name}`));
@@ -349,7 +381,7 @@ export function EncounterDetailView({
       return set;
     }
     return expandedItems;
-  }, [term, conditionFilter, expandedItems, filteredCirculos, filteredEquipes, filteredDirigente, filteredConselho, filteredPalestrantes]);
+  }, [term, conditionFilter, selectedFilter, expandedItems, filteredCirculos, filteredEquipes, filteredDirigente, filteredConselho, filteredPalestrantes]);
 
   const totalGeral =
     vivenciantes.length +
@@ -647,17 +679,31 @@ export function EncounterDetailView({
       {/* SEÇÃO 1: VIVENCIOU */}
       {(activeTab === 'all' || activeTab === 'vivenciou') && (
         <section className="panel" style={{ padding: '0', overflow: 'hidden' }}>
-          <div
+          {/* Cabeçalho Raiz Suspenso */}
+          <button
+            type="button"
+            onClick={() => toggleRoot('vivenciou')}
+            aria-expanded={effectiveExpandedRoots.has('vivenciou')}
             style={{
+              width: '100%',
               padding: '16px 20px',
-              borderBottom: '1px solid var(--border-base)',
+              border: 'none',
+              borderBottom: effectiveExpandedRoots.has('vivenciou') ? '1px solid var(--border-base)' : 'none',
               background: 'linear-gradient(to right, #fffbf0, #fff)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
+              cursor: 'pointer',
+              textAlign: 'left',
+              transition: 'background 0.15s ease',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              {effectiveExpandedRoots.has('vivenciou') ? (
+                <CaretDown size={20} color="var(--brand-primary)" weight="bold" />
+              ) : (
+                <CaretRight size={20} color="var(--text-muted)" weight="bold" />
+              )}
               <IdentificationCard size={22} color="var(--brand-primary)" weight="duotone" />
               <div>
                 <strong style={{ fontSize: '1.05rem', color: 'var(--brand-primary)', fontFamily: 'var(--font-serif)' }}>
@@ -668,17 +714,23 @@ export function EncounterDetailView({
                 </div>
               </div>
             </div>
-            <span className="badge badge-amber" style={{ fontSize: '0.75rem', fontWeight: 600 }}>
-              Vivência Oficial
-            </span>
-          </div>
-
-          {filteredCirculos.length === 0 ? (
-            <div style={{ padding: '30px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
-              Nenhum encontrista ou círculo encontrado com os critérios pesquisados.
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span className="badge badge-amber" style={{ fontSize: '0.75rem', fontWeight: 600 }}>
+                Vivência Oficial
+              </span>
+              <span style={{ fontSize: '0.74rem', color: 'var(--text-subtle)', fontWeight: 600 }}>
+                {effectiveExpandedRoots.has('vivenciou') ? 'Recolher' : 'Abrir'}
+              </span>
             </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
+          </button>
+
+          {effectiveExpandedRoots.has('vivenciou') && (
+            filteredCirculos.length === 0 ? (
+              <div style={{ padding: '30px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                Nenhum encontrista ou círculo encontrado com os critérios pesquisados.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
               {filteredCirculos.map(([circulo, pessoas]) => {
                 const itemId = `circulo-${circulo}`;
                 const isExpanded = effectiveExpanded.has(itemId);
@@ -812,24 +864,39 @@ export function EncounterDetailView({
                 );
               })}
             </div>
-          )}
-        </section>
+          )
+        )}
+      </section>
       )}
 
       {/* SEÇÃO 2: TRABALHOU */}
       {(activeTab === 'all' || activeTab === 'trabalhou') && (
         <section className="panel" style={{ padding: '0', overflow: 'hidden' }}>
-          <div
+          {/* Cabeçalho Raiz Suspenso */}
+          <button
+            type="button"
+            onClick={() => toggleRoot('trabalhou')}
+            aria-expanded={effectiveExpandedRoots.has('trabalhou')}
             style={{
+              width: '100%',
               padding: '16px 20px',
-              borderBottom: '1px solid var(--border-base)',
+              border: 'none',
+              borderBottom: effectiveExpandedRoots.has('trabalhou') ? '1px solid var(--border-base)' : 'none',
               background: 'linear-gradient(to right, #f0fdf4, #fff)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
+              cursor: 'pointer',
+              textAlign: 'left',
+              transition: 'background 0.15s ease',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              {effectiveExpandedRoots.has('trabalhou') ? (
+                <CaretDown size={20} color="var(--brand-secondary)" weight="bold" />
+              ) : (
+                <CaretRight size={20} color="var(--text-muted)" weight="bold" />
+              )}
               <HandHeart size={22} color="var(--brand-secondary)" weight="duotone" />
               <div>
                 <strong style={{ fontSize: '1.05rem', color: 'var(--text-main)', fontFamily: 'var(--font-serif)' }}>
@@ -840,17 +907,23 @@ export function EncounterDetailView({
                 </div>
               </div>
             </div>
-            <span className="badge badge-blue" style={{ fontSize: '0.75rem', fontWeight: 600 }}>
-              Voluntários e Serviço
-            </span>
-          </div>
-
-          {filteredEquipes.length === 0 ? (
-            <div style={{ padding: '30px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
-              Nenhuma equipe de trabalho encontrada com os critérios pesquisados.
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span className="badge badge-blue" style={{ fontSize: '0.75rem', fontWeight: 600 }}>
+                Voluntários e Serviço
+              </span>
+              <span style={{ fontSize: '0.74rem', color: 'var(--text-subtle)', fontWeight: 600 }}>
+                {effectiveExpandedRoots.has('trabalhou') ? 'Recolher' : 'Abrir'}
+              </span>
             </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
+          </button>
+
+          {effectiveExpandedRoots.has('trabalhou') && (
+            filteredEquipes.length === 0 ? (
+              <div style={{ padding: '30px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                Nenhuma equipe de trabalho encontrada com os critérios pesquisados.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
               {filteredEquipes.map(([equipe, membros]) => {
                 const itemId = `equipe-${equipe}`;
                 const isExpanded = effectiveExpanded.has(itemId);
@@ -995,26 +1068,41 @@ export function EncounterDetailView({
                 );
               })}
             </div>
-          )}
-        </section>
+          )
+        )}
+      </section>
       )}
 
       {/* SEÇÃO 3: EQUIPE DIRIGENTE */}
       {(activeTab === 'all' || activeTab === 'dirigente') && dirigenteMembers.length > 0 && (
         <section className="panel" style={{ padding: '0', overflow: 'hidden' }}>
-          <div
+          {/* Cabeçalho Raiz Suspenso */}
+          <button
+            type="button"
+            onClick={() => toggleRoot('dirigente')}
+            aria-expanded={effectiveExpandedRoots.has('dirigente')}
             style={{
+              width: '100%',
               padding: '16px 20px',
-              borderBottom: '1px solid var(--border-base)',
+              border: 'none',
+              borderBottom: effectiveExpandedRoots.has('dirigente') ? '1px solid var(--border-base)' : 'none',
               background: 'linear-gradient(to right, #f0fdf4, #fff)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
+              cursor: 'pointer',
+              textAlign: 'left',
               flexWrap: 'wrap',
               gap: '12px',
+              transition: 'background 0.15s ease',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              {effectiveExpandedRoots.has('dirigente') ? (
+                <CaretDown size={20} color="#15803d" weight="bold" />
+              ) : (
+                <CaretRight size={20} color="var(--text-muted)" weight="bold" />
+              )}
               <span style={{ fontSize: '1.4rem' }}>⛪</span>
               <div>
                 <strong style={{ fontSize: '1.05rem', color: '#15803d', fontFamily: 'var(--font-serif)' }}>
@@ -1025,40 +1113,47 @@ export function EncounterDetailView({
                 </div>
               </div>
             </div>
-            <span
-              style={{
-                fontSize: '0.75rem',
-                fontWeight: 700,
-                padding: '4px 10px',
-                borderRadius: '999px',
-                background: '#dcfce7',
-                color: '#15803d',
-                border: '1px solid #bbf7d0',
-              }}
-            >
-              Mandato Paroquial
-            </span>
-          </div>
-
-          {/* Box explicativo */}
-          <div
-            style={{
-              padding: '12px 20px',
-              background: '#f0fdf4',
-              borderBottom: '1px solid #bbf7d0',
-              fontSize: '0.8rem',
-              color: '#166534',
-              lineHeight: 1.5,
-              display: 'flex',
-              alignItems: 'flex-start',
-              gap: '10px',
-            }}
-          >
-            <span style={{ fontSize: '1.1rem', marginTop: '-1px' }}>ℹ️</span>
-            <div>
-              <strong>Mandato Pastoral:</strong> Os membros da Equipe Dirigente da Paróquia constam no quadrante por estarem no exercício de seu mandato bienal responsável pela liderança, pastoreio e realização deste encontro.
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span
+                style={{
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  padding: '4px 10px',
+                  borderRadius: '999px',
+                  background: '#dcfce7',
+                  color: '#15803d',
+                  border: '1px solid #bbf7d0',
+                }}
+              >
+                Mandato Paroquial
+              </span>
+              <span style={{ fontSize: '0.74rem', color: 'var(--text-subtle)', fontWeight: 600 }}>
+                {effectiveExpandedRoots.has('dirigente') ? 'Recolher' : 'Abrir'}
+              </span>
             </div>
-          </div>
+          </button>
+
+          {effectiveExpandedRoots.has('dirigente') && (
+            <>
+              {/* Box explicativo */}
+              <div
+                style={{
+                  padding: '12px 20px',
+                  background: '#f0fdf4',
+                  borderBottom: '1px solid #bbf7d0',
+                  fontSize: '0.8rem',
+                  color: '#166534',
+                  lineHeight: 1.5,
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '10px',
+                }}
+              >
+                <span style={{ fontSize: '1.1rem', marginTop: '-1px' }}>ℹ️</span>
+                <div>
+                  <strong>Mandato Pastoral:</strong> Os membros da Equipe Dirigente da Paróquia constam no quadrante por estarem no exercício de seu mandato bienal responsável pela liderança, pastoreio e realização deste encontro.
+                </div>
+              </div>
 
           {filteredDirigente.length === 0 ? (
             <div style={{ padding: '30px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
@@ -1207,25 +1302,41 @@ export function EncounterDetailView({
               })}
             </div>
           )}
+            </>
+          )}
         </section>
       )}
 
       {/* SEÇÃO 4: CONSELHO (DIOCESANO & SETORIAL) */}
       {(activeTab === 'all' || activeTab === 'conselho') && conselhoMembers.length > 0 && (
         <section className="panel" style={{ padding: '0', overflow: 'hidden' }}>
-          <div
+          {/* Cabeçalho Raiz Suspenso */}
+          <button
+            type="button"
+            onClick={() => toggleRoot('conselho')}
+            aria-expanded={effectiveExpandedRoots.has('conselho')}
             style={{
+              width: '100%',
               padding: '16px 20px',
-              borderBottom: '1px solid var(--border-base)',
+              border: 'none',
+              borderBottom: effectiveExpandedRoots.has('conselho') ? '1px solid var(--border-base)' : 'none',
               background: 'linear-gradient(to right, #fefce8, #fff)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
+              cursor: 'pointer',
+              textAlign: 'left',
               flexWrap: 'wrap',
               gap: '12px',
+              transition: 'background 0.15s ease',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              {effectiveExpandedRoots.has('conselho') ? (
+                <CaretDown size={20} color="#92400e" weight="bold" />
+              ) : (
+                <CaretRight size={20} color="var(--text-muted)" weight="bold" />
+              )}
               <span style={{ fontSize: '1.4rem' }}>🏛️</span>
               <div>
                 <strong style={{ fontSize: '1.05rem', color: '#92400e', fontFamily: 'var(--font-serif)' }}>
@@ -1236,40 +1347,47 @@ export function EncounterDetailView({
                 </div>
               </div>
             </div>
-            <span
-              style={{
-                fontSize: '0.75rem',
-                fontWeight: 700,
-                padding: '4px 10px',
-                borderRadius: '999px',
-                background: '#fef3c7',
-                color: '#92400e',
-                border: '1px solid #fde68a',
-              }}
-            >
-              Mandato Diocesano / Setorial
-            </span>
-          </div>
-
-          {/* Box explicativo */}
-          <div
-            style={{
-              padding: '12px 20px',
-              background: '#fffbeb',
-              borderBottom: '1px solid #fef3c7',
-              fontSize: '0.8rem',
-              color: '#78350f',
-              lineHeight: 1.5,
-              display: 'flex',
-              alignItems: 'flex-start',
-              gap: '10px',
-            }}
-          >
-            <span style={{ fontSize: '1.1rem', marginTop: '-1px' }}>ℹ️</span>
-            <div>
-              <strong>Representação Diocesana:</strong> Os membros do Conselho Diocesano e das Coordenações Setoriais constam formalmente no quadrante do encontro por estarem no exercício de seus mandatos bienais de articulação pastoral do movimento no ano em que o encontro foi realizado.
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span
+                style={{
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  padding: '4px 10px',
+                  borderRadius: '999px',
+                  background: '#fef3c7',
+                  color: '#92400e',
+                  border: '1px solid #fde68a',
+                }}
+              >
+                Conselho Diocesano & Setor
+              </span>
+              <span style={{ fontSize: '0.74rem', color: 'var(--text-subtle)', fontWeight: 600 }}>
+                {effectiveExpandedRoots.has('conselho') ? 'Recolher' : 'Abrir'}
+              </span>
             </div>
-          </div>
+          </button>
+
+          {effectiveExpandedRoots.has('conselho') && (
+            <>
+              {/* Box explicativo */}
+              <div
+                style={{
+                  padding: '12px 20px',
+                  background: '#fffbeb',
+                  borderBottom: '1px solid #fef3c7',
+                  fontSize: '0.8rem',
+                  color: '#78350f',
+                  lineHeight: 1.5,
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '10px',
+                }}
+              >
+                <span style={{ fontSize: '1.1rem', marginTop: '-1px' }}>ℹ️</span>
+                <div>
+                  <strong>Representação Diocesana:</strong> Os membros do Conselho Diocesano e das Coordenações Setoriais constam formalmente no quadrante do encontro por estarem no exercício de seus mandatos bienais de articulação pastoral do movimento no ano em que o encontro foi realizado.
+                </div>
+              </div>
 
           {filteredConselho.length === 0 ? (
             <div style={{ padding: '30px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
@@ -1418,25 +1536,41 @@ export function EncounterDetailView({
               })}
             </div>
           )}
+          </>
+          )}
         </section>
       )}
 
       {/* SEÇÃO 5: PALESTRANTES */}
       {(activeTab === 'all' || activeTab === 'palestrantes') && palestrantesList.length > 0 && (
         <section className="panel" style={{ padding: '0', overflow: 'hidden' }}>
-          <div
+          {/* Cabeçalho Raiz Suspenso */}
+          <button
+            type="button"
+            onClick={() => toggleRoot('palestrantes')}
+            aria-expanded={effectiveExpandedRoots.has('palestrantes')}
             style={{
+              width: '100%',
               padding: '16px 20px',
-              borderBottom: '1px solid var(--border-base)',
+              border: 'none',
+              borderBottom: effectiveExpandedRoots.has('palestrantes') ? '1px solid var(--border-base)' : 'none',
               background: 'linear-gradient(to right, #f0f9ff, #fff)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
+              cursor: 'pointer',
+              textAlign: 'left',
               flexWrap: 'wrap',
               gap: '12px',
+              transition: 'background 0.15s ease',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              {effectiveExpandedRoots.has('palestrantes') ? (
+                <CaretDown size={20} color="#0284c7" weight="bold" />
+              ) : (
+                <CaretRight size={20} color="var(--text-muted)" weight="bold" />
+              )}
               <MicrophoneStage size={22} color="#0284c7" weight="duotone" />
               <div>
                 <strong style={{ fontSize: '1.05rem', color: '#0369a1', fontFamily: 'var(--font-serif)' }}>
@@ -1447,27 +1581,33 @@ export function EncounterDetailView({
                 </div>
               </div>
             </div>
-            <span
-              style={{
-                fontSize: '0.75rem',
-                fontWeight: 700,
-                padding: '4px 10px',
-                borderRadius: '999px',
-                background: '#e0f2fe',
-                color: '#0369a1',
-                border: '1px solid #bae6fd',
-              }}
-            >
-              Palestras do Encontro
-            </span>
-          </div>
-
-          {filteredPalestrantes.length === 0 ? (
-            <div style={{ padding: '30px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
-              Nenhum palestrante ou tema encontrado com os critérios pesquisados.
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span
+                style={{
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  padding: '4px 10px',
+                  borderRadius: '999px',
+                  background: '#e0f2fe',
+                  color: '#0369a1',
+                  border: '1px solid #bae6fd',
+                }}
+              >
+                Palestrantes do Encontro
+              </span>
+              <span style={{ fontSize: '0.74rem', color: 'var(--text-subtle)', fontWeight: 600 }}>
+                {effectiveExpandedRoots.has('palestrantes') ? 'Recolher' : 'Abrir'}
+              </span>
             </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
+          </button>
+
+          {effectiveExpandedRoots.has('palestrantes') && (
+            filteredPalestrantes.length === 0 ? (
+              <div style={{ padding: '30px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                Nenhum palestrante ou tema encontrado com os critérios pesquisados.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
               {filteredPalestrantes.map(([tema, palestrantesDoTema]) => {
                 const itemId = `palestra-${tema}`;
                 const isExpanded = effectiveExpanded.has(itemId);
@@ -1615,8 +1755,9 @@ export function EncounterDetailView({
                 );
               })}
             </div>
-          )}
-        </section>
+          )
+        )}
+      </section>
       )}
     </div>
   );
