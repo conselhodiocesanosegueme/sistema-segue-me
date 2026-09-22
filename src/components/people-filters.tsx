@@ -18,6 +18,8 @@ const QUICK_FILTERS = [
   { id: 'worked', label: 'Trabalharam nas Equipes' },
   { id: 'couples', label: 'Casais Atuantes / Tios' },
   { id: 'musicians', label: 'Músicos & Cantores', icon: '🎵' },
+  { id: 'speakers', label: 'Palestrantes', icon: '🎙️' },
+  { id: 'talents', label: 'Com Habilidades', icon: '✨' },
 ];
 
 export function PeopleFilters({

@@ -13,27 +13,29 @@ interface PersonTalksCardProps {
   };
   talks: Array<{
     id: string;
-    title?: string;
-    role?: string;
-    team?: string;
-    location?: string;
-    notes?: string;
-    kind?: string;
-    condition?: string;
+    title?: string | null;
+    role?: string | null;
+    team?: string | null;
+    location?: string | null;
+    notes?: string | null;
+    kind?: string | null;
+    condition?: string | null;
     encounter?: {
       id: string;
-      name?: string;
-      edition?: string;
-      year?: number;
-      parish?: string;
-      city?: string;
-    };
+      name?: string | null;
+      edition?: string | number | null;
+      year?: number | null;
+      parish?: string | null;
+      city?: string | null;
+    } | null;
   }>;
-  isStaff: boolean;
+  isStaff?: boolean;
+  canEdit?: boolean;
 }
 
-export function PersonTalksCard({ person, talks = [], isStaff }: PersonTalksCardProps) {
+export function PersonTalksCard({ person, talks = [], isStaff = false, canEdit }: PersonTalksCardProps) {
   const [modalOpen, setModalOpen] = useState(false);
+  const allowEdit = canEdit ?? isStaff;
 
   // Ordena sempre do mais recente para o mais antigo (2026 -> 2011)
   const sortedTalks = useMemo(() => {
@@ -60,7 +62,7 @@ export function PersonTalksCard({ person, talks = [], isStaff }: PersonTalksCard
           </h2>
         </div>
 
-        {isStaff && (
+        {allowEdit && (
           <button
             type="button"
             onClick={() => setModalOpen(true)}
@@ -77,9 +79,9 @@ export function PersonTalksCard({ person, talks = [], isStaff }: PersonTalksCard
       {talks.length === 0 ? (
         <div style={{ padding: '14px 16px', background: 'var(--bg-canvas)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-light)' }}>
           <p style={{ fontSize: '0.84rem', color: 'var(--text-muted)', margin: '0 0 10px 0', lineHeight: '1.45' }}>
-            Nenhum registro de palestra ministrada encontrado para esta pessoa no banco de dados.
+            Nenhum registro de palestra ministrada encontrado no banco de dados.
           </p>
-          {isStaff && (
+          {allowEdit && (
             <button
               type="button"
               onClick={() => setModalOpen(true)}
@@ -87,7 +89,7 @@ export function PersonTalksCard({ person, talks = [], isStaff }: PersonTalksCard
               style={{ fontSize: '0.78rem', padding: '6px 12px', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
             >
               <MicrophoneStage size={14} />
-              Registrar que {person.name} já ministrou palestra
+              Registrar palestra que já ministrou
             </button>
           )}
         </div>

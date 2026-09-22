@@ -390,13 +390,13 @@ export function MyHistoryView({
             border: '1px solid var(--border-base)',
             borderRadius: 'var(--radius-md)',
             padding: '14px 16px',
-            borderLeft: '4px solid var(--brand-gold)',
+            borderLeft: '4px solid #16a34a',
           }}
         >
-          <span style={{ fontSize: '0.74rem', color: 'var(--text-subtle)', textTransform: 'uppercase', fontWeight: 700 }}>
+          <span style={{ fontSize: '0.74rem', color: '#15803d', textTransform: 'uppercase', fontWeight: 700 }}>
             Vivenciou
           </span>
-          <div style={{ fontSize: '1.6rem', fontWeight: 700, color: 'var(--brand-primary)', marginTop: '2px' }}>
+          <div style={{ fontSize: '1.6rem', fontWeight: 700, color: '#15803d', marginTop: '2px' }}>
             {vivencias.length}
           </div>
           <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
@@ -410,13 +410,13 @@ export function MyHistoryView({
             border: '1px solid var(--border-base)',
             borderRadius: 'var(--radius-md)',
             padding: '14px 16px',
-            borderLeft: '4px solid var(--brand-primary)',
+            borderLeft: '4px solid #2563eb',
           }}
         >
-          <span style={{ fontSize: '0.74rem', color: 'var(--text-subtle)', textTransform: 'uppercase', fontWeight: 700 }}>
+          <span style={{ fontSize: '0.74rem', color: '#1d4ed8', textTransform: 'uppercase', fontWeight: 700 }}>
             Trabalhou
           </span>
-          <div style={{ fontSize: '1.6rem', fontWeight: 700, color: 'var(--brand-primary)', marginTop: '2px' }}>
+          <div style={{ fontSize: '1.6rem', fontWeight: 700, color: '#1d4ed8', marginTop: '2px' }}>
             {trabalhos.length}
           </div>
           <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
@@ -430,13 +430,13 @@ export function MyHistoryView({
             border: '1px solid var(--border-base)',
             borderRadius: 'var(--radius-md)',
             padding: '14px 16px',
-            borderLeft: '4px solid var(--brand-staff)',
+            borderLeft: '4px solid #7c3aed',
           }}
         >
-          <span style={{ fontSize: '0.74rem', color: 'var(--text-subtle)', textTransform: 'uppercase', fontWeight: 700 }}>
+          <span style={{ fontSize: '0.74rem', color: '#6d28d9', textTransform: 'uppercase', fontWeight: 700 }}>
             Mandatos
           </span>
-          <div style={{ fontSize: '1.6rem', fontWeight: 700, color: 'var(--brand-primary)', marginTop: '2px' }}>
+          <div style={{ fontSize: '1.6rem', fontWeight: 700, color: '#6d28d9', marginTop: '2px' }}>
             {totalMandatesCount}
           </div>
           <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
@@ -505,9 +505,15 @@ export function MyHistoryView({
               type="button"
               onClick={() => setActiveTab('vivenciou')}
               className={`button ${activeTab === 'vivenciou' ? 'button-primary' : 'button-secondary'}`}
-              style={{ padding: '6px 14px', fontSize: '0.82rem' }}
+              style={{
+                padding: '6px 14px',
+                fontSize: '0.82rem',
+                ...(activeTab === 'vivenciou'
+                  ? { background: '#16a34a', borderColor: '#15803d', color: '#fff' }
+                  : {}),
+              }}
             >
-              <CalendarBlank size={16} />
+              <CalendarBlank size={16} color={activeTab === 'vivenciou' ? '#fff' : '#16a34a'} />
               Vivenciou ({vivencias.length})
             </button>
 
@@ -515,9 +521,15 @@ export function MyHistoryView({
               type="button"
               onClick={() => setActiveTab('trabalhou')}
               className={`button ${activeTab === 'trabalhou' ? 'button-primary' : 'button-secondary'}`}
-              style={{ padding: '6px 14px', fontSize: '0.82rem' }}
+              style={{
+                padding: '6px 14px',
+                fontSize: '0.82rem',
+                ...(activeTab === 'trabalhou'
+                  ? { background: '#2563eb', borderColor: '#1d4ed8', color: '#fff' }
+                  : {}),
+              }}
             >
-              <HandHeart size={16} />
+              <HandHeart size={16} color={activeTab === 'trabalhou' ? '#fff' : '#2563eb'} />
               Trabalhou & Equipes ({trabalhos.length})
             </button>
 
@@ -525,9 +537,15 @@ export function MyHistoryView({
               type="button"
               onClick={() => setActiveTab('mandatos')}
               className={`button ${activeTab === 'mandatos' ? 'button-primary' : 'button-secondary'}`}
-              style={{ padding: '6px 14px', fontSize: '0.82rem' }}
+              style={{
+                padding: '6px 14px',
+                fontSize: '0.82rem',
+                ...(activeTab === 'mandatos'
+                  ? { background: '#7c3aed', borderColor: '#6d28d9', color: '#fff' }
+                  : {}),
+              }}
             >
-              <Briefcase size={16} />
+              <Briefcase size={16} color={activeTab === 'mandatos' ? '#fff' : '#7c3aed'} />
               Mandatos ({totalMandatesCount})
             </button>
           </div>
@@ -588,20 +606,24 @@ export function MyHistoryView({
                 const isCasal = part.condition?.toLowerCase().includes('casal');
 
                 return (
-                  <div key={part.id || index} className="timeline-item">
+                  <div key={part.id || index} className="timeline-item" style={{ marginBottom: '12px' }}>
                     <div
                       className="timeline-dot"
                       style={{
-                        borderColor: isVivencia ? 'var(--brand-gold)' : 'var(--brand-primary)',
-                        background: isVivencia ? '#fff' : 'var(--brand-primary)',
+                        borderColor: isVivencia ? '#16a34a' : '#2563eb',
+                        background: '#fff',
+                        boxShadow: `0 0 0 3px ${isVivencia ? '#dcfce7' : '#dbeafe'}`,
+                        width: '13px',
+                        height: '13px',
+                        left: '-26px',
+                        top: '7px',
                       }}
                     />
                     <div
                       className="timeline-card"
                       style={{
-                        borderLeft: `4px solid ${
-                          isVivencia ? 'var(--brand-gold)' : isCasal ? 'var(--brand-staff)' : 'var(--brand-primary)'
-                        }`,
+                        borderLeft: `3.5px solid ${isVivencia ? '#16a34a' : '#2563eb'}`,
+                        padding: '10px 14px',
                       }}
                     >
                       {/* Topo do Card */}
@@ -610,39 +632,39 @@ export function MyHistoryView({
                           display: 'flex',
                           alignItems: 'flex-start',
                           justifyContent: 'space-between',
-                          gap: '12px',
-                          marginBottom: '10px',
+                          gap: '10px',
+                          marginBottom: '5px',
                         }}
                       >
                         <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px', flexWrap: 'wrap' }}>
                             {/* Badge do Tipo / Missão */}
                             {isExternalImplantation(part.encounter) && !isVivencia ? (
                               <span
                                 style={{
-                                  fontSize: '0.72rem',
+                                  fontSize: '0.67rem',
                                   fontWeight: 700,
                                   textTransform: 'uppercase',
-                                  padding: '3px 8px',
+                                  padding: '2px 7px',
                                   borderRadius: '4px',
                                   background: '#cffafe',
                                   color: '#0e7490',
                                   border: '1px solid #a5f3fc',
                                 }}
                               >
-                                🌐 Missão de Implantação Externa
+                                🌐 Missão Externa
                               </span>
                             ) : (
                               <span
                                 style={{
-                                  fontSize: '0.72rem',
+                                  fontSize: '0.67rem',
                                   fontWeight: 700,
                                   textTransform: 'uppercase',
-                                  padding: '3px 8px',
+                                  padding: '2px 7px',
                                   borderRadius: '4px',
-                                  background: isVivencia ? 'var(--brand-light)' : 'var(--bg-subtle)',
-                                  color: isVivencia ? 'var(--brand-primary)' : 'var(--text-main)',
-                                  border: `1px solid ${isVivencia ? 'var(--brand-border)' : 'var(--border-light)'}`,
+                                  background: isVivencia ? '#dcfce7' : '#dbeafe',
+                                  color: isVivencia ? '#15803d' : '#1d4ed8',
+                                  border: `1px solid ${isVivencia ? '#bbf7d0' : '#bfdbfe'}`,
                                 }}
                               >
                                 {isVivencia ? '★ Vivenciou o Encontro' : '⚙ Equipe de Trabalho'}
@@ -652,42 +674,42 @@ export function MyHistoryView({
                             {isVivencia && part.is_external_seed && (
                               <span
                                 style={{
-                                  fontSize: '0.72rem',
+                                  fontSize: '0.67rem',
                                   fontWeight: 700,
                                   textTransform: 'uppercase',
-                                  padding: '3px 8px',
+                                  padding: '2px 7px',
                                   borderRadius: '4px',
                                   background: '#fef3c7',
                                   color: '#92400e',
                                   border: '1px solid #fde68a',
                                 }}
                               >
-                                🌱 Remessa de Implantação
+                                🌱 Remessa
                               </span>
                             )}
 
                             {/* Badge da Condição: Jovem ou Casal */}
                             <span
                               style={{
-                                fontSize: '0.72rem',
+                                fontSize: '0.67rem',
                                 fontWeight: 600,
                                 display: 'inline-flex',
                                 alignItems: 'center',
-                                gap: '4px',
-                                padding: '3px 8px',
+                                gap: '3px',
+                                padding: '2px 7px',
                                 borderRadius: '4px',
-                                background: isCasal ? '#fef3c7' : '#e0f2fe',
-                                color: isCasal ? '#92400e' : '#0369a1',
-                                border: `1px solid ${isCasal ? '#fde68a' : '#bae6fd'}`,
+                                background: isCasal ? '#fef3c7' : '#f1f5f9',
+                                color: isCasal ? '#92400e' : '#475569',
+                                border: `1px solid ${isCasal ? '#fde68a' : '#e2e8f0'}`,
                               }}
                             >
                               {isCasal ? (
                                 <>
-                                  <Heart size={12} weight="fill" /> Enquanto Casal
+                                  <Heart size={11} weight="fill" /> Enquanto Casal
                                 </>
                               ) : (
                                 <>
-                                  <User size={12} /> Enquanto Jovem
+                                  <User size={11} /> Enquanto Jovem
                                 </>
                               )}
                             </span>
@@ -696,7 +718,8 @@ export function MyHistoryView({
                           <h3
                             style={{
                               fontFamily: 'var(--font-serif)',
-                              fontSize: '1.25rem',
+                              fontSize: '1.04rem',
+                              lineHeight: 1.25,
                               color: 'var(--text-main)',
                               margin: 0,
                             }}
@@ -707,11 +730,15 @@ export function MyHistoryView({
 
                         {part.encounter?.year && (
                           <span
-                            className="badge badge-neutral"
                             style={{
                               fontWeight: 700,
-                              fontSize: '0.85rem',
-                              padding: '4px 10px',
+                              fontSize: '0.78rem',
+                              padding: '2px 8px',
+                              borderRadius: '4px',
+                              background: isVivencia ? '#f0fdf4' : '#eff6ff',
+                              color: isVivencia ? '#15803d' : '#1d4ed8',
+                              border: `1px solid ${isVivencia ? '#bbf7d0' : '#bfdbfe'}`,
+                              whiteSpace: 'nowrap',
                             }}
                           >
                             {part.encounter.year}
@@ -719,56 +746,62 @@ export function MyHistoryView({
                         )}
                       </div>
 
-                      {/* Conteúdo Específico: Equipe, Função, Círculo */}
+                      {/* Conteúdo Específico Compacto: Equipe, Função, Círculo */}
                       <div
                         style={{
-                          display: 'grid',
-                          gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-                          gap: '8px 14px',
-                          background: 'var(--bg-canvas)',
-                          padding: '12px 14px',
-                          borderRadius: 'var(--radius-md)',
-                          fontSize: '0.84rem',
-                          marginBottom: '10px',
+                          display: 'flex',
+                          flexWrap: 'wrap',
+                          alignItems: 'center',
+                          gap: '6px 14px',
+                          background: isVivencia ? '#f9fefb' : '#f8fafc',
+                          border: `1px solid ${isVivencia ? '#e2f5e8' : '#e2e8f0'}`,
+                          padding: '5px 10px',
+                          borderRadius: '6px',
+                          fontSize: '0.80rem',
+                          marginBottom: '5px',
                         }}
                       >
                         {!isVivencia && part.team && (
-                          <div>
-                            <span style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-subtle)', textTransform: 'uppercase', fontWeight: 700 }}>
-                              Equipe de Trabalho
+                          <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+                            <span style={{ fontSize: '0.67rem', color: 'var(--text-subtle)', textTransform: 'uppercase', fontWeight: 700 }}>
+                              Equipe:
                             </span>
-                            <strong style={{ color: 'var(--brand-primary)', fontSize: '0.92rem' }}>
+                            <strong style={{ color: '#1d4ed8', fontSize: '0.86rem' }}>
                               {part.team}
                             </strong>
                           </div>
                         )}
 
                         {part.role && (
-                          <div>
-                            <span style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-subtle)', textTransform: 'uppercase', fontWeight: 700 }}>
-                              Função / Cargo
+                          <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+                            <span style={{ fontSize: '0.67rem', color: 'var(--text-subtle)', textTransform: 'uppercase', fontWeight: 700 }}>
+                              Função:
                             </span>
-                            <strong style={{ color: 'var(--text-main)' }}>
+                            <strong style={{ color: isVivencia ? '#15803d' : 'var(--text-main)', fontSize: '0.86rem' }}>
                               {part.role}
                             </strong>
                           </div>
                         )}
 
                         {part.circle && (
-                          <div>
-                            <span style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-subtle)', textTransform: 'uppercase', fontWeight: 700 }}>
-                              Círculo
+                          <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+                            <span style={{ fontSize: '0.67rem', color: 'var(--text-subtle)', textTransform: 'uppercase', fontWeight: 700 }}>
+                              Círculo:
                             </span>
-                            <strong>{part.circle}</strong>
+                            <strong style={{ color: 'var(--text-main)', fontSize: '0.86rem' }}>
+                              {part.circle}
+                            </strong>
                           </div>
                         )}
 
                         {part.patron && (
-                          <div>
-                            <span style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-subtle)', textTransform: 'uppercase', fontWeight: 700 }}>
-                              Padroeiro
+                          <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+                            <span style={{ fontSize: '0.67rem', color: 'var(--text-subtle)', textTransform: 'uppercase', fontWeight: 700 }}>
+                              Padroeiro:
                             </span>
-                            <span>{part.patron}</span>
+                            <span style={{ color: 'var(--text-main)', fontSize: '0.82rem' }}>
+                              {part.patron}
+                            </span>
                           </div>
                         )}
                       </div>
@@ -779,14 +812,14 @@ export function MyHistoryView({
                           style={{
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '6px',
-                            fontSize: '0.78rem',
+                            gap: '5px',
+                            fontSize: '0.74rem',
                             color: '#0e7490',
                             fontWeight: 600,
-                            marginBottom: '3px',
+                            marginBottom: '2px',
                           }}
                         >
-                          <Buildings size={14} color="#0891b2" />
+                          <Buildings size={13} color="#0891b2" />
                           <span>Diocese: {part.encounter.target_diocese}</span>
                         </div>
                       )}
@@ -796,12 +829,12 @@ export function MyHistoryView({
                           style={{
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '6px',
-                            fontSize: '0.78rem',
+                            gap: '5px',
+                            fontSize: '0.74rem',
                             color: 'var(--text-subtle)',
                           }}
                         >
-                          <MapPin size={14} color="var(--brand-primary)" />
+                          <MapPin size={13} color={isVivencia ? '#16a34a' : '#2563eb'} />
                           <span>
                             {part.encounter.parish}
                             {part.encounter.city ? ` · ${part.encounter.city}` : ''}
@@ -813,17 +846,17 @@ export function MyHistoryView({
                       {isCasal && couple?.spouse && (
                         <div
                           style={{
-                            marginTop: '8px',
-                            paddingTop: '6px',
+                            marginTop: '5px',
+                            paddingTop: '4px',
                             borderTop: '1px dashed var(--border-light)',
-                            fontSize: '0.76rem',
-                            color: 'var(--brand-primary)',
+                            fontSize: '0.73rem',
+                            color: isVivencia ? '#15803d' : '#1d4ed8',
                             display: 'flex',
                             alignItems: 'center',
                             gap: '5px',
                           }}
                         >
-                          <Heart size={13} weight="fill" />
+                          <Heart size={12} weight="fill" />
                           <span>
                             Atuação em casal com {couple.spouse.name}
                           </span>
@@ -839,19 +872,24 @@ export function MyHistoryView({
               const isCasal = mandate.condition?.toLowerCase().includes('casal');
 
               return (
-                <div key={mandate.id || index} className="timeline-item">
+                <div key={mandate.id || index} className="timeline-item" style={{ marginBottom: '12px' }}>
                   <div
                     className="timeline-dot"
                     style={{
-                      borderColor: 'var(--brand-staff)',
-                      background: 'var(--brand-staff)',
+                      borderColor: '#7c3aed',
+                      background: '#fff',
+                      boxShadow: '0 0 0 3px #f3e8ff',
+                      width: '13px',
+                      height: '13px',
+                      left: '-26px',
+                      top: '7px',
                     }}
                   />
                   <div
                     className="timeline-card"
                     style={{
-                      borderLeft: '4px solid var(--brand-staff)',
-                      background: '#fffcf9',
+                      borderLeft: '3.5px solid #7c3aed',
+                      padding: '10px 14px',
                     }}
                   >
                     <div
@@ -859,22 +897,22 @@ export function MyHistoryView({
                         display: 'flex',
                         alignItems: 'flex-start',
                         justifyContent: 'space-between',
-                        gap: '12px',
-                        marginBottom: '10px',
+                        gap: '10px',
+                        marginBottom: '5px',
                       }}
                     >
                       <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px', flexWrap: 'wrap' }}>
                           <span
                             style={{
-                              fontSize: '0.72rem',
+                              fontSize: '0.67rem',
                               fontWeight: 700,
                               textTransform: 'uppercase',
-                              padding: '3px 8px',
+                              padding: '2px 7px',
                               borderRadius: '4px',
-                              background: '#fef3c7',
-                              color: '#894a29',
-                              border: '1px solid #fde68a',
+                              background: '#f3e8ff',
+                              color: '#6d28d9',
+                              border: '1px solid #e9d5ff',
                             }}
                           >
                             🏛 Mandato & Coordenação
@@ -882,25 +920,25 @@ export function MyHistoryView({
 
                           <span
                             style={{
-                              fontSize: '0.72rem',
+                              fontSize: '0.67rem',
                               fontWeight: 600,
                               display: 'inline-flex',
                               alignItems: 'center',
-                              gap: '4px',
-                              padding: '3px 8px',
+                              gap: '3px',
+                              padding: '2px 7px',
                               borderRadius: '4px',
-                              background: isCasal ? '#fef3c7' : '#e0f2fe',
-                              color: isCasal ? '#92400e' : '#0369a1',
-                              border: `1px solid ${isCasal ? '#fde68a' : '#bae6fd'}`,
+                              background: isCasal ? '#fef3c7' : '#f1f5f9',
+                              color: isCasal ? '#92400e' : '#475569',
+                              border: `1px solid ${isCasal ? '#fde68a' : '#e2e8f0'}`,
                             }}
                           >
                             {isCasal ? (
                               <>
-                                <Heart size={12} weight="fill" /> Enquanto Casal
+                                <Heart size={11} weight="fill" /> Enquanto Casal
                               </>
                             ) : (
                               <>
-                                <User size={12} /> Enquanto Jovem
+                                <User size={11} /> Enquanto Jovem
                               </>
                             )}
                           </span>
@@ -909,7 +947,8 @@ export function MyHistoryView({
                         <h3
                           style={{
                             fontFamily: 'var(--font-serif)',
-                            fontSize: '1.25rem',
+                            fontSize: '1.04rem',
+                            lineHeight: 1.25,
                             color: 'var(--text-main)',
                             margin: 0,
                           }}
@@ -918,16 +957,20 @@ export function MyHistoryView({
                         </h3>
                       </div>
 
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                         <span
-                          className="badge badge-amber"
                           style={{
                             fontWeight: 700,
-                            fontSize: '0.82rem',
-                            padding: '4px 12px',
+                            fontSize: '0.75rem',
+                            padding: '2px 8px',
+                            borderRadius: '4px',
+                            background: '#f3e8ff',
+                            color: '#6d28d9',
+                            border: '1px solid #e9d5ff',
                             display: 'inline-flex',
                             alignItems: 'center',
-                            gap: '6px',
+                            gap: '4px',
+                            whiteSpace: 'nowrap',
                           }}
                         >
                           <span>🏛️</span>
@@ -940,45 +983,54 @@ export function MyHistoryView({
 
                         <span
                           style={{
-                            fontSize: '0.70rem',
+                            fontSize: '0.67rem',
                             fontWeight: 700,
-                            padding: '2px 8px',
+                            padding: '2px 6px',
                             borderRadius: '4px',
                             background: (mandate.end_year || mandate.start_year || 0) >= new Date().getFullYear() ? '#dcfce7' : '#f4f4f5',
                             color: (mandate.end_year || mandate.start_year || 0) >= new Date().getFullYear() ? '#15803d' : '#52525b',
                             border: `1px solid ${(mandate.end_year || mandate.start_year || 0) >= new Date().getFullYear() ? '#bbf7d0' : '#e4e4e7'}`,
+                            whiteSpace: 'nowrap',
                           }}
                         >
-                          {(mandate.end_year || mandate.start_year || 0) >= new Date().getFullYear() ? 'Vigente (Ativo)' : 'Mandato Concluído'}
+                          {(mandate.end_year || mandate.start_year || 0) >= new Date().getFullYear() ? 'Vigente' : 'Concluído'}
                         </span>
                       </div>
                     </div>
 
                     <div
                       style={{
-                        background: 'var(--bg-canvas)',
-                        padding: '12px 14px',
-                        borderRadius: 'var(--radius-md)',
-                        fontSize: '0.84rem',
-                        marginBottom: '8px',
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        alignItems: 'center',
+                        gap: '6px 14px',
+                        background: '#faf5ff',
+                        border: '1px solid #f3e8ff',
+                        padding: '5px 10px',
+                        borderRadius: '6px',
+                        fontSize: '0.80rem',
+                        marginBottom: '5px',
                       }}
                     >
-                      <span style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-subtle)', textTransform: 'uppercase', fontWeight: 700 }}>
-                        Cargo Desempenhado
-                      </span>
-                      <strong style={{ fontSize: '0.98rem', color: 'var(--brand-primary)' }}>
-                        {mandate.role}
-                      </strong>
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+                        <span style={{ fontSize: '0.67rem', color: 'var(--text-subtle)', textTransform: 'uppercase', fontWeight: 700 }}>
+                          Cargo:
+                        </span>
+                        <strong style={{ fontSize: '0.88rem', color: '#6d28d9' }}>
+                          {mandate.role}
+                        </strong>
+                      </div>
 
                       {mandate.record_type && (
-                        <span style={{ display: 'block', fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-                          Tipo: {mandate.record_type}
-                        </span>
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '3px', fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+                          <span>Tipo:</span>
+                          <span>{mandate.record_type}</span>
+                        </div>
                       )}
                     </div>
 
                     {mandate.notes && (
-                      <p style={{ fontSize: '0.8rem', color: 'var(--text-subtle)', fontStyle: 'italic', margin: '4px 0 0 0' }}>
+                      <p style={{ fontSize: '0.74rem', color: 'var(--text-subtle)', fontStyle: 'italic', margin: '3px 0 0 0' }}>
                         {mandate.notes}
                       </p>
                     )}
@@ -986,17 +1038,17 @@ export function MyHistoryView({
                     {isCasal && couple?.spouse && (
                       <div
                         style={{
-                          marginTop: '8px',
-                          paddingTop: '6px',
+                          marginTop: '5px',
+                          paddingTop: '4px',
                           borderTop: '1px dashed var(--border-light)',
-                          fontSize: '0.76rem',
-                          color: 'var(--brand-primary)',
+                          fontSize: '0.73rem',
+                          color: '#6d28d9',
                           display: 'flex',
                           alignItems: 'center',
                           gap: '5px',
                         }}
                       >
-                        <Heart size={13} weight="fill" />
+                        <Heart size={12} weight="fill" />
                         <span>
                           Mandato desempenhado em casal com {couple.spouse.name}
                         </span>

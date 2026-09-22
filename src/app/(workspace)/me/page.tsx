@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { CalendarBlank, FileText, Heart, MapPin, ShieldCheck, UserCheck, UsersThree } from '@phosphor-icons/react/dist/ssr';
+import { CalendarBlank, FileText, Heart, MapPin, ShieldCheck, UserCheck, UsersThree, MicrophoneStage } from '@phosphor-icons/react/dist/ssr';
 import { requireViewer } from '@/lib/auth';
 import { getMyData } from '@/lib/data';
 import { Avatar, Badge, PageHeading } from '@/components/ui';
@@ -9,10 +9,19 @@ import { IdentityRequestForm } from '@/components/identity-request-form';
 import { MyHistoryView } from '@/components/my-history-view';
 import { ManagePhotoModal } from '@/components/manage-photo-modal';
 import { PersonSkillsCard } from '@/components/person-skills-card';
+import { PersonTalksCard } from '@/components/person-talks-card';
 
 export default async function MeuHistoricoPage() {
   const viewer = await requireViewer();
   const { person, participations, requests, mandates, couple } = await getMyData();
+
+  const talks = participations?.filter(
+    (p) => p.kind === 'Palestrou' || (p.team || '').toLowerCase() === 'palestrantes'
+  ) || [];
+
+  const parsedNotes = person ? (typeof person.notes === 'string' ? (() => { try { return JSON.parse(person.notes); } catch { return {}; } })() : (person.notes || {})) : {};
+  const hasPalestraSkill = (person?.skills?.other_skills || []).some(s => s.toLowerCase().includes('palestr') || s.toLowerCase().includes('prega'));
+  const isSpeakerPerson = Boolean(talks.length > 0 || parsedNotes.is_speaker || hasPalestraSkill);
 
   return (
     <div className="page-enter">
@@ -123,9 +132,26 @@ export default async function MeuHistoricoPage() {
                   <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.35rem', color: 'var(--text-main)' }}>
                     {person.name}
                   </h2>
-                  <span className="badge badge-green" style={{ marginTop: '4px' }}>
-                    Vínculo ativo
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginTop: '4px' }}>
+                    <span className="badge badge-green">
+                      Vínculo ativo
+                    </span>
+                    {isSpeakerPerson && (
+                      <span
+                        className="badge"
+                        style={{
+                          background: '#fef3c7',
+                          color: '#92400e',
+                          border: '1px solid #fde68a',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                        }}
+                      >
+                        <MicrophoneStage size={13} weight="bold" /> Palestrante
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -178,6 +204,13 @@ export default async function MeuHistoricoPage() {
               personId={person.id}
               personName={person.name}
               initialSkills={person.skills}
+              canEdit={true}
+            />
+
+            {/* Palestras & Pregações Ministradas */}
+            <PersonTalksCard
+              person={person}
+              talks={talks}
               canEdit={true}
             />
 

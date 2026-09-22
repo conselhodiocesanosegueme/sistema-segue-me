@@ -208,6 +208,10 @@ export default async function PersonDetailPage({ params }: PersonPageProps) {
   // Link do WhatsApp do titular
   const personWhatsapp = person.phone ? `https://wa.me/55${person.phone.replace(/\D/g, '')}` : null;
 
+  const parsedNotes = person ? (typeof person.notes === 'string' ? (() => { try { return JSON.parse(person.notes); } catch { return {}; } })() : (person.notes || {})) : {};
+  const hasPalestraSkill = (person?.skills?.other_skills || []).some(s => s.toLowerCase().includes('palestr') || s.toLowerCase().includes('prega'));
+  const isSpeakerPerson = Boolean((extras.talks && extras.talks.length > 0) || parsedNotes.is_speaker || hasPalestraSkill);
+
   return (
     <div className="page-enter">
       {/* Link de Retorno */}
@@ -278,6 +282,24 @@ export default async function PersonDetailPage({ params }: PersonPageProps) {
                   }}
                 >
                   <Church size={13} /> {person.parish}
+                </span>
+              )}
+              {isSpeakerPerson && (
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    fontSize: '0.76rem',
+                    color: '#92400e',
+                    background: '#fef3c7',
+                    padding: '2px 8px',
+                    borderRadius: '12px',
+                    border: '1px solid #fde68a',
+                    fontWeight: 600,
+                  }}
+                >
+                  <MicrophoneStage size={13} weight="bold" /> Palestrante
                 </span>
               )}
             </div>

@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from 'react';
-import { ArrowsMerge, NotePencil, User, Check, WarningCircle, Heart, Church } from '@phosphor-icons/react';
+import { ArrowsMerge, NotePencil, User, Check, WarningCircle, Heart, Church, PencilSimple } from '@phosphor-icons/react';
 import { Modal, SubmitButton, Feedback, post } from '@/components/ui';
 import type { Person, Viewer } from '@/lib/types';
 import { ManageSpouseModal } from './manage-spouse-modal';
 import { ManageParishModal } from './manage-parish-modal';
+import { ManagePersonModal } from './manage-person-modal';
 
 export function PersonActions({
   person,
@@ -19,6 +20,7 @@ export function PersonActions({
   const [spouseOpen, setSpouseOpen] = useState(false);
   const [parishOpen, setParishOpen] = useState(false);
   const [correctionOpen, setCorrectionOpen] = useState(false);
+  const [editProfileOpen, setEditProfileOpen] = useState(false);
   const [mergeOpen, setMergeOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -104,7 +106,17 @@ export function PersonActions({
   }
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+      <button
+        type="button"
+        className="button button-primary"
+        onClick={() => setEditProfileOpen(true)}
+        style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+      >
+        <PencilSimple size={16} />
+        Editar Meus Dados
+      </button>
+
       <button
         type="button"
         className="button button-secondary"
@@ -113,9 +125,11 @@ export function PersonActions({
           setSuccess('');
           setCorrectionOpen(true);
         }}
+        title="Solicitar revisão de histórico ao Conselho"
+        style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
       >
-        <NotePencil size={17} />
-        Solicitar correção
+        <NotePencil size={16} />
+        Solicitar revisão
       </button>
 
       {isStaff && (
@@ -342,6 +356,13 @@ export function PersonActions({
         person={person}
         open={parishOpen}
         onClose={() => setParishOpen(false)}
+      />
+
+      {/* Modal de Edição Direta de Dados Pessoais */}
+      <ManagePersonModal
+        isOpen={editProfileOpen}
+        onClose={() => setEditProfileOpen(false)}
+        person={person}
       />
     </div>
   );

@@ -180,23 +180,27 @@ export function PersonTimeline({ participations, isStaff }: PersonTimelineProps)
             const cardBorder = isVivenciou ? '3.5px solid #16a34a' : isPalestrou ? '3.5px solid #7c3aed' : '3.5px solid #2563eb';
 
             return (
-              <div key={part.id} className="timeline-item">
+              <div key={part.id} className="timeline-item" style={{ marginBottom: '12px' }}>
                 <div
                   className="timeline-dot"
                   style={{
                     borderColor: dotBorder,
                     background: isVivenciou ? '#f0fdf4' : isPalestrou ? '#faf5ff' : '#eff6ff',
+                    width: '13px',
+                    height: '13px',
+                    left: '-26px',
+                    top: '7px',
                   }}
                 />
                 <div
                   className="timeline-card"
                   style={{
                     borderLeft: cardBorder,
-                    boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
-                    padding: '16px 18px',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+                    padding: '10px 14px',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', marginBottom: '8px', flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '10px', marginBottom: '5px', flexWrap: 'wrap' }}>
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px', flexWrap: 'wrap' }}>
                         {isExternalImplantation(part.encounter) && part.kind === 'Trabalhou' ? (
@@ -302,14 +306,14 @@ export function PersonTimeline({ participations, isStaff }: PersonTimelineProps)
                         </span>
                       </div>
 
-                      <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.2rem', color: 'var(--text-main)', margin: '4px 0 0 0' }}>
+                      <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.05rem', lineHeight: 1.25, color: 'var(--text-main)', margin: '2px 0 0 0' }}>
                         {part.encounter ? (
                           <Link
                             href={`/encontros/${part.encounter.id}`}
                             style={{ color: 'inherit', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                           >
                             {part.encounter.name || `${part.encounter.edition}º Encontro Segue-me`}
-                            <ArrowUpRight size={15} color="var(--brand-primary)" />
+                            <ArrowUpRight size={14} color="var(--brand-primary)" />
                           </Link>
                         ) : (
                           'Encontro Segue-me'
@@ -322,14 +326,14 @@ export function PersonTimeline({ participations, isStaff }: PersonTimelineProps)
                         className="badge badge-neutral"
                         style={{
                           fontWeight: 700,
-                          fontSize: '0.85rem',
-                          padding: '4px 10px',
+                          fontSize: '0.78rem',
+                          padding: '2px 8px',
                           display: 'inline-flex',
                           alignItems: 'center',
                           gap: '4px',
                         }}
                       >
-                        <CalendarBlank size={13} />
+                        <CalendarBlank size={12} />
                         {part.encounter.year}
                       </span>
                     )}
@@ -339,13 +343,13 @@ export function PersonTimeline({ participations, isStaff }: PersonTimelineProps)
                   <div
                     style={{
                       display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-                      gap: '8px 16px',
-                      fontSize: '0.84rem',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+                      gap: '6px 14px',
+                      fontSize: '0.80rem',
                       background: 'var(--bg-canvas)',
-                      padding: '10px 14px',
+                      padding: '6px 10px',
                       borderRadius: 'var(--radius-sm)',
-                      margin: '10px 0',
+                      margin: '6px 0',
                     }}
                   >
                     {part.team && (

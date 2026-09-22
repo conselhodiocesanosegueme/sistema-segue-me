@@ -91,10 +91,24 @@ export async function getPeople(filters: Record<string, string>): Promise<PageRe
         const hydrated = hydratePerson(p);
         const hasMusicalSkill = Boolean(
           hydrated?.skills?.sings ||
+          (hydrated?.skills?.instruments && hydrated.skills.instruments.length > 0)
+        );
+        if (!hasMusicalSkill) return false;
+      } else if (filters.quickFilter === 'speakers') {
+        const hydrated = hydratePerson(p);
+        const hasSpeakerSkill = (hydrated?.skills?.other_skills || []).some(s => s.toLowerCase().includes('palestr') || s.toLowerCase().includes('prega'));
+        const parsedNotes = typeof p.notes === 'string' ? (() => { try { return JSON.parse(p.notes); } catch { return {}; } })() : (p.notes || {});
+        const hasTalks = state.participations.some(h => h.person_id === p.id && (h.kind === 'Palestrou' || (h.team || '').toLowerCase() === 'palestrantes'));
+        const isSpeaker = Boolean(hasTalks || parsedNotes.is_speaker || hasSpeakerSkill);
+        if (!isSpeaker) return false;
+      } else if (filters.quickFilter === 'talents') {
+        const hydrated = hydratePerson(p);
+        const hasAnyTalent = Boolean(
+          hydrated?.skills?.sings ||
           (hydrated?.skills?.instruments && hydrated.skills.instruments.length > 0) ||
           (hydrated?.skills?.other_skills && hydrated.skills.other_skills.length > 0)
         );
-        if (!hasMusicalSkill) return false;
+        if (!hasAnyTalent) return false;
       }
 
       // Filtros detalhados de encontro, equipe, tipo e ano
@@ -126,14 +140,19 @@ export async function getPeople(filters: Record<string, string>): Promise<PageRe
   const db = await supabaseServer();
   const admin = supabaseAdmin();
 
-  // Tratamento de filtro rápido para Músicos & Cantores em modo Supabase
-  if (filters.quickFilter === 'musicians') {
+  // Tratamento de filtros rápidos para Músicos, Palestrantes e Habilidades em modo Supabase
+  if (filters.quickFilter === 'musicians' || filters.quickFilter === 'speakers' || filters.quickFilter === 'talents') {
     try {
       let query = admin
         .from('people')
         .select('id, legacy_id, name, phone, email, birth_date_text, sex, identification_status, notes, version, parish, photo_url', { count: 'exact' })
-        .is('merged_into', null)
-        .ilike('notes', '%"skills"%');
+        .is('merged_into', null);
+
+      if (filters.quickFilter === 'speakers') {
+        query = query.or('notes.ilike.%"is_speaker":true%,notes.ilike.%"Palestra%');
+      } else {
+        query = query.ilike('notes', '%"skills"%');
+      }
 
       if (filters.parish) query = query.eq('parish', filters.parish);
       if (filters.q) query = query.ilike('name', `%${filters.q}%`);

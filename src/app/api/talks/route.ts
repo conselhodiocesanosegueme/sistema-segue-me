@@ -6,7 +6,7 @@ import { mutateDemo } from '@/lib/demo';
 
 export async function POST(request: NextRequest) {
   try {
-    const viewer = await authorize(request, ['admin']);
+    const viewer = await authorize(request);
     const body = await request.json().catch(() => ({}));
 
     const personId = (body.person_id || '').toString().trim();
@@ -22,6 +22,31 @@ export async function POST(request: NextRequest) {
     }
     if (!theme) {
       throw new HttpError(400, 'Tema da palestra é obrigatório.');
+    }
+
+    if (viewer.role === 'participant') {
+      const db = await supabaseServer();
+      const admin = supabaseAdmin();
+      let profilePersonId: string | null = null;
+      try {
+        const { data: profileData } = await db.rpc('get_my_profile');
+        if (profileData && (profileData as any).id) {
+          profilePersonId = (profileData as any).id;
+        }
+      } catch {}
+
+      const linkRes = await admin
+        .from('account_links')
+        .select('id')
+        .eq('user_id', viewer.id)
+        .eq('person_id', personId)
+        .eq('status', 'active')
+        .maybeSingle();
+
+      const isLinked = Boolean(linkRes.data) || profilePersonId === personId;
+      if (!isLinked) {
+        throw new HttpError(403, 'Você só possui permissão para registrar palestras do seu próprio histórico.');
+      }
     }
 
     if (isDemoMode()) {

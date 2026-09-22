@@ -2284,37 +2284,37 @@ html, body {
   display: flex;
   flex-direction: column;
   position: relative;
-  padding-left: 28px;
+  padding-left: 26px;
 }
 .timeline::before {
   content: '';
   position: absolute;
-  top: 12px;
-  bottom: 12px;
-  left: 9px;
+  top: 10px;
+  bottom: 10px;
+  left: 7px;
   width: 2px;
   background: var(--border-base);
 }
 .timeline-item {
   position: relative;
-  margin-bottom: 24px;
+  margin-bottom: 14px;
 }
 .timeline-dot {
   position: absolute;
-  left: -28px;
+  left: -26px;
   top: 6px;
-  width: 18px;
-  height: 18px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   background: #fff;
-  border: 3px solid var(--brand-primary);
+  border: 2.5px solid var(--brand-primary);
   box-shadow: 0 0 0 2px #fff;
 }
 .timeline-card {
   background: #fff;
   border: 1px solid var(--border-base);
   border-radius: var(--radius-md);
-  padding: 16px 18px;
+  padding: 12px 14px;
   box-shadow: var(--shadow-sm);
 }
 

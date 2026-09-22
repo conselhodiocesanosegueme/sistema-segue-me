@@ -94,7 +94,7 @@ export default async function PessoasPage({ searchParams }: PessoasPageProps) {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', whiteSpace: 'nowrap' }}>
                         <Avatar name={person.name} src={person.photo_url} />
                         <div style={{ minWidth: 0 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap', flexWrap: 'wrap' }}>
                             <Link
                               href={`/pessoas/${person.id}`}
                               className="person-table-name"
@@ -102,6 +102,27 @@ export default async function PessoasPage({ searchParams }: PessoasPageProps) {
                             >
                               {person.name}
                             </Link>
+                            {Boolean(
+                              (person.skills?.other_skills || []).some(s => s.toLowerCase().includes('palestr') || s.toLowerCase().includes('prega')) ||
+                              (typeof person.notes === 'string' && person.notes.includes('"is_speaker":true')) ||
+                              (typeof person.notes === 'object' && (person.notes as any)?.is_speaker)
+                            ) && (
+                              <span
+                                title="Palestrante / Pregador do Segue-me"
+                                style={{
+                                  fontSize: '0.68rem',
+                                  padding: '1px 6px',
+                                  borderRadius: '999px',
+                                  background: '#fef3c7',
+                                  color: '#92400e',
+                                  border: '1px solid #fde68a',
+                                  fontWeight: 600,
+                                  whiteSpace: 'nowrap',
+                                }}
+                              >
+                                🎙️ Palestrante
+                              </span>
+                            )}
                             {person.skills?.sings && (
                               <span
                                 title="Canta / Salmista / Coral"
@@ -135,6 +156,24 @@ export default async function PessoasPage({ searchParams }: PessoasPageProps) {
                               >
                                 🎸 {person.skills.instruments[0]}
                                 {person.skills.instruments.length > 1 ? ` +${person.skills.instruments.length - 1}` : ''}
+                              </span>
+                            )}
+                            {person.skills?.other_skills && person.skills.other_skills.filter(s => !s.toLowerCase().includes('palestr') && !s.toLowerCase().includes('prega')).length > 0 && (
+                              <span
+                                title={person.skills.other_skills.filter(s => !s.toLowerCase().includes('palestr') && !s.toLowerCase().includes('prega')).join(', ')}
+                                style={{
+                                  fontSize: '0.68rem',
+                                  padding: '1px 6px',
+                                  borderRadius: '999px',
+                                  background: '#f3e8ff',
+                                  color: '#7e22ce',
+                                  border: '1px solid #e9d5ff',
+                                  fontWeight: 600,
+                                  whiteSpace: 'nowrap',
+                                }}
+                              >
+                                ✨ {person.skills.other_skills.filter(s => !s.toLowerCase().includes('palestr') && !s.toLowerCase().includes('prega'))[0]}
+                                {person.skills.other_skills.filter(s => !s.toLowerCase().includes('palestr') && !s.toLowerCase().includes('prega')).length > 1 ? ` +${person.skills.other_skills.filter(s => !s.toLowerCase().includes('palestr') && !s.toLowerCase().includes('prega')).length - 1}` : ''}
                               </span>
                             )}
                           </div>
