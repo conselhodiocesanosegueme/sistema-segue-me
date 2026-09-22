@@ -148,23 +148,20 @@ export default async function MeuHistoricoPage() {
                   <Avatar name={person.name} src={person.photo_url} large />
                 </div>
                 
-                {/* Nome em uma Única Linha */}
+                {/* Nome Completo do Participante */}
                 <h2
                   style={{
                     fontFamily: 'var(--font-serif)',
-                    fontSize: 'clamp(0.88rem, 1.8vw, 1.08rem)',
+                    fontSize: '1.25rem',
                     fontWeight: 700,
                     color: 'var(--text-main)',
-                    margin: '0 0 8px 0',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    width: '100%',
-                    maxWidth: '100%',
-                    lineHeight: 1.25,
+                    margin: '0 0 10px 0',
+                    lineHeight: 1.3,
                     textAlign: 'center',
+                    textWrap: 'balance',
+                    width: '100%',
+                    wordBreak: 'normal',
                   }}
-                  title={person.name}
                 >
                   {person.name}
                 </h2>
