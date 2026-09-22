@@ -15,9 +15,10 @@ const statuses: Record<string, { label: string; tone: string }> = {
   active: { label: 'Ativo', tone: 'green' }, suspended: { label: 'Acesso suspenso', tone: 'amber' },
 };
 
-export function Badge({ status, children, tone }: { status?: string; children?: ReactNode; tone?: string }) {
+export function Badge({ status, children, tone, variant }: { status?: string; children?: ReactNode; tone?: string; variant?: string }) {
+  const effectiveTone = tone || (variant === 'success' ? 'green' : variant === 'warning' ? 'amber' : variant === 'primary' ? 'blue' : variant === 'danger' ? 'red' : variant);
   const value = status ? statuses[status.toLowerCase()] : undefined;
-  return <span className={`badge badge-${tone ?? value?.tone ?? 'neutral'}`}><span className="badge-dot" />{children ?? value?.label ?? status ?? 'Não informado'}</span>;
+  return <span className={`badge badge-${effectiveTone ?? value?.tone ?? 'neutral'}`}><span className="badge-dot" />{children ?? value?.label ?? status ?? 'Não informado'}</span>;
 }
 
 export function Avatar({ name, large = false, src }: { name: string; large?: boolean; src?: string | null }) {

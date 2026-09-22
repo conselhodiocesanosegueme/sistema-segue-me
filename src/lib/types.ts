@@ -103,6 +103,33 @@ export type Overview = {
   couplesCount?: number;
   allParishes?: string[];
 };
+
+export type PublicDiocesanStats = {
+  totalYouthVivenciou: number;
+  totalCouples: number;
+  totalPeople: number;
+  totalParishes: number;
+  totalSectors: number;
+  totalEncounters: number;
+  byStage: {
+    firstStage: number;
+    secondStage: number;
+    retiroMariano: number;
+    congressoEucaristico: number;
+  };
+  bySector: {
+    id: string;
+    roman: string;
+    name: string;
+    region: string;
+    parishCount: number;
+    encountersCount: number;
+  }[];
+  byYear: {
+    year: number;
+    encounters: number;
+  }[];
+};
 export type Viewer = { id: string; name: string; email: string; role: Role; demo: boolean; parish?: string | null };
 export type PageResult<T> = { items: T[]; total: number; page: number; pageSize: number };
 

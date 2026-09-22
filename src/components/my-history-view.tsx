@@ -18,10 +18,12 @@ import {
   Funnel,
   CaretRight,
   Buildings,
+  Scroll,
 } from '@phosphor-icons/react';
 import type { CoupleInfo, Mandate, Participation, Person } from '@/lib/types';
 import { Avatar, Badge } from '@/components/ui';
 import { isMandateRecord, isExternalImplantation, normalizeMandateBody } from '@/lib/encounter-config';
+import { EncounterQuadrantModal } from './encounter-quadrant-modal';
 
 interface MyHistoryViewProps {
   person: Person;
@@ -41,6 +43,7 @@ export function MyHistoryView({
 }: MyHistoryViewProps) {
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [conditionFilter, setConditionFilter] = useState<ConditionFilter>('all');
+  const [selectedEncounterForQuadrant, setSelectedEncounterForQuadrant] = useState<{ id: string; title: string } | null>(null);
 
   // Contagens
   const vivencias = useMemo(
@@ -856,6 +859,45 @@ export function MyHistoryView({
                           </span>
                         </div>
                       )}
+
+                      {/* Botão Ver Quadrante do Encontro */}
+                      {(part.encounter_id || part.encounter?.id) && (
+                        <div
+                          style={{
+                            marginTop: '8px',
+                            paddingTop: '6px',
+                            borderTop: '1px solid var(--border-soft)',
+                            display: 'flex',
+                            justifyContent: 'flex-end',
+                          }}
+                        >
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setSelectedEncounterForQuadrant({
+                                id: part.encounter_id || part.encounter!.id,
+                                title: part.encounter?.name || `${part.encounter?.edition || ''} Encontro Segue-me`,
+                              })
+                            }
+                            className="button button-secondary"
+                            style={{
+                              padding: '4px 10px',
+                              fontSize: '0.76rem',
+                              fontWeight: 600,
+                              borderRadius: '6px',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '5px',
+                              cursor: 'pointer',
+                              color: 'var(--brand-primary)',
+                              borderColor: 'var(--border-soft)',
+                            }}
+                          >
+                            <Scroll size={14} weight="bold" />
+                            <span>Ver Quadrante do Encontro</span>
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
@@ -1042,6 +1084,45 @@ export function MyHistoryView({
                         </span>
                       </div>
                     )}
+
+                    {/* Botão Ver Quadrante do Encontro para Mandatos vinculados */}
+                    {(mandate.encounter_id || mandate.encounter?.id) && (
+                      <div
+                        style={{
+                          marginTop: '8px',
+                          paddingTop: '6px',
+                          borderTop: '1px solid var(--border-soft)',
+                          display: 'flex',
+                          justifyContent: 'flex-end',
+                        }}
+                      >
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setSelectedEncounterForQuadrant({
+                              id: mandate.encounter_id || mandate.encounter!.id,
+                              title: mandate.encounter?.name || `${mandate.encounter?.edition || ''} Encontro Segue-me`,
+                            })
+                          }
+                          className="button button-secondary"
+                          style={{
+                            padding: '4px 10px',
+                            fontSize: '0.76rem',
+                            fontWeight: 600,
+                            borderRadius: '6px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '5px',
+                            cursor: 'pointer',
+                            color: '#6d28d9',
+                            borderColor: 'var(--border-soft)',
+                          }}
+                        >
+                          <Scroll size={14} weight="bold" />
+                          <span>Ver Quadrante do Encontro</span>
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               );
@@ -1049,6 +1130,14 @@ export function MyHistoryView({
           </div>
         )}
       </section>
+
+      {selectedEncounterForQuadrant && (
+        <EncounterQuadrantModal
+          encounterId={selectedEncounterForQuadrant.id}
+          encounterTitle={selectedEncounterForQuadrant.title}
+          onClose={() => setSelectedEncounterForQuadrant(null)}
+        />
+      )}
     </div>
   );
 }

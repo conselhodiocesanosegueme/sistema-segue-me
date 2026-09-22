@@ -18,9 +18,11 @@ import type {
   Participation,
   Person,
   PersonAvailability,
+  PublicDiocesanStats,
   ReviewItem,
 } from './types';
 import { ENCOUNTER_TYPES } from './encounter-config';
+import { DIOCESAN_SECTORS, matchEncounterToParish } from './sectors';
 import { mutateDemo } from './demo';
 export function pageNumber(value:string|undefined){const parsed=Number(value||1);return Number.isFinite(parsed)?Math.max(1,Math.min(Math.floor(parsed),100000)):1;}
 const text=(s:string)=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
@@ -766,6 +768,146 @@ export const getOverview = cache(async (parishScope?: string | null): Promise<Ov
     lastImport: (await getImports())[0] || null
   };
 });
+
+export const getPublicDiocesanStats = cache(async (): Promise<PublicDiocesanStats> => {
+  if (isDemoMode()) {
+    const state = await readDemo();
+    let firstStage = 0, secondStage = 0, retiroMariano = 0, congressoEucaristico = 0;
+    const yearCounts: Record<number, number> = {};
+
+    for (const e of state.encounters) {
+      const t = `${e.name || ''} ${e.notes || ''} ${e.edition || ''}`.toLowerCase();
+      if (t.includes('congresso') || t.includes('eucaristico') || t.includes('eucarístico')) {
+        congressoEucaristico++;
+      } else if (t.includes('mariano') || t.includes('retiro mariano')) {
+        retiroMariano++;
+      } else if (t.includes('2ª etapa') || t.includes('2a etapa') || t.includes('segunda etapa')) {
+        secondStage++;
+      } else {
+        firstStage++;
+      }
+
+      if (e.year) {
+        yearCounts[e.year] = (yearCounts[e.year] || 0) + 1;
+      }
+    }
+
+    const youthVivenciouCount = state.participations.filter(p => p.kind === 'Vivenciou' && p.condition === 'Jovem').length;
+    const coupleCount = (state.couples || []).length;
+    const peopleCount = state.people.filter(p => !p.merged_into).length;
+
+    const bySector = DIOCESAN_SECTORS.map(s => {
+      let encountersCount = 0;
+      for (const e of state.encounters) {
+        if (s.parishes.some(p => matchEncounterToParish({ parish: e.parish, city: e.city }, p))) {
+          encountersCount++;
+        }
+      }
+      return {
+        id: s.id,
+        roman: s.roman,
+        name: s.name,
+        region: s.region,
+        parishCount: s.parishes.length,
+        encountersCount,
+      };
+    });
+
+    const byYear = Object.entries(yearCounts)
+      .map(([y, c]) => ({ year: Number(y), encounters: c }))
+      .sort((a, b) => a.year - b.year);
+
+    const totalParishes = DIOCESAN_SECTORS.reduce((acc, s) => acc + s.parishes.length, 0);
+
+    return {
+      totalYouthVivenciou: youthVivenciouCount,
+      totalCouples: coupleCount,
+      totalPeople: peopleCount,
+      totalParishes,
+      totalSectors: DIOCESAN_SECTORS.length,
+      totalEncounters: state.encounters.length,
+      byStage: {
+        firstStage,
+        secondStage,
+        retiroMariano,
+        congressoEucaristico,
+      },
+      bySector,
+      byYear,
+    };
+  }
+
+  const admin = supabaseAdmin();
+
+  const [encountersRes, youthRes, couplesRes, peopleRes] = await Promise.all([
+    admin.from('encounters').select('id, name, notes, edition, year, parish, city'),
+    admin.from('participations').select('id', { count: 'exact', head: true }).eq('kind', 'Vivenciou').ilike('condition', '%jovem%'),
+    admin.from('couples').select('id', { count: 'exact', head: true }),
+    admin.from('people').select('id', { count: 'exact', head: true }).is('merged_into', null),
+  ]);
+
+  const encounters = encountersRes.data || [];
+  let firstStage = 0, secondStage = 0, retiroMariano = 0, congressoEucaristico = 0;
+  const yearCounts: Record<number, number> = {};
+
+  for (const e of encounters) {
+    const t = `${e.name || ''} ${e.notes || ''} ${e.edition || ''}`.toLowerCase();
+    if (t.includes('congresso') || t.includes('eucaristico') || t.includes('eucarístico')) {
+      congressoEucaristico++;
+    } else if (t.includes('mariano') || t.includes('retiro mariano')) {
+      retiroMariano++;
+    } else if (t.includes('2ª etapa') || t.includes('2a etapa') || t.includes('segunda etapa')) {
+      secondStage++;
+    } else {
+      firstStage++;
+    }
+
+    if (e.year) {
+      yearCounts[e.year] = (yearCounts[e.year] || 0) + 1;
+    }
+  }
+
+  const bySector = DIOCESAN_SECTORS.map(s => {
+    let encountersCount = 0;
+    for (const e of encounters) {
+      if (s.parishes.some(p => matchEncounterToParish({ parish: e.parish, city: e.city }, p))) {
+        encountersCount++;
+      }
+    }
+    return {
+      id: s.id,
+      roman: s.roman,
+      name: s.name,
+      region: s.region,
+      parishCount: s.parishes.length,
+      encountersCount,
+    };
+  });
+
+  const byYear = Object.entries(yearCounts)
+    .map(([y, c]) => ({ year: Number(y), encounters: c }))
+    .sort((a, b) => a.year - b.year);
+
+  const totalParishes = DIOCESAN_SECTORS.reduce((acc, s) => acc + s.parishes.length, 0);
+
+  return {
+    totalYouthVivenciou: youthRes.count || 0,
+    totalCouples: couplesRes.count || 0,
+    totalPeople: peopleRes.count || 0,
+    totalParishes,
+    totalSectors: DIOCESAN_SECTORS.length,
+    totalEncounters: encounters.length,
+    byStage: {
+      firstStage,
+      secondStage,
+      retiroMariano,
+      congressoEucaristico,
+    },
+    bySector,
+    byYear,
+  };
+});
+
 export async function getMyData(): Promise<MyHistoryData> {
   if (isDemoMode()) {
     const state = await readDemo();

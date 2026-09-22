@@ -55,22 +55,62 @@ export function AppShell({ viewer, children }: { viewer: Viewer; children: React
     ? navigation
     : navigation.filter((item) => item.href !== '/importacoes');
 
-  const title = navItems.find((item) => active(item.href))?.label ?? (pathname.startsWith('/me') ? 'Meu histórico' : pathname.startsWith('/gestao') ? 'Gestão de acessos' : 'Sistema Segue-me');
+  const title = !staff && active('/')
+    ? 'Painel Diocesano'
+    : navItems.find((item) => active(item.href))?.label ?? (pathname.startsWith('/me') ? 'Meu histórico' : pathname.startsWith('/gestao') ? 'Gestão de acessos' : 'Sistema Segue-me');
 
   const workspaceSubtitle = viewer.role === 'admin'
     ? 'Coordenação Diocesana · Diocese de Anápolis'
     : viewer.role === 'reviewer'
     ? `Acesso Paroquial · ${viewer.parish || 'Equipe Dirigente'}`
-    : 'Portal do participante';
+    : 'Movimento Segue-me · Diocese de Anápolis';
 
   return <div className="app-layout">
     <a className="skip-link" href="#conteudo">Pular para o conteúdo</a>
     {mobileOpen && <button className="sidebar-overlay" aria-label="Fechar menu" onClick={() => setMobileOpen(false)} />}
     <aside className={`sidebar${mobileOpen ? ' sidebar-open' : ''}`} aria-label="Menu principal">
-      <div className="sidebar-brand"><Link href={staff ? '/' : '/me'} aria-label="Segue-me, início"><Brand /></Link><button type="button" className="icon-button mobile-close" onClick={() => setMobileOpen(false)} aria-label="Fechar menu"><X size={22} /></button></div>
+      <div className="sidebar-brand"><Link href="/" aria-label="Segue-me, início"><Brand /></Link><button type="button" className="icon-button mobile-close" onClick={() => setMobileOpen(false)} aria-label="Fechar menu"><X size={22} /></button></div>
       <div className="workspace-label"><span className="workspace-dot" />{workspaceSubtitle}</div>
-      {staff && <><p className="nav-caption">ESPAÇO DE TRABALHO</p><nav>{navItems.map(({ href, label, icon: Icon }) => <Link key={href} href={href} className={`nav-item${active(href) ? ' nav-active' : ''}`} aria-current={active(href) ? 'page' : undefined}><Icon size={21} weight={active(href) ? 'fill' : 'regular'} /><span>{label}</span>{active(href) && <span className="nav-active-dot" />}</Link>)}</nav></>}
-      <p className="nav-caption">MEU ESPAÇO</p><nav><Link href="/me" className={`nav-item${active('/me') ? ' nav-active' : ''}`} aria-current={active('/me') ? 'page' : undefined}><BookOpen size={21} weight={active('/me') ? 'fill' : 'regular'} /><span>Meu histórico</span></Link>{viewer.role === 'admin' && <Link href="/gestao" className={`nav-item${active('/gestao') ? ' nav-active' : ''}`}><GearSix size={21} /><span>Gestão de acessos</span></Link>}</nav>
+      {staff ? (
+        <>
+          <p className="nav-caption">ESPAÇO DE TRABALHO</p>
+          <nav>
+            {navItems.map(({ href, label, icon: Icon }) => (
+              <Link key={href} href={href} className={`nav-item${active(href) ? ' nav-active' : ''}`} aria-current={active(href) ? 'page' : undefined}>
+                <Icon size={21} weight={active(href) ? 'fill' : 'regular'} />
+                <span>{label}</span>
+                {active(href) && <span className="nav-active-dot" />}
+              </Link>
+            ))}
+          </nav>
+        </>
+      ) : (
+        <>
+          <p className="nav-caption">VISÃO GERAL</p>
+          <nav>
+            <Link href="/" className={`nav-item${active('/') ? ' nav-active' : ''}`} aria-current={active('/') ? 'page' : undefined}>
+              <House size={21} weight={active('/') ? 'fill' : 'regular'} />
+              <span>Painel Diocesano</span>
+              {active('/') && <span className="nav-active-dot" />}
+            </Link>
+          </nav>
+        </>
+      )}
+      <p className="nav-caption">MEU ESPAÇO</p>
+      <nav>
+        <Link href="/me" className={`nav-item${active('/me') ? ' nav-active' : ''}`} aria-current={active('/me') ? 'page' : undefined}>
+          <BookOpen size={21} weight={active('/me') ? 'fill' : 'regular'} />
+          <span>Meu histórico</span>
+          {active('/me') && <span className="nav-active-dot" />}
+        </Link>
+        {viewer.role === 'admin' && (
+          <Link href="/gestao" className={`nav-item${active('/gestao') ? ' nav-active' : ''}`}>
+            <GearSix size={21} />
+            <span>Gestão de acessos</span>
+            {active('/gestao') && <span className="nav-active-dot" />}
+          </Link>
+        )}
+      </nav>
       <div className="sidebar-bottom"><div className="sidebar-mission"><span className="mission-line" /><p>Documentação da Base<br /><em>Diocese de Anápolis</em></p><span>Mapeamento de quem já vivenciou o encontro em todas as paróquias.</span></div><div className="sidebar-user"><Avatar name={viewer.name} /><div><strong>{viewer.name}</strong><span>{roles[viewer.role]}</span></div><form action="/api/auth/signout" method="post"><button className="icon-button" aria-label="Sair da conta" title="Sair da conta"><SignOut size={20} /></button></form></div></div>
     </aside>
     <div className="main-layout">
@@ -79,7 +119,7 @@ export function AppShell({ viewer, children }: { viewer: Viewer; children: React
           <button className="icon-button mobile-menu" onClick={() => setMobileOpen(true)} aria-label="Abrir menu" aria-expanded={mobileOpen}>
             <List size={23} />
           </button>
-          <Link href={staff ? '/' : '/me'} className="topbar-mobile-brand" aria-label="Início Segue-me">
+          <Link href="/" className="topbar-mobile-brand" aria-label="Início Segue-me">
             <span className="brand-symbol" style={{ width: '32px', height: '32px', background: '#fff', border: '1.5px solid var(--brand-primary)', padding: '2px', borderRadius: '8px' }}>
               <img
                 src="/logo-segue-me.png"
