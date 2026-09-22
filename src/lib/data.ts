@@ -221,8 +221,12 @@ export async function getPerson(id: string) {
     return hydratePerson(p) as Person | null;
   }
   const db = await supabaseServer();
-  const { data, error } = await db.from('people').select('*').eq('id', id).maybeSingle();
-  checkDb(error);
+  let { data, error } = await db.from('people').select('*').eq('id', id).maybeSingle();
+  if (!data) {
+    const admin = supabaseAdmin();
+    const res = await admin.from('people').select('*').eq('id', id).maybeSingle();
+    data = res.data;
+  }
   return hydratePerson(data) as Person | null;
 }
 export async function getParticipations(personId?: string, encounterId?: string): Promise<Participation[]> {
@@ -799,7 +803,7 @@ export async function getMyData(): Promise<MyHistoryData> {
     }
 
     return {
-      person: { ...person, notes: undefined },
+      person: hydratePerson(person) as Person,
       participations,
       requests,
       mandates,
@@ -828,7 +832,11 @@ export async function getMyData(): Promise<MyHistoryData> {
 
   let personData = profile.data as Person | null;
   if (personData?.id) {
-    const { data: pDetails } = await db.from('people').select('photo_url, notes').eq('id', personData.id).maybeSingle();
+    const { data: pDetails } = await admin
+      .from('people')
+      .select('photo_url, notes, parish, skills, availability, pastoral_notes')
+      .eq('id', personData.id)
+      .maybeSingle();
     if (pDetails) {
       personData = hydratePerson({ ...personData, ...pDetails });
     } else {

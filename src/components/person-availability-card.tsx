@@ -219,7 +219,7 @@ export function PersonAvailabilityCard({
           </div>
         </div>
 
-        {canEdit && !isEditing && (
+        {canEdit && !isEditing && hasAnyData && (
           <button
             type="button"
             className="button button-secondary"
@@ -227,7 +227,7 @@ export function PersonAvailabilityCard({
             style={{ fontSize: '0.8rem', padding: '6px 12px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
           >
             <PencilSimple size={14} />
-            {hasAnyData ? 'Atualizar Prontidão' : 'Informar Disponibilidade'}
+            Atualizar Prontidão
           </button>
         )}
       </div>

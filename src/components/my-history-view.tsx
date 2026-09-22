@@ -1029,12 +1029,6 @@ export function MyHistoryView({
                       )}
                     </div>
 
-                    {mandate.notes && (
-                      <p style={{ fontSize: '0.74rem', color: 'var(--text-subtle)', fontStyle: 'italic', margin: '3px 0 0 0' }}>
-                        {mandate.notes}
-                      </p>
-                    )}
-
                     {isCasal && couple?.spouse && (
                       <div
                         style={{

@@ -93,7 +93,8 @@ export function ManagePhotoModal({
       router.refresh();
       setTimeout(() => {
         setIsOpen(false);
-      }, 1000);
+        window.location.reload();
+      }, 700);
     } catch (err: any) {
       setError(err.message || 'Falha ao salvar a imagem. Tente novamente.');
     } finally {
@@ -128,7 +129,8 @@ export function ManagePhotoModal({
       router.refresh();
       setTimeout(() => {
         setIsOpen(false);
-      }, 1000);
+        window.location.reload();
+      }, 700);
     } catch (err: any) {
       setError(err.message || 'Falha ao remover a foto.');
     } finally {

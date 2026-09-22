@@ -36,7 +36,6 @@ const COMMON_INSTRUMENTS = [
 ];
 
 const COMMON_OTHER_SKILLS = [
-  'Palestra / Pregação / Testemunho',
   'Animação',
   'Teatro / Expressão',
   'Sonorização / Mesa de Som',
