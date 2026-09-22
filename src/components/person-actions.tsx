@@ -106,30 +106,23 @@ export function PersonActions({
   }
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', width: '100%' }}>
       <button
         type="button"
         className="button button-primary"
         onClick={() => setEditProfileOpen(true)}
-        style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-      >
-        <PencilSimple size={16} />
-        Editar Meus Dados
-      </button>
-
-      <button
-        type="button"
-        className="button button-secondary"
-        onClick={() => {
-          setError('');
-          setSuccess('');
-          setCorrectionOpen(true);
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '8px',
+          width: isStaff && viewer.id !== person.id ? 'auto' : '100%',
+          padding: '10px 16px',
+          fontWeight: 600,
         }}
-        title="Solicitar revisão de histórico ao Conselho"
-        style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
       >
-        <NotePencil size={16} />
-        Solicitar revisão
+        <PencilSimple size={17} weight="bold" />
+        {isStaff && viewer.id !== person.id ? 'Editar Dados do Cadastro' : 'Editar Meus Dados'}
       </button>
 
       {isStaff && (

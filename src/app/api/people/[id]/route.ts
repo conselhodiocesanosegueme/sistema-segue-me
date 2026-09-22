@@ -20,6 +20,8 @@ export async function PATCH(request: Request, context: RouteContext) {
       parish?: string;
       sex?: string;
       is_speaker?: boolean;
+      speaker_talk?: string | null;
+      speaker_talks?: string[];
     };
 
     if (isDemoMode()) {
@@ -41,6 +43,12 @@ export async function PATCH(request: Request, context: RouteContext) {
             if (p.notes) notesObj = JSON.parse(p.notes);
           } catch {}
           notesObj.is_speaker = Boolean(data.is_speaker);
+          if (data.speaker_talk !== undefined) {
+            notesObj.speaker_talk = data.speaker_talk || null;
+          }
+          if (data.speaker_talks !== undefined) {
+            notesObj.speaker_talks = data.speaker_talks;
+          }
           p.notes = JSON.stringify(notesObj);
         }
 
@@ -136,6 +144,12 @@ export async function PATCH(request: Request, context: RouteContext) {
         existingNotes = { raw_notes: currentPerson.notes };
       }
       existingNotes.is_speaker = Boolean(data.is_speaker);
+      if (data.speaker_talk !== undefined) {
+        existingNotes.speaker_talk = data.speaker_talk || null;
+      }
+      if (data.speaker_talks !== undefined) {
+        existingNotes.speaker_talks = data.speaker_talks;
+      }
       updatePayload.notes = JSON.stringify(existingNotes);
     }
 

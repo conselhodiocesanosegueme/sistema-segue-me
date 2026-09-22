@@ -9,12 +9,27 @@ import {
   CalendarBlank,
   Church,
   MicrophoneStage,
+  Check,
   CheckCircle,
   PencilSimple,
 } from '@phosphor-icons/react';
 import { Modal, SubmitButton, Feedback } from '@/components/ui';
 import { DIOCESAN_SECTORS } from '@/lib/sectors';
 import type { Person } from '@/lib/types';
+
+export const COMMON_TALK_THEMES = [
+  'O Filho Pródigo',
+  'Amor e Sexualidade',
+  'A Vida em Família',
+  'Um Homem Chamado Jesus',
+  'Uma Jovem Chamada Maria',
+  'O Jovem Cristão no Mundo de Hoje',
+  'Reconciliação, uma Proposta de Paz',
+  'Conhecendo a Ceia Eucarística',
+  'As Dimensões do Ser Humano e suas Vocações',
+  'Olhando para o Alto',
+  'Testemunho do Jovem',
+];
 
 interface ManagePersonModalProps {
   isOpen: boolean;
@@ -37,14 +52,32 @@ export function ManagePersonModal({
   const [phone, setPhone] = useState(person.phone || '');
   const [birthDate, setBirthDate] = useState(person.birth_date_text || '');
   const [parish, setParish] = useState(person.parish || '');
-  const [isSpeaker, setIsSpeaker] = useState(() => {
+
+  // Dados de palestrante
+  const initialTalkData = (() => {
     try {
       const parsed = typeof person.notes === 'string' ? JSON.parse(person.notes) : (person.notes || {});
-      return Boolean(parsed.is_speaker);
+      const theme = parsed.speaker_talk || (parsed.speaker_talks && parsed.speaker_talks[0]) || '';
+      return {
+        isSpeaker: Boolean(parsed.is_speaker || theme),
+        talk: theme,
+      };
     } catch {
-      return false;
+      return { isSpeaker: false, talk: '' };
     }
+  })();
+
+  const [isSpeaker, setIsSpeaker] = useState(initialTalkData.isSpeaker);
+  const isCommonTheme = COMMON_TALK_THEMES.includes(initialTalkData.talk);
+  const [speakerTalk, setSpeakerTalk] = useState<string>(() => {
+    if (!initialTalkData.talk) return '';
+    return isCommonTheme ? initialTalkData.talk : 'OUTRA';
   });
+  const [customTalk, setCustomTalk] = useState<string>(() => {
+    if (!initialTalkData.talk) return '';
+    return isCommonTheme ? '' : initialTalkData.talk;
+  });
+  const [talkContext, setTalkContext] = useState<string>('');
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -84,6 +117,10 @@ export function ManagePersonModal({
         throw new Error('Por favor, informe seu nome e sobrenome completos.');
       }
 
+      const resolvedTalk = isSpeaker
+        ? (speakerTalk === 'OUTRA' ? customTalk.trim() : speakerTalk.trim())
+        : null;
+
       const payload = {
         name: trimmedName,
         email: email.trim() || null,
@@ -91,6 +128,8 @@ export function ManagePersonModal({
         birth_date_text: birthDate.trim() || null,
         parish: parish.trim() || null,
         is_speaker: isSpeaker,
+        speaker_talk: resolvedTalk || null,
+        speaker_talks: resolvedTalk ? [resolvedTalk] : [],
       };
 
       const res = await fetch(`/api/people/${person.id}`, {
@@ -102,6 +141,25 @@ export function ManagePersonModal({
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.error || 'Erro ao atualizar dados pessoais.');
+      }
+
+      // Se informou que é palestrante com tema especificado, sincroniza também em /api/talks
+      if (isSpeaker && resolvedTalk) {
+        try {
+          await fetch('/api/talks', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              person_id: person.id,
+              theme: resolvedTalk,
+              parish: talkContext.trim() || parish.trim() || person.parish || '',
+              year: new Date().getFullYear(),
+              condition: 'Jovem',
+            }),
+          });
+        } catch (talkErr) {
+          console.warn('Aviso ao registrar palestra nas participações:', talkErr);
+        }
       }
 
       setSuccess('Dados cadastrais atualizados com sucesso no sistema!');
@@ -269,33 +327,187 @@ export function ManagePersonModal({
           </div>
         </div>
 
-        {/* Seção de Palestrante / Formação */}
+        {/* Seção de Palestrante: Perguntas Interativas */}
         <div
           style={{
-            background: isSpeaker ? '#faf5ff' : 'var(--bg-canvas)',
-            border: `1.5px solid ${isSpeaker ? '#d8b4fe' : 'var(--border-light)'}`,
+            background: isSpeaker ? '#faf5ff' : '#fafaf9',
+            border: `1.5px solid ${isSpeaker ? '#c084fc' : 'var(--border-light)'}`,
             borderRadius: 'var(--radius-md)',
-            padding: '12px 14px',
-            transition: 'all 0.18s ease',
+            padding: '14px 16px',
+            transition: 'all 0.2s ease',
           }}
         >
-          <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer', margin: 0 }}>
-            <input
-              type="checkbox"
-              checked={isSpeaker}
-              onChange={(e) => setIsSpeaker(e.target.checked)}
-              style={{ marginTop: '3px', width: '16px', height: '16px', accentColor: '#7c3aed' }}
-            />
-            <div>
-              <strong style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.86rem', color: isSpeaker ? '#6d28d9' : 'var(--text-main)' }}>
-                <MicrophoneStage size={16} weight={isSpeaker ? 'fill' : 'regular'} />
-                Atuo como Palestrante / Pregador no Segue-me
-              </strong>
-              <span style={{ display: 'block', fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: '2px', lineHeight: 1.4 }}>
-                Marque esta opção caso você já ministre ou esteja disponível para ministrar palestras e testemunhos nos encontros do Segue-me da Diocese.
-              </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+            <MicrophoneStage size={18} color={isSpeaker ? '#7c3aed' : 'var(--text-subtle)'} weight={isSpeaker ? 'fill' : 'bold'} />
+            <strong style={{ fontSize: '0.88rem', color: isSpeaker ? '#6d28d9' : 'var(--text-main)' }}>
+              Você já palestrou no Segue-me?
+            </strong>
+          </div>
+          <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '0 0 10px 0', lineHeight: 1.4 }}>
+            Mapeamento diocesano de pregadores e palestrantes que já ministraram palestras nos encontros.
+          </p>
+
+          {/* Opções: Não / Sim */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+            <button
+              type="button"
+              onClick={() => {
+                setIsSpeaker(false);
+                setSpeakerTalk('');
+                setCustomTalk('');
+              }}
+              style={{
+                padding: '9px 12px',
+                borderRadius: 'var(--radius-sm)',
+                border: !isSpeaker ? '2px solid #7c3aed' : '1px solid var(--border-base)',
+                background: !isSpeaker ? '#ede9fe' : '#ffffff',
+                color: !isSpeaker ? '#5b21b6' : 'var(--text-main)',
+                fontWeight: !isSpeaker ? 700 : 500,
+                fontSize: '0.82rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              {!isSpeaker && <Check size={15} weight="bold" />}
+              Não, nunca palestrei
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setIsSpeaker(true);
+                if (!speakerTalk) {
+                  setSpeakerTalk(COMMON_TALK_THEMES[0]);
+                }
+              }}
+              style={{
+                padding: '9px 12px',
+                borderRadius: 'var(--radius-sm)',
+                border: isSpeaker ? '2px solid #7c3aed' : '1px solid var(--border-base)',
+                background: isSpeaker ? '#7c3aed' : '#ffffff',
+                color: isSpeaker ? '#ffffff' : 'var(--text-main)',
+                fontWeight: isSpeaker ? 700 : 500,
+                fontSize: '0.82rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                boxShadow: isSpeaker ? '0 2px 4px rgba(124, 58, 237, 0.25)' : 'none',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              {isSpeaker && <Check size={15} weight="bold" />}
+              Sim, já palestrei
+            </button>
+          </div>
+
+          {/* Se Sim: Pergunta 'Se sim, qual palestra você ministrou?' */}
+          {isSpeaker && (
+            <div
+              style={{
+                marginTop: '12px',
+                paddingTop: '12px',
+                borderTop: '1px dashed #d8b4fe',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '10px',
+              }}
+            >
+              <label
+                htmlFor="speaker-talk-select"
+                style={{ display: 'block', fontSize: '0.80rem', fontWeight: 700, color: '#6d28d9' }}
+              >
+                Se sim, qual palestra você ministrou? *
+              </label>
+
+              <select
+                id="speaker-talk-select"
+                value={speakerTalk}
+                onChange={(e) => setSpeakerTalk(e.target.value)}
+                className="filter-input"
+                style={{ width: '100%', background: '#ffffff', borderColor: '#c084fc' }}
+              >
+                <option value="">Selecione o tema da palestra...</option>
+                {COMMON_TALK_THEMES.map((theme) => (
+                  <option key={theme} value={theme}>
+                    {theme}
+                  </option>
+                ))}
+                <option value="OUTRA">Outra palestra / Tema não listado...</option>
+              </select>
+
+              {speakerTalk === 'OUTRA' && (
+                <input
+                  type="text"
+                  value={customTalk}
+                  onChange={(e) => setCustomTalk(e.target.value)}
+                  placeholder="Informe o tema ou título da palestra ministrada..."
+                  className="filter-input"
+                  style={{ width: '100%', background: '#ffffff', borderColor: '#c084fc' }}
+                  autoFocus
+                />
+              )}
+
+              {/* Botões rápidos com temas oficiais */}
+              <div>
+                <span style={{ display: 'block', fontSize: '0.70rem', color: 'var(--text-subtle)', marginBottom: '6px', fontWeight: 600 }}>
+                  Ou toque em um dos temas oficiais para preencher direto:
+                </span>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                  {COMMON_TALK_THEMES.map((theme) => {
+                    const isSelected = speakerTalk === theme;
+                    return (
+                      <button
+                        key={theme}
+                        type="button"
+                        onClick={() => {
+                          setSpeakerTalk(theme);
+                          setCustomTalk('');
+                        }}
+                        style={{
+                          fontSize: '0.72rem',
+                          padding: '3px 8px',
+                          borderRadius: '12px',
+                          border: `1px solid ${isSelected ? '#7c3aed' : 'var(--border-base)'}`,
+                          background: isSelected ? '#7c3aed' : '#ffffff',
+                          color: isSelected ? '#ffffff' : 'var(--text-muted)',
+                          fontWeight: isSelected ? 700 : 500,
+                          cursor: 'pointer',
+                          transition: 'all 0.12s ease',
+                        }}
+                      >
+                        {theme}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Paróquia ou ano opcional */}
+              <div style={{ marginTop: '2px' }}>
+                <label
+                  htmlFor="speaker-talk-context"
+                  style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-subtle)', marginBottom: '4px' }}
+                >
+                  Em qual paróquia ou ano você ministrou? (Opcional)
+                </label>
+                <input
+                  id="speaker-talk-context"
+                  type="text"
+                  value={talkContext}
+                  onChange={(e) => setTalkContext(e.target.value)}
+                  placeholder="Ex: Paróquia São Benedito (2023)"
+                  className="filter-input"
+                  style={{ width: '100%', background: '#ffffff', fontSize: '0.80rem' }}
+                />
+              </div>
             </div>
-          </label>
+          )}
         </div>
 
         {/* Ações */}

@@ -46,6 +46,17 @@ export function PersonTalksCard({ person, talks = [], isStaff = false, canEdit }
     });
   }, [talks]);
 
+  // Se talks estiver vazio, checa se há palestra autodeclarada no cadastro (person.notes)
+  const declaredTalk = useMemo(() => {
+    try {
+      const pNotes = (person as any).notes;
+      const parsed = typeof pNotes === 'string' ? JSON.parse(pNotes) : (pNotes || {});
+      return parsed.speaker_talk || (parsed.speaker_talks && parsed.speaker_talks[0]) || null;
+    } catch {
+      return null;
+    }
+  }, [(person as any).notes]);
+
   return (
     <section className="panel" style={{ padding: '20px' }}>
       {/* Cabeçalho do Bloco */}
@@ -54,9 +65,9 @@ export function PersonTalksCard({ person, talks = [], isStaff = false, canEdit }
           <span className="section-kicker">FORMAÇÃO & TESTEMUNHO</span>
           <h2 style={{ fontSize: '1.15rem', margin: '2px 0 0 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span>Palestras Ministradas</span>
-            {talks.length > 0 && (
+            {(talks.length > 0 || declaredTalk) && (
               <span className="badge badge-amber" style={{ fontSize: '0.72rem' }}>
-                {talks.length} {talks.length === 1 ? 'palestra' : 'palestras'}
+                {talks.length > 0 ? `${talks.length} ${talks.length === 1 ? 'palestra' : 'palestras'}` : '1 palestra'}
               </span>
             )}
           </h2>
@@ -76,7 +87,7 @@ export function PersonTalksCard({ person, talks = [], isStaff = false, canEdit }
       </div>
 
       {/* Lista de Palestras ou Estado Vazio */}
-      {talks.length === 0 ? (
+      {sortedTalks.length === 0 && !declaredTalk ? (
         <div style={{ padding: '14px 16px', background: 'var(--bg-canvas)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-light)' }}>
           <p style={{ fontSize: '0.84rem', color: 'var(--text-muted)', margin: '0 0 10px 0', lineHeight: '1.45' }}>
             Nenhum registro de palestra ministrada encontrado no banco de dados.
@@ -92,6 +103,66 @@ export function PersonTalksCard({ person, talks = [], isStaff = false, canEdit }
               Registrar palestra que já ministrou
             </button>
           )}
+        </div>
+      ) : sortedTalks.length === 0 && declaredTalk ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '12px',
+              padding: '12px 14px',
+              background: '#ffffff',
+              border: '1px solid var(--border-base)',
+              borderLeft: '3.5px solid #7c3aed',
+              borderRadius: 'var(--radius-md)',
+            }}
+          >
+            <div
+              style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                background: '#f5f3ff',
+                color: '#7c3aed',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+                marginTop: '2px',
+              }}
+            >
+              <MicrophoneStage size={16} weight="bold" />
+            </div>
+
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
+                <strong style={{ fontSize: '0.90rem', color: 'var(--text-main)', display: 'block' }}>
+                  {declaredTalk}
+                </strong>
+                <span
+                  style={{
+                    fontSize: '0.70rem',
+                    fontWeight: 700,
+                    color: '#7c3aed',
+                    background: '#ede9fe',
+                    padding: '2px 8px',
+                    borderRadius: '999px',
+                  }}
+                >
+                  Informada no Perfil
+                </span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                {person.parish && (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    <Church size={13} />
+                    {person.parish}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>

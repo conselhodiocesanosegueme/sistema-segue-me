@@ -50,7 +50,16 @@ export async function POST(request: NextRequest) {
     }
 
     if (isDemoMode()) {
+      let isDuplicate = false;
       await mutateDemo((state) => {
+        const alreadyExists = state.participations.some(
+          (p) => p.person_id === personId && p.kind === 'Palestrou' && (p.role || '').toLowerCase() === theme.toLowerCase()
+        );
+        if (alreadyExists) {
+          isDuplicate = true;
+          return;
+        }
+
         let encId = encounterId;
         if (!encId) {
           const matchedEnc = state.encounters.find((e) => e.parish === parish && e.year === year);
@@ -130,6 +139,23 @@ export async function POST(request: NextRequest) {
 
     if (!encounterId) {
       throw new HttpError(400, 'Não foi possível associar um encontro a esta palestra.');
+    }
+
+    // Verificar se a palestra já foi registrada para esta pessoa
+    const { data: existingPart } = await admin
+      .from('participations')
+      .select('id')
+      .eq('person_id', personId)
+      .eq('kind', 'Palestrou')
+      .ilike('role', theme)
+      .maybeSingle();
+
+    if (existingPart) {
+      return NextResponse.json({
+        success: true,
+        id: existingPart.id,
+        message: 'Palestra já registrada anteriormente.',
+      });
     }
 
     // Inserir registro na tabela participations
