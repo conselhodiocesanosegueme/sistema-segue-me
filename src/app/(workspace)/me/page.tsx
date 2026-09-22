@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { CalendarBlank, FileText, Heart, MapPin, ShieldCheck, UserCheck, UsersThree, MicrophoneStage } from '@phosphor-icons/react/dist/ssr';
+import { CalendarBlank, FileText, Heart, MapPin, ShieldCheck, UserCheck, UsersThree, MicrophoneStage, Buildings } from '@phosphor-icons/react/dist/ssr';
 import { requireViewer } from '@/lib/auth';
 import { getMyData } from '@/lib/data';
 import { Avatar, Badge, PageHeading } from '@/components/ui';
@@ -23,6 +23,22 @@ export default async function MeuHistoricoPage() {
   const parsedNotes = person ? (typeof person.notes === 'string' ? (() => { try { return JSON.parse(person.notes); } catch { return {}; } })() : (person.notes || {})) : {};
   const hasPalestraSkill = (person?.skills?.other_skills || []).some(s => s.toLowerCase().includes('palestr') || s.toLowerCase().includes('prega'));
   const isSpeakerPerson = Boolean(talks.length > 0 || parsedNotes.is_speaker || hasPalestraSkill);
+
+  // Mandato Ativo Vigente (Ex: Casal Tesoureiro no Conselho Diocesano)
+  // Regra de transição contínua:
+  // Um mandato é considerado ativo/vigente se o ano de término (ou início) for >= ano atual de referência.
+  // Quando um novo mandato for inserido para o próximo ano (ex: 2027 Casal Coordenador),
+  // o mandato anterior (2026) automaticamente encerra seu ciclo no histórico como "Concluído"
+  // e o novo mandato mais recente assume como o mandato ativo do participante!
+  const currentYear = new Date().getFullYear();
+  const sortedMandates = mandates && mandates.length > 0
+    ? [...mandates].sort((a, b) => (b.start_year || b.end_year || 0) - (a.start_year || a.end_year || 0))
+    : [];
+
+  const activeMandate = sortedMandates.find((m) => {
+    const end = m.end_year || m.start_year || 0;
+    return end >= currentYear;
+  }) || (sortedMandates.length > 0 && (sortedMandates[0].start_year || 0) >= currentYear ? sortedMandates[0] : null);
 
   return (
     <div className="page-enter">
@@ -123,68 +139,107 @@ export default async function MeuHistoricoPage() {
           </div>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: '24px', alignItems: 'start' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '340px 1fr', gap: '24px', alignItems: 'start' }}>
           {/* Coluna Esquerda: Card de Dados do Participante & Solicitações */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <section className="panel">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '16px' }}>
-                <div style={{ flexShrink: 0, width: '64px', height: '64px', borderRadius: '50%', boxShadow: '0 2px 8px rgba(0,0,0,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <section className="panel" style={{ padding: '22px 18px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginBottom: '16px' }}>
+                <div style={{ flexShrink: 0, width: '74px', height: '74px', borderRadius: '50%', boxShadow: '0 3px 10px rgba(0,0,0,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '12px', border: '3px solid #ffffff', outline: '2px solid var(--border-base)' }}>
                   <Avatar name={person.name} src={person.photo_url} large />
                 </div>
-                <div style={{ minWidth: 0, flex: 1 }}>
-                  <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.25rem', color: 'var(--text-main)', wordBreak: 'break-word', lineHeight: 1.25, margin: 0 }}>
-                    {person.name}
-                  </h2>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginTop: '4px' }}>
-                    <span className="badge badge-green">
-                      Vínculo ativo
+                
+                {/* Nome em uma Única Linha */}
+                <h2
+                  style={{
+                    fontFamily: 'var(--font-serif)',
+                    fontSize: 'clamp(0.88rem, 1.8vw, 1.08rem)',
+                    fontWeight: 700,
+                    color: 'var(--text-main)',
+                    margin: '0 0 8px 0',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    width: '100%',
+                    maxWidth: '100%',
+                    lineHeight: 1.25,
+                    textAlign: 'center',
+                  }}
+                  title={person.name}
+                >
+                  {person.name}
+                </h2>
+
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                  <span className="badge badge-green">
+                    Vínculo ativo
+                  </span>
+
+                  {/* Mandato Ativo Vigente tem prioridade e substitui o badge genérico de Palestrante */}
+                  {activeMandate ? (
+                    <span
+                      className="badge"
+                      style={{
+                        background: '#fdf4ff',
+                        color: '#86198f',
+                        border: '1px solid #f0abfc',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        fontWeight: 600,
+                        fontSize: '0.74rem',
+                      }}
+                      title={`${activeMandate.body} · Mandato Vigente (${activeMandate.start_year || ''})`}
+                    >
+                      <Buildings size={13} weight="bold" /> {activeMandate.role}
                     </span>
-                    {person.availability?.status === 'disponivel' && (
-                      <span
-                        className="badge badge-green"
-                        style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                        title="Disponível para servir nos próximos encontros"
-                      >
-                        🟢 Disponível p/ Servir
-                      </span>
-                    )}
-                    {person.availability?.second_stage_status === 'desejo_vivenciar' && (
-                      <span
-                        className="badge"
-                        style={{
-                          background: '#fef9c3',
-                          color: '#854d0e',
-                          border: '1px solid #fde047',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          fontWeight: 600,
-                        }}
-                        title="Interesse declarado em vivenciar a 2ª Etapa"
-                      >
-                        🌟 Deseja 2ª Etapa
-                      </span>
-                    )}
-                    {isSpeakerPerson && (
-                      <span
-                        className="badge"
-                        style={{
-                          background: '#fef3c7',
-                          color: '#92400e',
-                          border: '1px solid #fde68a',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                        }}
-                      >
-                        <MicrophoneStage size={13} weight="bold" /> Palestrante
-                      </span>
-                    )}
-                  </div>
+                  ) : isSpeakerPerson ? (
+                    <span
+                      className="badge"
+                      style={{
+                        background: '#fef3c7',
+                        color: '#92400e',
+                        border: '1px solid #fde68a',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        fontWeight: 600,
+                        fontSize: '0.74rem',
+                      }}
+                    >
+                      <MicrophoneStage size={13} weight="bold" /> Palestrante
+                    </span>
+                  ) : null}
+
+                  {person.availability?.status === 'disponivel' && (
+                    <span
+                      className="badge badge-green"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                      title="Disponível para servir nos próximos encontros"
+                    >
+                      🟢 Disponível p/ Servir
+                    </span>
+                  )}
+                  {person.availability?.second_stage_status === 'desejo_vivenciar' && (
+                    <span
+                      className="badge"
+                      style={{
+                        background: '#fef9c3',
+                        color: '#854d0e',
+                        border: '1px solid #fde047',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        fontWeight: 600,
+                      }}
+                      title="Interesse declarado em vivenciar a 2ª Etapa"
+                    >
+                      🌟 Deseja 2ª Etapa
+                    </span>
+                  )}
                 </div>
               </div>
 
-              <div style={{ marginBottom: '18px', paddingBottom: '14px', borderBottom: '1px solid var(--border-light)' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '18px', paddingBottom: '14px', borderBottom: '1px solid var(--border-light)' }}>
                 <ManagePhotoModal
                   personId={person.id}
                   personName={person.name}
