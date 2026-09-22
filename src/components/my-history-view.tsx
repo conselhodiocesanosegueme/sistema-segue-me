@@ -345,12 +345,6 @@ export function MyHistoryView({
                   </div>
                 )}
               </div>
-
-              {couple.notes && (
-                <p style={{ marginTop: '10px', fontSize: '0.8rem', color: 'var(--text-subtle)', fontStyle: 'italic' }}>
-                  {couple.notes}
-                </p>
-              )}
             </div>
           </div>
 

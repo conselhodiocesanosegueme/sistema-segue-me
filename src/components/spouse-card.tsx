@@ -170,12 +170,6 @@ export function SpouseCard({ person, couple, isStaff }: SpouseCardProps) {
                 Vínculo ativo desde {couple.start_text}
               </div>
             )}
-
-            {couple?.notes && (
-              <div style={{ fontSize: '0.76rem', color: 'var(--text-subtle)', fontStyle: 'italic', marginTop: '2px' }}>
-                Obs: {couple.notes}
-              </div>
-            )}
           </div>
         </div>
       ) : (

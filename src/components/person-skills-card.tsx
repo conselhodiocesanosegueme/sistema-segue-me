@@ -37,7 +37,9 @@ const COMMON_INSTRUMENTS = [
 
 const COMMON_OTHER_SKILLS = [
   'Animação',
-  'Teatro / Expressão',
+  'Dom de cozinhar para muitas pessoas',
+  'Facilidade com comida / Cozinha',
+  'Facilidade com limpeza',
   'Sonorização / Mesa de Som',
   'Liturgia / Proclamação',
   'Cenografia / Decoração',
@@ -174,7 +176,7 @@ export function PersonSkillsCard({
                 style={{ width: '16px', height: '16px', accentColor: 'var(--brand-primary)', cursor: 'pointer' }}
               />
               <MicrophoneStage size={18} color="var(--brand-primary)" weight="bold" />
-              Canto / Vocal (Canta ou já participou de ministério/coral)
+              Canta? ou participou da equipe do canto
             </label>
 
             {sings && (
@@ -372,7 +374,7 @@ export function PersonSkillsCard({
                     }}
                   >
                     <MicrophoneStage size={15} weight="bold" />
-                    Canto / Vocal
+                    Canto / Equipe de Canto
                   </span>
                   {skills.singing_types?.map((t) => (
                     <span
