@@ -86,12 +86,13 @@ async function handleUpdate(request: Request, context: RouteContext) {
     // Busca dados atuais para merge seguro em notes
     const { data: currentPerson, error: fetchErr } = await admin
       .from('people')
-      .select('notes, engagement_status')
+      .select('notes')
       .eq('id', personId)
       .single();
 
     if (fetchErr || !currentPerson) {
-      throw new HttpError(404, 'Pessoa não encontrada.');
+      console.error('[AVAILABILITY] Erro ao buscar pessoa:', fetchErr);
+      throw new HttpError(404, 'Pessoa não encontrada no banco de dados.');
     }
 
     let existingNotesObj: Record<string, any> = {};
@@ -106,17 +107,13 @@ async function handleUpdate(request: Request, context: RouteContext) {
     }
 
     existingNotesObj.availability = availability;
-    if (availability.status === 'disponivel') {
-      existingNotesObj.engagement_status = 'disponivel';
+    if (availability.status) {
+      existingNotesObj.engagement_status = availability.status;
     }
 
     const updatePayload: Record<string, any> = {
       notes: JSON.stringify(existingNotesObj),
     };
-
-    if (availability.status === 'disponivel') {
-      updatePayload.engagement_status = 'disponivel';
-    }
 
     // 1. Salva obrigatoriamente na coluna notes (garantia de persistência no Postgres)
     const { error: updateNotesErr } = await admin
