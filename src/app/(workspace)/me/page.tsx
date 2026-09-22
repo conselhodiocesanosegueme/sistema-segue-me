@@ -128,9 +128,11 @@ export default async function MeuHistoricoPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <section className="panel">
               <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '16px' }}>
-                <Avatar name={person.name} src={person.photo_url} large />
-                <div>
-                  <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.35rem', color: 'var(--text-main)' }}>
+                <div style={{ flexShrink: 0, width: '64px', height: '64px', borderRadius: '50%', boxShadow: '0 2px 8px rgba(0,0,0,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Avatar name={person.name} src={person.photo_url} large />
+                </div>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.25rem', color: 'var(--text-main)', wordBreak: 'break-word', lineHeight: 1.25, margin: 0 }}>
                     {person.name}
                   </h2>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginTop: '4px' }}>

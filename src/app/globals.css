@@ -689,8 +689,12 @@ html, body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  aspect-ratio: 1 / 1;
+  flex-shrink: 0;
   border-radius: 50%;
   background: var(--brand-light);
   color: var(--brand-primary);
@@ -698,11 +702,17 @@ html, body {
   font-weight: 600;
   text-transform: uppercase;
   border: 1px solid var(--brand-border);
+  box-sizing: border-box;
 }
 .avatar-large {
-  width: 54px;
-  height: 54px;
-  font-size: 1.25rem;
+  width: 64px;
+  height: 64px;
+  min-width: 64px;
+  min-height: 64px;
+  aspect-ratio: 1 / 1;
+  flex-shrink: 0;
+  font-size: 1.3rem;
+  border-radius: 50%;
 }
 
 /* Badges */

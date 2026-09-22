@@ -26,17 +26,41 @@ export function Avatar({ name, large = false, src }: { name: string; large?: boo
       <span
         aria-hidden="true"
         className={`avatar${large ? ' avatar-large' : ''}`}
-        style={{ padding: 0, overflow: 'hidden', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+        style={{
+          padding: 0,
+          overflow: 'hidden',
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+          aspectRatio: '1 / 1',
+          borderRadius: '50%',
+        }}
       >
         <img
           src={src}
           alt={name}
-          style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit', display: 'block' }}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            aspectRatio: '1 / 1',
+            borderRadius: '50%',
+            display: 'block',
+          }}
         />
       </span>
     );
   }
-  return <span aria-hidden="true" className={`avatar${large ? ' avatar-large' : ''}`}>{initials(name)}</span>;
+  return (
+    <span
+      aria-hidden="true"
+      className={`avatar${large ? ' avatar-large' : ''}`}
+      style={{ flexShrink: 0, aspectRatio: '1 / 1', borderRadius: '50%' }}
+    >
+      {initials(name)}
+    </span>
+  );
 }
 
 export function PageHeading({ eyebrow, title, description, actions }: { eyebrow?: string; title: string; description?: string; actions?: ReactNode }) {

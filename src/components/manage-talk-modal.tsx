@@ -93,10 +93,20 @@ export function ManageTalkModal({
 
   if (!isOpen) return null;
 
-  const allParishes = DIOCESAN_SECTORS.flatMap((s) => s.parishes).map((p) => ({
-    name: p.dbNames[0] || p.name,
-    label: `${p.name} (${p.city.replace(/\s*-\s*GO/i, '')})`,
-  }));
+  const allParishes = DIOCESAN_SECTORS.flatMap((s) => s.parishes).map((p) => {
+    const canonicalDbName = p.dbNames.find((n) => !n.includes('(')) || p.name;
+    const finalParishName =
+      canonicalDbName.startsWith('Paróquia') ||
+      canonicalDbName.startsWith('Santuário') ||
+      canonicalDbName.startsWith('Catedral')
+        ? canonicalDbName
+        : `Paróquia ${canonicalDbName}`;
+
+    return {
+      name: finalParishName,
+      label: `${p.name} (${p.city.replace(/\s*-\s*GO/i, '')})`,
+    };
+  });
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

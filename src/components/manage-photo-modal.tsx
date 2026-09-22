@@ -258,7 +258,22 @@ export function ManagePhotoModal({
                   position: 'relative',
                 }}
               >
-                <Avatar name={personName} src={activePhoto} large />
+                {activePhoto ? (
+                  <img
+                    src={activePhoto}
+                    alt={personName}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      borderRadius: '50%',
+                      aspectRatio: '1 / 1',
+                      display: 'block',
+                    }}
+                  />
+                ) : (
+                  <Avatar name={personName} large />
+                )}
               </div>
 
               {previewUrl && (

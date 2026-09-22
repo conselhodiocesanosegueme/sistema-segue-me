@@ -3,6 +3,7 @@ import { authorize, apiError, HttpError } from '@/lib/http';
 import { supabaseServer, supabaseAdmin } from '@/lib/supabase/server';
 import { isDemoMode } from '@/lib/config';
 import { mutateDemo } from '@/lib/demo';
+import { DIOCESAN_SECTORS } from '@/lib/sectors';
 
 export async function POST(request: NextRequest) {
   try {
@@ -92,53 +93,105 @@ export async function POST(request: NextRequest) {
 
     const admin = supabaseAdmin();
 
-    // Se encounterId não foi informado, buscar ou vincular um encontro correspondente
+    // Se encounterId não foi informado, buscar com precisão ou criar o encontro da paróquia
     if (!encounterId) {
-      if (parish) {
-        const { data: matchedEnc } = await admin
+      const rawParish = (parish || '').toString().trim();
+      const cleanParish = rawParish.replace(/\s*\(.*?\)\s*/g, ' ').trim();
+      const cityHint = (rawParish.match(/\((.*?)\)/) || [])[1]?.trim() || '';
+
+      // Localiza a paróquia canônica no mapeamento diocesano
+      const allSectorParishes = DIOCESAN_SECTORS.flatMap((s) => s.parishes);
+      const norm = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+      const matchedSector = allSectorParishes.find((p) => {
+        const pNameNorm = norm(p.name);
+        const rawNorm = norm(rawParish);
+        const cleanNorm = norm(cleanParish);
+        if (rawNorm.includes(pNameNorm) || cleanNorm.includes(pNameNorm)) return true;
+        return p.dbNames.some((dbn) => norm(dbn) === rawNorm || norm(dbn) === cleanNorm || rawNorm.includes(norm(dbn)));
+      });
+
+      // Lista de candidatos de nome de paróquia para busca no banco
+      const candidateParishNames = new Set<string>();
+      if (cleanParish) candidateParishNames.add(cleanParish);
+      if (rawParish) candidateParishNames.add(rawParish);
+      if (matchedSector) {
+        candidateParishNames.add(matchedSector.name);
+        matchedSector.dbNames.forEach((n) => {
+          candidateParishNames.add(n);
+          candidateParishNames.add(n.replace(/\s*\(.*?\)\s*/g, ' ').trim());
+        });
+      }
+
+      let foundEnc: { id: string; parish: string; city: string; name: string } | null = null;
+
+      // 1. Busca por ano e nome da paróquia
+      for (const candidate of candidateParishNames) {
+        if (!candidate || candidate.length < 3) continue;
+        const { data } = await admin
           .from('encounters')
-          .select('id')
-          .ilike('parish', `%${parish}%`)
+          .select('id, parish, city, name')
           .eq('year', year)
-          .maybeSingle();
-
-        if (matchedEnc) {
-          encounterId = matchedEnc.id;
-        }
-      }
-
-      // Se ainda não encontrou encontro pelo ano e paróquia, buscar o mais recente da paróquia ou criar registro
-      if (!encounterId && parish) {
-        const { data: anyEnc } = await admin
-          .from('encounters')
-          .select('id')
-          .ilike('parish', `%${parish}%`)
-          .order('year', { ascending: false })
+          .ilike('parish', `%${candidate}%`)
           .limit(1)
           .maybeSingle();
 
-        if (anyEnc) {
-          encounterId = anyEnc.id;
+        if (data) {
+          foundEnc = data;
+          break;
         }
       }
 
-      // Fallback para o primeiro encontro disponível se nenhum foi encontrado
-      if (!encounterId) {
-        const { data: firstEnc } = await admin
+      // 2. Se não encontrou pelo nome, tenta pela cidade correspondente
+      if (!foundEnc && (matchedSector?.city || cityHint)) {
+        const targetCity = (matchedSector?.city || cityHint).replace(/\s*[\/-]\s*GO/i, '').trim();
+        if (targetCity) {
+          const { data } = await admin
+            .from('encounters')
+            .select('id, parish, city, name')
+            .eq('year', year)
+            .ilike('city', `%${targetCity}%`)
+            .limit(1)
+            .maybeSingle();
+
+          if (data) {
+            foundEnc = data;
+          }
+        }
+      }
+
+      // 3. Se ainda assim não existe encontro para esse ano, CRIA o encontro daquela paróquia para aquele ano
+      // (NUNCA associar a um encontro de outra paróquia)
+      if (!foundEnc) {
+        const canonicalParish = matchedSector?.dbNames.find((n) => !n.includes('('))
+          || (cleanParish.startsWith('Paróquia') || cleanParish.startsWith('Santuário') ? cleanParish : `Paróquia ${cleanParish}`);
+        const canonicalCity = matchedSector?.city || cityHint || 'Diocese de Anápolis';
+        const newEncounterName = `Encontro de Jovens com Cristo Segue-me (${year})`;
+
+        const { data: newEnc, error: createEncErr } = await admin
           .from('encounters')
-          .select('id')
-          .order('year', { ascending: false })
-          .limit(1)
-          .maybeSingle();
+          .insert({
+            name: newEncounterName,
+            parish: canonicalParish,
+            city: canonicalCity,
+            year: year,
+            edition: '1ª',
+            date_text: year.toString(),
+            extraction_status: 'Autodeclarado',
+            notes: 'Encontro gerado para registro de palestra diocesana',
+            version: 1,
+          })
+          .select('id, parish, city, name')
+          .single();
 
-        if (firstEnc) {
-          encounterId = firstEnc.id;
+        if (createEncErr || !newEnc) {
+          console.error('[TALKS] Erro ao criar encontro para a paróquia:', createEncErr);
+          throw new HttpError(500, `Não foi possível localizar ou criar o encontro da paróquia ${canonicalParish} (${year}).`);
         }
-      }
-    }
 
-    if (!encounterId) {
-      throw new HttpError(400, 'Não foi possível associar um encontro a esta palestra.');
+        foundEnc = newEnc;
+      }
+
+      encounterId = foundEnc.id;
     }
 
     // Verificar se a palestra já foi registrada para esta pessoa

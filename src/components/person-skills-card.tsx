@@ -80,10 +80,12 @@ export function PersonSkillsCard({
 
   const addCustomInstrument = () => {
     const trimmed = customInstrument.trim();
-    if (trimmed && !instruments.includes(trimmed)) {
-      setInstruments((prev) => [...prev, trimmed]);
-      setCustomInstrument('');
+    if (!trimmed) return;
+    const formatted = trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+    if (!instruments.some((i) => i.toLowerCase() === formatted.toLowerCase())) {
+      setInstruments((prev) => [...prev, formatted]);
     }
+    setCustomInstrument('');
   };
 
   const toggleOtherSkill = (skill: string) => {
@@ -236,15 +238,64 @@ export function PersonSkillsCard({
               ))}
             </div>
 
+            {/* Instrumentos personalizados já adicionados */}
+            {instruments.filter((i) => !COMMON_INSTRUMENTS.includes(i)).length > 0 && (
+              <div style={{ marginBottom: '10px' }}>
+                <span style={{ display: 'block', fontSize: '0.74rem', color: 'var(--text-subtle)', marginBottom: '4px' }}>
+                  Instrumentos adicionados por você:
+                </span>
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                  {instruments
+                    .filter((i) => !COMMON_INSTRUMENTS.includes(i))
+                    .map((inst) => (
+                      <span
+                        key={inst}
+                        style={{
+                          background: '#0284c7',
+                          color: '#ffffff',
+                          borderRadius: '18px',
+                          padding: '4px 10px',
+                          fontSize: '0.78rem',
+                          fontWeight: 600,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                        }}
+                      >
+                        <Guitar size={13} />
+                        {inst}
+                        <button
+                          type="button"
+                          onClick={() => setInstruments((prev) => prev.filter((i) => i !== inst))}
+                          title={`Remover ${inst}`}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: '#ffffff',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            padding: '1px',
+                            marginLeft: '2px',
+                          }}
+                        >
+                          <X size={13} weight="bold" />
+                        </button>
+                      </span>
+                    ))}
+                </div>
+              </div>
+            )}
+
             {/* Adicionar outro instrumento personalizado */}
             <div style={{ display: 'flex', gap: '8px', maxWidth: '380px' }}>
               <input
                 type="text"
                 value={customInstrument}
                 onChange={(e) => setCustomInstrument(e.target.value)}
-                placeholder="Outro instrumento (ex: Saxofone)"
+                placeholder="Outro instrumento (ex: Saxofone, Trompete...)"
                 className="filter-input"
-                style={{ fontSize: '0.8rem', padding: '6px 10px' }}
+                style={{ fontSize: '0.8rem', padding: '6px 10px', flex: 1 }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault();
@@ -256,7 +307,7 @@ export function PersonSkillsCard({
                 type="button"
                 onClick={addCustomInstrument}
                 className="button button-secondary"
-                style={{ fontSize: '0.78rem', padding: '6px 12px', height: 'auto' }}
+                style={{ fontSize: '0.78rem', padding: '6px 12px', height: 'auto', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
               >
                 <Plus size={14} /> Adicionar
               </button>

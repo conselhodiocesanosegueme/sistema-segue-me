@@ -217,7 +217,10 @@ export function PersonTalksCard({ person, talks = [], isStaff = false, canEdit }
                   {parishName && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: '2px' }}>
                       <Church size={13} color="var(--brand-primary)" />
-                      <span>{parishName}</span>
+                      <span>
+                        {parishName}
+                        {t.encounter?.city ? ` • ${t.encounter.city.replace(/\s*[\/-]\s*GO/i, '')}` : ''}
+                      </span>
                     </div>
                   )}
 
