@@ -124,6 +124,11 @@ export type PublicDiocesanStats = {
     region: string;
     parishCount: number;
     encountersCount: number;
+    parishes: {
+      name: string;
+      city: string;
+      status?: string;
+    }[];
   }[];
   byYear: {
     year: number;

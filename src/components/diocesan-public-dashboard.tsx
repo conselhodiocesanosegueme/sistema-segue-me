@@ -427,7 +427,7 @@ export function DiocesanPublicDashboard({ stats, viewer }: DiocesanPublicDashboa
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1rem' }}>
           {stats.bySector.map((s) => (
             <div
               key={s.id}
@@ -439,7 +439,7 @@ export function DiocesanPublicDashboard({ stats, viewer }: DiocesanPublicDashboa
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
-                gap: '0.75rem',
+                gap: '0.85rem',
               }}
             >
               <div>
@@ -460,10 +460,62 @@ export function DiocesanPublicDashboard({ stats, viewer }: DiocesanPublicDashboa
                     {s.encountersCount} {s.encountersCount === 1 ? 'encontro' : 'encontros'}
                   </span>
                 </div>
-                <h3 style={{ margin: '0 0 0.35rem', fontSize: '1.05rem', color: 'var(--text-primary)' }}>{s.name}</h3>
-                <p style={{ margin: 0, fontSize: '0.83rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
+                <h3 style={{ margin: '0 0 0.35rem', fontSize: '1.1rem', color: 'var(--text-primary)' }}>{s.name}</h3>
+                <p style={{ margin: '0 0 0.85rem', fontSize: '0.83rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
                   {s.region}
                 </p>
+
+                {/* Lista das Paróquias Envolvidas */}
+                <div style={{ marginTop: '0.5rem' }}>
+                  <span
+                    style={{
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                      color: 'var(--text-muted)',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.04em',
+                      display: 'block',
+                      marginBottom: '0.45rem',
+                    }}
+                  >
+                    Paróquias Envolvidas ({s.parishes.length}):
+                  </span>
+                  <ul
+                    style={{
+                      listStyle: 'none',
+                      margin: 0,
+                      padding: 0,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.35rem',
+                    }}
+                  >
+                    {s.parishes.map((p, pIdx) => (
+                      <li
+                        key={pIdx}
+                        style={{
+                          fontSize: '0.8rem',
+                          display: 'flex',
+                          alignItems: 'baseline',
+                          justifyContent: 'space-between',
+                          gap: '0.5rem',
+                          padding: '4px 8px',
+                          borderRadius: '5px',
+                          background: 'var(--bg-base)',
+                          border: '1px solid rgba(0, 0, 0, 0.04)',
+                        }}
+                      >
+                        <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                          <span style={{ color: 'var(--brand-primary)', marginRight: '6px' }}>•</span>
+                          {p.name}
+                        </span>
+                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', flexShrink: 0 }}>
+                          {p.city}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
 
               <div
@@ -473,8 +525,9 @@ export function DiocesanPublicDashboard({ stats, viewer }: DiocesanPublicDashboa
                   justifyContent: 'space-between',
                   paddingTop: '0.65rem',
                   borderTop: '1px solid var(--border-soft)',
-                  fontSize: '0.8rem',
+                  fontSize: '0.78rem',
                   color: 'var(--text-muted)',
+                  marginTop: '0.35rem',
                 }}
               >
                 <span>{s.parishCount} paróquias integrantes</span>

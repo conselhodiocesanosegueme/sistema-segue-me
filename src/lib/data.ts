@@ -810,6 +810,11 @@ export const getPublicDiocesanStats = cache(async (): Promise<PublicDiocesanStat
         region: s.region,
         parishCount: s.parishes.length,
         encountersCount,
+        parishes: s.parishes.map(p => ({
+          name: p.name,
+          city: p.city,
+          status: p.status,
+        })),
       };
     });
 
@@ -881,6 +886,11 @@ export const getPublicDiocesanStats = cache(async (): Promise<PublicDiocesanStat
       region: s.region,
       parishCount: s.parishes.length,
       encountersCount,
+      parishes: s.parishes.map(p => ({
+        name: p.name,
+        city: p.city,
+        status: p.status,
+      })),
     };
   });
 
