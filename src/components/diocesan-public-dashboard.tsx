@@ -466,56 +466,58 @@ export function DiocesanPublicDashboard({ stats, viewer }: DiocesanPublicDashboa
                 </p>
 
                 {/* Lista das Paróquias Envolvidas */}
-                <div style={{ marginTop: '0.5rem' }}>
-                  <span
-                    style={{
-                      fontSize: '0.72rem',
-                      fontWeight: 700,
-                      color: 'var(--text-muted)',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.04em',
-                      display: 'block',
-                      marginBottom: '0.45rem',
-                    }}
-                  >
-                    Paróquias Envolvidas ({s.parishes.length}):
-                  </span>
-                  <ul
-                    style={{
-                      listStyle: 'none',
-                      margin: 0,
-                      padding: 0,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '0.35rem',
-                    }}
-                  >
-                    {s.parishes.map((p, pIdx) => (
-                      <li
-                        key={pIdx}
-                        style={{
-                          fontSize: '0.8rem',
-                          display: 'flex',
-                          alignItems: 'baseline',
-                          justifyContent: 'space-between',
-                          gap: '0.5rem',
-                          padding: '4px 8px',
-                          borderRadius: '5px',
-                          background: 'var(--bg-base)',
-                          border: '1px solid rgba(0, 0, 0, 0.04)',
-                        }}
-                      >
-                        <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
-                          <span style={{ color: 'var(--brand-primary)', marginRight: '6px' }}>•</span>
-                          {p.name}
-                        </span>
-                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', flexShrink: 0 }}>
-                          {p.city}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                {s.parishes && s.parishes.length > 0 && (
+                  <div style={{ marginTop: '0.5rem' }}>
+                    <span
+                      style={{
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        color: 'var(--text-muted)',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.04em',
+                        display: 'block',
+                        marginBottom: '0.45rem',
+                      }}
+                    >
+                      Paróquias Envolvidas ({s.parishes.length}):
+                    </span>
+                    <ul
+                      style={{
+                        listStyle: 'none',
+                        margin: 0,
+                        padding: 0,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.35rem',
+                      }}
+                    >
+                      {s.parishes.map((p, pIdx) => (
+                        <li
+                          key={pIdx}
+                          style={{
+                            fontSize: '0.8rem',
+                            display: 'flex',
+                            alignItems: 'baseline',
+                            justifyContent: 'space-between',
+                            gap: '0.5rem',
+                            padding: '4px 8px',
+                            borderRadius: '5px',
+                            background: 'var(--bg-base)',
+                            border: '1px solid rgba(0, 0, 0, 0.04)',
+                          }}
+                        >
+                          <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                            <span style={{ color: 'var(--brand-primary)', marginRight: '6px' }}>•</span>
+                            {p.name}
+                          </span>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', flexShrink: 0 }}>
+                            {p.city}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
 
               <div

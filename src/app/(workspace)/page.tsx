@@ -3,6 +3,8 @@ import { getOverview, getPublicDiocesanStats } from '@/lib/data';
 import { OverviewView } from '@/components/overview';
 import { DiocesanPublicDashboard } from '@/components/diocesan-public-dashboard';
 
+export const dynamic = 'force-dynamic';
+
 interface OverviewPageProps {
   searchParams: Promise<{ parish?: string }>;
 }
