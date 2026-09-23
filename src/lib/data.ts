@@ -798,11 +798,22 @@ export const getPublicDiocesanStats = cache(async (): Promise<PublicDiocesanStat
 
     const bySector = DIOCESAN_SECTORS.map(s => {
       let encountersCount = 0;
-      for (const e of state.encounters) {
-        if (s.parishes.some(p => matchEncounterToParish({ parish: e.parish, city: e.city }, p))) {
-          encountersCount++;
+      const parishes = s.parishes.map(p => {
+        let pEncounters = 0;
+        for (const e of state.encounters) {
+          if (matchEncounterToParish({ parish: e.parish, city: e.city }, p)) {
+            pEncounters++;
+          }
         }
-      }
+        encountersCount += pEncounters;
+        return {
+          name: p.name,
+          city: p.city,
+          status: p.status,
+          encountersCount: pEncounters,
+        };
+      });
+
       return {
         id: s.id,
         roman: s.roman,
@@ -810,11 +821,7 @@ export const getPublicDiocesanStats = cache(async (): Promise<PublicDiocesanStat
         region: s.region,
         parishCount: s.parishes.length,
         encountersCount,
-        parishes: s.parishes.map(p => ({
-          name: p.name,
-          city: p.city,
-          status: p.status,
-        })),
+        parishes,
       };
     });
 
@@ -874,11 +881,22 @@ export const getPublicDiocesanStats = cache(async (): Promise<PublicDiocesanStat
 
   const bySector = DIOCESAN_SECTORS.map(s => {
     let encountersCount = 0;
-    for (const e of encounters) {
-      if (s.parishes.some(p => matchEncounterToParish({ parish: e.parish, city: e.city }, p))) {
-        encountersCount++;
+    const parishes = s.parishes.map(p => {
+      let pEncounters = 0;
+      for (const e of encounters) {
+        if (matchEncounterToParish({ parish: e.parish, city: e.city }, p)) {
+          pEncounters++;
+        }
       }
-    }
+      encountersCount += pEncounters;
+      return {
+        name: p.name,
+        city: p.city,
+        status: p.status,
+        encountersCount: pEncounters,
+      };
+    });
+
     return {
       id: s.id,
       roman: s.roman,
@@ -886,11 +904,7 @@ export const getPublicDiocesanStats = cache(async (): Promise<PublicDiocesanStat
       region: s.region,
       parishCount: s.parishes.length,
       encountersCount,
-      parishes: s.parishes.map(p => ({
-        name: p.name,
-        city: p.city,
-        status: p.status,
-      })),
+      parishes,
     };
   });
 

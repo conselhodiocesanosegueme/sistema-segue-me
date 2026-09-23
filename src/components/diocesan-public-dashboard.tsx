@@ -491,30 +491,71 @@ export function DiocesanPublicDashboard({ stats, viewer }: DiocesanPublicDashboa
                         gap: '0.35rem',
                       }}
                     >
-                      {s.parishes.map((p, pIdx) => (
-                        <li
-                          key={pIdx}
-                          style={{
-                            fontSize: '0.8rem',
-                            display: 'flex',
-                            alignItems: 'baseline',
-                            justifyContent: 'space-between',
-                            gap: '0.5rem',
-                            padding: '4px 8px',
-                            borderRadius: '5px',
-                            background: 'var(--bg-base)',
-                            border: '1px solid rgba(0, 0, 0, 0.04)',
-                          }}
-                        >
-                          <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
-                            <span style={{ color: 'var(--brand-primary)', marginRight: '6px' }}>•</span>
-                            {p.name}
-                          </span>
-                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', flexShrink: 0 }}>
-                            {p.city}
-                          </span>
-                        </li>
-                      ))}
+                      {s.parishes.map((p, pIdx) => {
+                        const count = p.encountersCount ?? 0;
+                        return (
+                          <li
+                            key={pIdx}
+                            style={{
+                              fontSize: '0.8rem',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              gap: '0.6rem',
+                              padding: '5px 8px',
+                              borderRadius: '6px',
+                              background: 'var(--bg-base)',
+                              border: '1px solid rgba(0, 0, 0, 0.04)',
+                            }}
+                          >
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', minWidth: 0 }}>
+                              <span style={{ fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                <span style={{ color: count > 0 ? 'var(--brand-primary)' : 'var(--text-muted)', marginRight: '6px' }}>•</span>
+                                {p.name}
+                              </span>
+                              <span style={{ fontSize: '0.70rem', color: 'var(--text-muted)', paddingLeft: '11px' }}>
+                                {p.city}
+                              </span>
+                            </div>
+
+                            <div style={{ flexShrink: 0, textAlign: 'right' }}>
+                              {count > 0 ? (
+                                <span
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    padding: '2px 7px',
+                                    borderRadius: '5px',
+                                    background: 'rgba(163, 44, 45, 0.1)',
+                                    color: 'var(--brand-primary)',
+                                    fontWeight: 700,
+                                    fontSize: '0.73rem',
+                                    whiteSpace: 'nowrap',
+                                  }}
+                                  title={`${count} ${count === 1 ? 'encontro realizado' : 'encontros realizados'}`}
+                                >
+                                  {count} {count === 1 ? 'encontro' : 'encontros'}
+                                </span>
+                              ) : (
+                                <span
+                                  style={{
+                                    display: 'inline-block',
+                                    padding: '2px 6px',
+                                    borderRadius: '4px',
+                                    background: 'transparent',
+                                    color: 'var(--text-muted)',
+                                    fontSize: '0.69rem',
+                                    whiteSpace: 'nowrap',
+                                    border: '1px solid var(--border-soft)',
+                                  }}
+                                >
+                                  0 encontros
+                                </span>
+                              )}
+                            </div>
+                          </li>
+                        );
+                      })}
                     </ul>
                   </div>
                 )}

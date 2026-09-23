@@ -128,6 +128,7 @@ export type PublicDiocesanStats = {
       name: string;
       city: string;
       status?: string;
+      encountersCount: number;
     }[];
   }[];
   byYear: {
